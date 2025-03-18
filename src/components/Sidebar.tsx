@@ -64,7 +64,13 @@ const Sidebar = () => {
       <div className="absolute bottom-4 w-full px-3">
         <NavLink
           to="/settings"
-          className="flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className={({ isActive }) => 
+            `flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${
+              isActive 
+                ? 'bg-accent text-primary font-medium' 
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`
+          }
         >
           <Settings size={18} className="flex-shrink-0" />
           <span className={`ml-2.5 transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
