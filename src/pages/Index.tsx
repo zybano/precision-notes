@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -163,10 +164,10 @@ const Index = () => {
                 Streamlined Clinical Documentation
               </div>
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-tight">
-                Documentation that works <span className="text-primary">for you</span>, not against you
+                Clinical Documentation <span className="text-primary">Made Simple</span>
               </h1>
               <p className="text-lg text-muted-foreground">
-                Our AI-powered platform transforms time-consuming clinical documentation into an effortless experience, letting you focus on what matters most—patient care.
+                Transform your medical documentation workflow with real-time transcription and AI-powered assistance.
               </p>
               <div className="pt-4 flex flex-col sm:flex-row gap-4">
                 <Link to="/dashboard">
@@ -429,4 +430,3 @@ const Index = () => {
 };
 
 export default Index;
-
