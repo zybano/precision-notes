@@ -7,44 +7,83 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    --background: 260 50% 98%;
+    --foreground: 260 10% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 260 10% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 260 10% 10%;
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 260 100% 50%;
+    --primary-foreground: 260 50% 98%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 260 20% 96%;
+    --secondary-foreground: 260 10% 10%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 260 20% 96%;
+    --muted-foreground: 260 10% 40%;
 
-    --accent: 221 83% 95%;
-    --accent-foreground: 221 83% 53%;
+    --accent: 142 76% 60%;
+    --accent-foreground: 142 70% 10%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 260 50% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --border: 260 20% 90%;
+    --input: 260 20% 90%;
+    --ring: 260 100% 50%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 5% 26%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-foreground: 260 10% 26%;
+    --sidebar-primary: 260 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 96%;
-    --sidebar-accent-foreground: 240 6% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-accent: 260 10% 96%;
+    --sidebar-accent-foreground: 260 6% 10%;
+    --sidebar-border: 260 13% 91%;
+    --sidebar-ring: 260 100% 50%;
+  }
+
+  .dark {
+    --background: 260 25% 8%;
+    --foreground: 260 10% 98%;
+
+    --card: 260 25% 12%;
+    --card-foreground: 260 10% 98%;
+
+    --popover: 260 25% 12%;
+    --popover-foreground: 260 10% 98%;
+
+    --primary: 260 90% 60%;
+    --primary-foreground: 260 50% 98%;
+
+    --secondary: 260 25% 16%;
+    --secondary-foreground: 260 10% 98%;
+
+    --muted: 260 25% 16%;
+    --muted-foreground: 260 10% 60%;
+
+    --accent: 142 70% 50%;
+    --accent-foreground: 142 10% 98%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 260 10% 98%;
+
+    --border: 260 25% 22%;
+    --input: 260 25% 22%;
+    --ring: 260 90% 60%;
+
+    --sidebar-background: 260 25% 10%;
+    --sidebar-foreground: 260 10% 80%;
+    --sidebar-primary: 260 90% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 260 25% 16%;
+    --sidebar-accent-foreground: 260 10% 98%;
+    --sidebar-border: 260 25% 22%;
+    --sidebar-ring: 260 90% 60%;
   }
 
   * {
@@ -61,6 +100,23 @@
     @apply bg-white/80 backdrop-blur-md border border-white/20;
   }
   
+  .dark .glass {
+    @apply bg-background/80 backdrop-blur-md border border-white/10;
+  }
+  
+  /* Medical-themed gradient effects */
+  .medical-gradient {
+    @apply bg-gradient-to-r from-purple-600 to-purple-800;
+  }
+  
+  .nature-gradient {
+    @apply bg-gradient-to-r from-green-500 to-green-700;
+  }
+  
+  .tech-gradient-text {
+    @apply bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent;
+  }
+  
   /* Premium button styles */
   .btn-premium {
     @apply relative overflow-hidden transition-all duration-300 ease-out;
@@ -73,6 +129,19 @@
   
   .btn-premium:hover::after {
     @apply opacity-100;
+  }
+  
+  /* Medical UI elements */
+  .medical-card {
+    @apply rounded-xl border border-purple-100 shadow-sm bg-white dark:bg-purple-900/10 dark:border-purple-700/30;
+  }
+  
+  .medical-glow {
+    @apply shadow-[0_0_15px_rgba(139,92,246,0.3)];
+  }
+  
+  .nature-glow {
+    @apply shadow-[0_0_15px_rgba(16,185,129,0.3)];
   }
   
   /* Transition base classes */
