@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy, Plus } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -21,12 +23,17 @@ import { useForm } from "react-hook-form";
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [transcript, setTranscript] = useState("");
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const { toast } = useToast();
   
   const form = useForm({
     defaultValues: {
       type: "SOAP Note",
       patientName: "",
+      notes: "",
     },
   });
 
@@ -47,7 +54,87 @@ const DocumentationPage = () => {
     });
     setNewDocumentOpen(false);
     form.reset();
+    stopRecording();
     // In a real app, this would create a new document with the provided details
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+      
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        // Here we would normally send this blob to a transcription service
+        // For demo purposes, we'll simulate a response
+        simulateTranscription(blob);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      setMediaRecorder(recorder);
+      recorder.start();
+      setIsRecording(true);
+      
+      // Start timer
+      const timer = setInterval(() => {
+        setRecordingTime(prevTime => prevTime + 1);
+      }, 1000);
+      
+      // Store timer ID for cleanup
+      return () => clearInterval(timer);
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      toast({
+        title: "Recording Error",
+        description: "Could not access microphone. Please check permissions.",
+        duration: 3000,
+      });
+    }
+  };
+  
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setRecordingTime(0);
+    }
+  };
+  
+  const simulateTranscription = (audioBlob: Blob) => {
+    // In a real app, we would send the audio blob to a transcription API
+    // For demo purposes, we'll simulate a response after a short delay
+    toast({
+      title: "Transcribing Audio",
+      description: "Please wait while we process your recording...",
+      duration: 3000,
+    });
+    
+    setTimeout(() => {
+      const simulatedText = "Patient presents with symptoms of seasonal allergies. Recommended treatment includes antihistamines and nasal spray. Follow-up in two weeks if symptoms persist.";
+      setTranscript(simulatedText);
+      form.setValue("notes", simulatedText);
+      
+      toast({
+        title: "Transcription Complete",
+        description: "Your recording has been transcribed successfully.",
+        duration: 3000,
+      });
+    }, 2000);
+  };
+  
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
   return (
@@ -207,12 +294,19 @@ const DocumentationPage = () => {
         </Tabs>
       </FadeIn>
 
-      <Dialog open={newDocumentOpen} onOpenChange={setNewDocumentOpen}>
-        <DialogContent>
+      <Dialog open={newDocumentOpen} onOpenChange={(open) => {
+        setNewDocumentOpen(open);
+        if (!open) {
+          stopRecording();
+          setTranscript("");
+          form.reset();
+        }
+      }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Document</DialogTitle>
             <DialogDescription>
-              Fill in the details to create a new medical document
+              Fill in the details or record your notes to create a new medical document
             </DialogDescription>
           </DialogHeader>
           
@@ -254,8 +348,68 @@ const DocumentationPage = () => {
                 )}
               />
               
+              <div className="border rounded-md p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium">Voice Recording</h4>
+                  <div className="flex items-center gap-2">
+                    {isRecording && <span className="text-xs text-muted-foreground">{formatTime(recordingTime)}</span>}
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      variant={isRecording ? "destructive" : "secondary"}
+                      onClick={isRecording ? stopRecording : startRecording}
+                      className="h-8 px-3"
+                    >
+                      {isRecording ? (
+                        <>
+                          <StopCircle className="h-4 w-4 mr-1" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-4 w-4 mr-1" />
+                          Record
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                
+                {isRecording && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-red-500">●</span>
+                      <span className="text-xs">Recording in progress...</span>
+                    </div>
+                    <Progress value={recordingTime % 60} max={60} className="h-1" />
+                  </div>
+                )}
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Enter notes or record audio to transcribe" 
+                        className="min-h-[120px]" 
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
               <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setNewDocumentOpen(false)}>
+                <Button variant="outline" type="button" onClick={() => {
+                  setNewDocumentOpen(false);
+                  stopRecording();
+                  setTranscript("");
+                  form.reset();
+                }}>
                   Cancel
                 </Button>
                 <Button type="submit">Create Document</Button>
