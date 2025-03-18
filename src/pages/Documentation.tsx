@@ -5,11 +5,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
+  const { toast } = useToast();
+  
+  const handleUseTemplate = (templateTitle: string) => {
+    toast({
+      title: `Template Selected: ${templateTitle}`,
+      description: "Your new document has been created from this template.",
+      duration: 3000,
+    });
+    // In a real app, this would create a new document from the template
+  };
   
   return (
     <div className="space-y-8">
@@ -75,7 +86,15 @@ const DocumentationPage = () => {
                     </div>
                     <Separator />
                     <div className="p-4 flex justify-end">
-                      <Button variant="ghost" size="sm">Use Template</Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleUseTemplate(template.title)}
+                        className="gap-1.5"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        Use Template
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -101,14 +120,22 @@ const DocumentationPage = () => {
                           <span>{doc.type} • {doc.date}</span>
                         </p>
                       </div>
-                      <Button variant="outline" size="sm">Continue</Button>
+                      <Button variant="outline" size="sm" onClick={() => toast({
+                        title: "Continuing Document",
+                        description: `Opening ${doc.title} for editing`,
+                        duration: 3000,
+                      })}>Continue</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
             <div className="flex justify-center">
-              <Button variant="outline">Load More</Button>
+              <Button variant="outline" onClick={() => toast({
+                title: "Loading More Documents",
+                description: "Retrieving your additional documents",
+                duration: 3000,
+              })}>Load More</Button>
             </div>
           </TabsContent>
           
@@ -127,7 +154,17 @@ const DocumentationPage = () => {
                           <span>{doc.author} • {doc.date}</span>
                         </p>
                       </div>
-                      <Button variant="outline" size="sm">View</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => toast({
+                          title: "Viewing Shared Document",
+                          description: `Opening ${doc.title}`,
+                          duration: 3000,
+                        })}
+                      >
+                        View
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
