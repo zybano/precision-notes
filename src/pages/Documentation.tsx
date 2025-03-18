@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +25,6 @@ const DocumentationPage = () => {
   
   const form = useForm({
     defaultValues: {
-      title: "",
       type: "SOAP Note",
       patientName: "",
     },
@@ -220,19 +218,6 @@ const DocumentationPage = () => {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleCreateNewDocument)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Document Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter document title" {...field} required />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="type"
