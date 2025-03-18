@@ -131,7 +131,7 @@ const Index = () => {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">N</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Nabla</span>
+            <span className="ml-3 text-xl font-medium">NoteMedAI</span>
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -186,7 +186,7 @@ const Index = () => {
             <div className="glass rounded-2xl shadow-xl overflow-hidden">
               <img 
                 src="https://images.unsplash.com/photo-1571772996211-2f02974a9f91?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.0.3" 
-                alt="Medical professional using Nabla" 
+                alt="Medical professional using NoteMedAI" 
                 className="w-full h-full object-cover"
               />
             </div>
@@ -331,7 +331,7 @@ const Index = () => {
                           ))}
                         </div>
                         <blockquote className="text-lg font-medium mb-4 italic">
-                          "{testimonial.quote}"
+                          "{testimonial.quote.replace(/Nabla/g, "NoteMedAI")}"
                         </blockquote>
                         <div>
                           <p className="font-semibold">{testimonial.author}</p>
@@ -378,7 +378,7 @@ const Index = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">N</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">Nabla</span>
+                <span className="ml-2 text-lg font-medium">NoteMedAI</span>
               </div>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -416,7 +416,7 @@ const Index = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 Nabla, Inc. All rights reserved.</p>
+            <p>© 2023 NoteMedAI, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <Link to="#" className="hover:text-foreground">Twitter</Link>
               <Link to="#" className="hover:text-foreground">LinkedIn</Link>

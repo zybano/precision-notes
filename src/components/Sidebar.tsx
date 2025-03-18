@@ -25,7 +25,7 @@ const Sidebar = () => {
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">N</span>
           </div>
-          <span className="ml-2 font-semibold">Nabla</span>
+          <span className="ml-2 font-semibold">NoteMedAI</span>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hover:bg-accent rounded-full">
           <Menu size={20} />
