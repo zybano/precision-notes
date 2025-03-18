@@ -5,14 +5,33 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
+  const [newDocumentOpen, setNewDocumentOpen] = useState(false);
   const { toast } = useToast();
   
+  const form = useForm({
+    defaultValues: {
+      title: "",
+      type: "SOAP Note",
+      patientName: "",
+    },
+  });
+
   const handleUseTemplate = (templateTitle: string) => {
     toast({
       title: `Template Selected: ${templateTitle}`,
@@ -20,6 +39,17 @@ const DocumentationPage = () => {
       duration: 3000,
     });
     // In a real app, this would create a new document from the template
+  };
+
+  const handleCreateNewDocument = (data: any) => {
+    toast({
+      title: "Document Created",
+      description: `Your new ${data.type} for ${data.patientName} has been created.`,
+      duration: 3000,
+    });
+    setNewDocumentOpen(false);
+    form.reset();
+    // In a real app, this would create a new document with the provided details
   };
   
   return (
@@ -33,7 +63,12 @@ const DocumentationPage = () => {
             </p>
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
-            <Button size="sm" className="shadow-sm hover:shadow-md transition-all btn-premium">
+            <Button 
+              size="sm" 
+              className="shadow-sm hover:shadow-md transition-all btn-premium"
+              onClick={() => setNewDocumentOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
               New Document
             </Button>
           </div>
@@ -173,6 +208,77 @@ const DocumentationPage = () => {
           </TabsContent>
         </Tabs>
       </FadeIn>
+
+      <Dialog open={newDocumentOpen} onOpenChange={setNewDocumentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Document</DialogTitle>
+            <DialogDescription>
+              Fill in the details to create a new medical document
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleCreateNewDocument)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Document Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter document title" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Document Type</FormLabel>
+                    <FormControl>
+                      <select 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        {...field}
+                      >
+                        <option value="SOAP Note">SOAP Note</option>
+                        <option value="Progress Note">Progress Note</option>
+                        <option value="Consultation Note">Consultation Note</option>
+                        <option value="Discharge Summary">Discharge Summary</option>
+                        <option value="Procedure Note">Procedure Note</option>
+                        <option value="History & Physical">History & Physical</option>
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="patientName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter patient name" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setNewDocumentOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Create Document</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
