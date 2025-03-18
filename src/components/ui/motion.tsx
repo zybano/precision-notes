@@ -38,18 +38,50 @@ export const motion = {
     );
   },
   
-  // More specialized motion components
-  section: (props: MotionProps) => {
-    const { children, ...rest } = props;
-    return <motion.div {...rest}><section>{children}</section></motion.div>;
+  // More specialized motion components - fixed to avoid TypeScript errors
+  section: ({ children, ...rest }: MotionProps) => {
+    return (
+      <section className={`transition-all ${rest.className || ""}`}
+        style={{
+          opacity: rest.animate?.opacity !== undefined ? rest.animate.opacity : 1,
+          transform: `translateY(${rest.animate?.y || 0}px) translateX(${rest.animate?.x || 0}px) scale(${rest.animate?.scale || 1})`,
+          transition: `all ${rest.transition?.duration || 0.3}s ${rest.transition?.ease || 'ease-out'}`
+        }}
+        {...(rest as Omit<MotionProps, 'className' | 'animate' | 'transition'>)}
+      >
+        {children}
+      </section>
+    );
   },
-  article: (props: MotionProps) => {
-    const { children, ...rest } = props;
-    return <motion.div {...rest}><article>{children}</article></motion.div>;
+  
+  article: ({ children, ...rest }: MotionProps) => {
+    return (
+      <article className={`transition-all ${rest.className || ""}`}
+        style={{
+          opacity: rest.animate?.opacity !== undefined ? rest.animate.opacity : 1,
+          transform: `translateY(${rest.animate?.y || 0}px) translateX(${rest.animate?.x || 0}px) scale(${rest.animate?.scale || 1})`,
+          transition: `all ${rest.transition?.duration || 0.3}s ${rest.transition?.ease || 'ease-out'}`
+        }}
+        {...(rest as Omit<MotionProps, 'className' | 'animate' | 'transition'>)}
+      >
+        {children}
+      </article>
+    );
   },
-  main: (props: MotionProps) => {
-    const { children, ...rest } = props;
-    return <motion.div {...rest}><main>{children}</main></motion.div>;
+  
+  main: ({ children, ...rest }: MotionProps) => {
+    return (
+      <main className={`transition-all ${rest.className || ""}`}
+        style={{
+          opacity: rest.animate?.opacity !== undefined ? rest.animate.opacity : 1,
+          transform: `translateY(${rest.animate?.y || 0}px) translateX(${rest.animate?.x || 0}px) scale(${rest.animate?.scale || 1})`,
+          transition: `all ${rest.transition?.duration || 0.3}s ${rest.transition?.ease || 'ease-out'}`
+        }}
+        {...(rest as Omit<MotionProps, 'className' | 'animate' | 'transition'>)}
+      >
+        {children}
+      </main>
+    );
   }
 };
 
