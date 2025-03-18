@@ -39,9 +39,18 @@ export const motion = {
   },
   
   // More specialized motion components
-  section: (props: MotionProps) => <motion.div as="section" {...props} />,
-  article: (props: MotionProps) => <motion.div as="article" {...props} />,
-  main: (props: MotionProps) => <motion.div as="main" {...props} />
+  section: (props: MotionProps) => {
+    const { children, ...rest } = props;
+    return <motion.div {...rest}><section>{children}</section></motion.div>;
+  },
+  article: (props: MotionProps) => {
+    const { children, ...rest } = props;
+    return <motion.div {...rest}><article>{children}</article></motion.div>;
+  },
+  main: (props: MotionProps) => {
+    const { children, ...rest } = props;
+    return <motion.div {...rest}><main>{children}</main></motion.div>;
+  }
 };
 
 // Utility component for fade-in effects

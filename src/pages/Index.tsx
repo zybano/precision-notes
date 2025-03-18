@@ -1,8 +1,35 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
+import { 
+  ThumbsUp, 
+  Shield, 
+  Clock, 
+  Zap, 
+  Settings, 
+  Sliders, 
+  Database, 
+  UserCheck, 
+  FileText, 
+  Check, 
+  Star 
+} from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
@@ -10,6 +37,47 @@ const Index = () => {
   useEffect(() => {
     setLoaded(true);
   }, []);
+
+  const advantages = [
+    {
+      title: "Time Savings",
+      description: "Reduce documentation time by up to 70% with AI-assisted note taking.",
+      icon: <Clock className="h-6 w-6 text-primary" />
+    },
+    {
+      title: "Enhanced Accuracy",
+      description: "Improve clinical documentation accuracy with contextual medical knowledge.",
+      icon: <Check className="h-6 w-6 text-primary" />
+    },
+    {
+      title: "Increased Security",
+      description: "HIPAA-compliant platform with enterprise-grade security protocols.",
+      icon: <Shield className="h-6 w-6 text-primary" />
+    },
+    {
+      title: "Better Patient Care",
+      description: "More time for patient interaction and less time on administrative tasks.",
+      icon: <UserCheck className="h-6 w-6 text-primary" />
+    }
+  ];
+
+  const settings = [
+    {
+      title: "Customizable Templates",
+      description: "Configure templates to match your specialty and workflow requirements.",
+      icon: <Settings className="h-6 w-6 text-primary" />
+    },
+    {
+      title: "AI Sensitivity Adjustment",
+      description: "Control how proactive the AI assistant is during documentation.",
+      icon: <Sliders className="h-6 w-6 text-primary" />
+    },
+    {
+      title: "EHR Integration",
+      description: "Connect with major electronic health record systems for seamless workflow.",
+      icon: <Database className="h-6 w-6 text-primary" />
+    }
+  ];
 
   const features = [
     {
@@ -23,6 +91,33 @@ const Index = () => {
     {
       title: "Secure & Compliant",
       description: "Your data is protected with enterprise-grade security and full regulatory compliance."
+    }
+  ];
+
+  const testimonials = [
+    {
+      quote: "Nabla has transformed our clinical documentation process. We've reduced administrative time by 60% and can focus more on patient care.",
+      author: "Dr. Sarah Johnson",
+      role: "Chief Medical Officer",
+      organization: "Northside Medical Group"
+    },
+    {
+      quote: "The AI assistance is remarkable. It understands medical terminology and context better than any tool we've used before.",
+      author: "Dr. Michael Chen",
+      role: "Cardiologist",
+      organization: "Heart & Vascular Institute"
+    },
+    {
+      quote: "Implementation was seamless, and the ROI was evident within weeks. Our clinicians actually enjoy using Nabla.",
+      author: "Emma Rodriguez",
+      role: "Healthcare IT Director",
+      organization: "City Health Partners"
+    },
+    {
+      quote: "The customizable templates and specialty-specific features make this platform incredibly valuable across all our departments.",
+      author: "Dr. James Wilson",
+      role: "Internal Medicine",
+      organization: "University Medical Center"
     }
   ];
 
@@ -98,6 +193,38 @@ const Index = () => {
         </div>
       </section>
       
+      {/* Advantages Section */}
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-semibold mb-4">Why Choose Nabla</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Our platform delivers measurable benefits for healthcare professionals and organizations.
+              </p>
+            </div>
+          </FadeIn>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {advantages.map((advantage, i) => (
+              <FadeIn key={i} delay={0.1 + i * 0.1}>
+                <Card className="h-full border-none shadow-md hover:shadow-lg transition-shadow bg-white">
+                  <CardHeader className="pb-3">
+                    <div className="mb-3 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      {advantage.icon}
+                    </div>
+                    <CardTitle className="text-xl">{advantage.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{advantage.description}</p>
+                  </CardContent>
+                </Card>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+      
       {/* Features Section */}
       <section className="bg-white py-16 md:py-24 border-y border-border">
         <div className="container mx-auto px-6 max-w-7xl">
@@ -123,6 +250,104 @@ const Index = () => {
               </FadeIn>
             ))}
           </div>
+        </div>
+      </section>
+      
+      {/* Settings Section */}
+      <section className="py-16 md:py-24 bg-accent/40">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <FadeIn delay={0.1}>
+              <div className="space-y-6">
+                <h2 className="text-3xl font-semibold leading-tight">Fully Customizable <span className="text-primary">To Your Practice</span></h2>
+                <p className="text-lg text-muted-foreground">
+                  Configure Nabla to match your specific workflow and requirements. Personalize settings to maximize efficiency.
+                </p>
+                <div className="space-y-4 pt-4">
+                  {settings.map((setting, i) => (
+                    <div key={i} className="flex items-start space-x-4">
+                      <div className="mt-1 w-10 h-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                        {setting.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-lg">{setting.title}</h3>
+                        <p className="text-muted-foreground">{setting.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-4">
+                  <Link to="/dashboard">
+                    <Button className="shadow hover:shadow-md transition-all btn-premium">
+                      Explore Settings
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </FadeIn>
+            
+            <FadeIn delay={0.3} className="hidden lg:block">
+              <div className="glass rounded-2xl shadow-xl overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.0.3" 
+                  alt="Nabla settings interface" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+      
+      {/* Testimonials Section */}
+      <section className="py-16 md:py-24 bg-white border-t border-border">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-semibold mb-4">What Healthcare Professionals Say</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Hear from doctors, nurses, and healthcare administrators who have transformed their documentation process.
+              </p>
+            </div>
+          </FadeIn>
+          
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full max-w-5xl mx-auto"
+          >
+            <CarouselContent>
+              {testimonials.map((testimonial, index) => (
+                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/2 pl-4">
+                  <div className="p-1">
+                    <Card className="h-full border shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="pt-6">
+                        <div className="flex mb-4">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                          ))}
+                        </div>
+                        <blockquote className="text-lg font-medium mb-4 italic">
+                          "{testimonial.quote}"
+                        </blockquote>
+                        <div>
+                          <p className="font-semibold">{testimonial.author}</p>
+                          <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                          <p className="text-sm text-muted-foreground">{testimonial.organization}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="flex justify-center mt-8">
+              <CarouselPrevious className="static mx-2 translate-y-0" />
+              <CarouselNext className="static mx-2 translate-y-0" />
+            </div>
+          </Carousel>
         </div>
       </section>
       
@@ -204,3 +429,4 @@ const Index = () => {
 };
 
 export default Index;
+
