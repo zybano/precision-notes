@@ -614,7 +614,7 @@ const Index = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 Documedly, Inc. All rights reserved.</p>
+            <p>© 2025 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <Link to="#" className="hover:text-foreground">Twitter</Link>
               <Link to="#" className="hover:text-foreground">LinkedIn</Link>
