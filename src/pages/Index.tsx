@@ -14,7 +14,8 @@ import {
   FileText, 
   Check, 
   Star,
-  Stethoscope
+  Stethoscope,
+  Play
 } from "lucide-react";
 import { 
   Card, 
@@ -24,6 +25,15 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import {
   Carousel,
   CarouselContent,
@@ -35,6 +45,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
 
   useEffect(() => {
     setLoaded(true);
@@ -240,9 +251,31 @@ const Index = () => {
                     Start Free Trial
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  See Demo
-                </Button>
+                <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto flex items-center gap-2">
+                      <Play className="h-4 w-4" /> See Demo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
+                    <DialogHeader>
+                      <DialogTitle>Documedly Product Demo</DialogTitle>
+                      <DialogDescription>
+                        See how Documedly can transform your clinical documentation workflow
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="aspect-video w-full overflow-hidden rounded-md">
+                      <iframe 
+                        className="w-full h-full"
+                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" 
+                        title="Documedly Demo"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </FadeIn>
