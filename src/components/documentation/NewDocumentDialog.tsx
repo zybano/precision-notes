@@ -102,7 +102,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Create New Document</DialogTitle>
           <DialogDescription>
@@ -164,6 +164,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
               transcriptSummary={transcriptSummary}
               showSummary={showSummary}
               setShowSummary={setShowSummary}
+              form={form}
             />
             
             <FormField
@@ -182,7 +183,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                       disabled={!field.value}
                     >
                       <Copy className="h-3 w-3" />
-                      Copy Transcription
+                      Copy Text
                     </Button>
                   </div>
                   <FormControl>

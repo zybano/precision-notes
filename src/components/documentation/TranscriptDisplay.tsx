@@ -1,9 +1,12 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, User, UserRound, AlertCircle } from "lucide-react";
+import { Copy, User, UserRound, AlertCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "@/services/transcription";
+import { useForm } from "react-hook-form";
+import { formatTranscriptionToNoteText } from "@/services/noteConversion";
+import { documentTemplates } from "@/data/documentTemplates";
 
 interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult | null;
@@ -11,6 +14,7 @@ interface TranscriptDisplayProps {
   transcriptSummary: string;
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
+  form?: any; // Optional form from parent to update
 }
 
 const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
@@ -19,8 +23,10 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   transcriptSummary,
   showSummary,
   setShowSummary,
+  form
 }) => {
   const { toast } = useToast();
+  const [selectedFormat, setSelectedFormat] = React.useState("SOAP Note");
 
   const handleCopyConversation = () => {
     if (!transcriptResult || !transcriptResult.utterances) return;
@@ -45,6 +51,23 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       title: "Summary Copied",
       description: "Transcript summary copied to clipboard",
       duration: 2000,
+    });
+  };
+
+  const handleConvertToNote = () => {
+    if (!transcriptResult || !form) return;
+
+    // Convert the transcript to a formatted note
+    const formattedText = formatTranscriptionToNoteText(transcriptResult, selectedFormat);
+    
+    // Update the form with the formatted note
+    form.setValue("type", selectedFormat);
+    form.setValue("notes", formattedText);
+    
+    toast({
+      title: "Note Structured",
+      description: `Transcript has been converted to ${selectedFormat} format`,
+      duration: 3000,
     });
   };
 
@@ -104,6 +127,34 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               </div>
             ))}
           </div>
+          
+          {form && (
+            <div className="mt-3 border-t pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  className="text-xs p-1.5 border rounded"
+                  value={selectedFormat}
+                  onChange={(e) => setSelectedFormat(e.target.value)}
+                >
+                  {documentTemplates.map((template, idx) => (
+                    <option key={idx} value={template.title}>
+                      {template.title}
+                    </option>
+                  ))}
+                </select>
+                
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 px-2 text-xs flex items-center gap-1"
+                  onClick={handleConvertToNote}
+                >
+                  <FileText className="h-3.5 w-3.5 mr-1" />
+                  Convert to Structured Note
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
       
