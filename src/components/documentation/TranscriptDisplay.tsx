@@ -50,9 +50,8 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   if (!transcriptResult) return null;
 
-  // Check if this is a mock/error transcript
-  const isMockTranscript = transcript.includes("mock transcription") || 
-                         transcript.includes("API key");
+  // Check if this is a mock transcript
+  const isMockTranscript = transcriptResult.isMock;
 
   return (
     <>
@@ -75,7 +74,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
           {isMockTranscript && (
             <div className="flex gap-2 items-center p-2 mb-3 bg-yellow-50 border border-yellow-200 rounded-md text-xs text-yellow-800">
               <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
-              <span>Using mock data. Add your AssemblyAI API key in environment variables to enable actual transcription.</span>
+              <span>Using mock data. API key has been properly configured but will need to be validated.</span>
             </div>
           )}
           

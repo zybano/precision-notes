@@ -11,6 +11,7 @@ export interface SpeakerUtterance {
 export interface TranscriptionResult {
   text: string;
   utterances: SpeakerUtterance[];
+  isMock: boolean;
 }
 
 // Define the options type for the transcription function
@@ -18,6 +19,7 @@ interface TranscriptionOptions {
   speakerLabels?: boolean;
   languageCode?: string;
   useSpeechModelNano?: boolean;
+  apiKey?: string;
 }
 
 /**
@@ -48,14 +50,15 @@ export const transcribeAudio = async (
           { speaker: "Patient", text: "Much improved, but I still get tired in the afternoons." },
           { speaker: "Doctor", text: "Your vital signs look stable. I recommend we follow up in two weeks." },
           { speaker: "Patient", text: "That sounds good to me. Thank you, doctor." }
-        ]
+        ],
+        isMock: true
       };
       
       return mockResult;
     }
     
-    // Check if API key exists and is not default placeholder
-    const apiKey = process.env.REACT_APP_ASSEMBLYAI_API_KEY;
+    // Check if API key exists in options or env variables
+    const apiKey = options.apiKey || process.env.REACT_APP_ASSEMBLYAI_API_KEY || '2d0b8970736a42b4a316c90b339d732a';
     
     if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
       console.log("No valid API key provided, using mock data instead");
@@ -70,7 +73,8 @@ export const transcribeAudio = async (
           { speaker: "Patient", text: "Much improved, but I still get tired in the afternoons." },
           { speaker: "Doctor", text: "Your vital signs look stable. I recommend we follow up in two weeks." },
           { speaker: "Patient", text: "That sounds good to me. Thank you, doctor." }
-        ]
+        ],
+        isMock: true
       };
       
       return mockResult;
@@ -122,7 +126,8 @@ export const transcribeAudio = async (
     // Return the structured result
     return {
       text: transcript.text || "No transcription available.",
-      utterances: utterances
+      utterances: utterances,
+      isMock: false
     };
     
   } catch (error) {
@@ -140,7 +145,8 @@ export const transcribeAudio = async (
           { speaker: "Patient", text: "I've been feeling better since the medication adjustment." },
           { speaker: "Doctor", text: "Your vital signs look stable. I recommend we follow up in two weeks." },
           { speaker: "Patient", text: "That sounds good to me. Thank you, doctor." }
-        ]
+        ],
+        isMock: true
       };
       
       return mockResult;
