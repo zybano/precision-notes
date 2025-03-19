@@ -1,3 +1,4 @@
+
 // Import the AssemblyAI SDK correctly
 import { AssemblyAI, RealtimeTranscript } from 'assemblyai';
 
@@ -42,10 +43,10 @@ export const transcribeAudio = async (
     
     // Start transcription process with the uploaded file's URL
     const transcript = await client.transcripts.transcribe({
-      audio_url: uploadResponse.url,
+      audio: uploadResponse.url, // Changed from audio_url to audio for AssemblyAI SDK v4
       language_code: options.languageCode || 'en_us', // English (US) by default
       speaker_labels: options.speakerLabels !== undefined ? options.speakerLabels : true,
-      speech_model: options.useSpeechModelNano ? 'nano' : undefined
+      speech_model: options.useSpeechModelNano ? 'nano' : undefined // Fixed type issue by using undefined
     });
     
     console.log("Transcription completed:", transcript);

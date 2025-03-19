@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2, FileText2 } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
