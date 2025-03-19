@@ -32,9 +32,9 @@ const About = () => {
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">N</span>
+              <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">NoteMedAI</span>
+            <span className="ml-3 text-xl font-medium">Documedly</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -61,7 +61,7 @@ const About = () => {
       <section className="container mx-auto px-6 py-16 md:py-24 max-w-7xl">
         <FadeIn>
           <div className="text-center mb-16">
-            <h1 className="text-4xl font-semibold mb-6">About NoteMedAI</h1>
+            <h1 className="text-4xl font-semibold mb-6">About Documedly</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               We're on a mission to give healthcare professionals more time for what truly matters - patient care.
             </p>
@@ -74,7 +74,7 @@ const About = () => {
               <h2 className="text-3xl font-semibold mb-6">Our Story</h2>
               <div className="space-y-4 text-lg">
                 <p>
-                  NoteMedAI was founded in 2021 by Dr. Sarah Thompson, a neurologist who experienced firsthand the 
+                  Documedly was founded in 2021 by Dr. Sarah Thompson, a neurologist who experienced firsthand the 
                   burden of clinical documentation and its impact on physician burnout.
                 </p>
                 <p>
@@ -83,7 +83,7 @@ const About = () => {
                   documentation.
                 </p>
                 <p>
-                  Today, NoteMedAI serves thousands of healthcare professionals across the country, helping them 
+                  Today, Documedly serves thousands of healthcare professionals across the country, helping them 
                   reclaim their time and focus on what they do best - caring for patients.
                 </p>
               </div>
@@ -133,9 +133,9 @@ const About = () => {
             <div className="mb-6 md:mb-0">
               <Link to="/" className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">N</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">NoteMedAI</span>
+                <span className="ml-2 text-lg font-medium">Documedly</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -173,7 +173,7 @@ const About = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 NoteMedAI, Inc. All rights reserved.</p>
+            <p>© 2023 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>

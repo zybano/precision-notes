@@ -10,9 +10,9 @@ const Terms = () => {
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">N</span>
+              <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">NoteMedAI</span>
+            <span className="ml-3 text-xl font-medium">Documedly</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -45,13 +45,13 @@ const Terms = () => {
           
           <div className="prose prose-slate max-w-none">
             <p>
-              Please read these Terms of Service carefully before using the NoteMedAI service. 
+              Please read these Terms of Service carefully before using the Documedly service. 
               By accessing or using the Service, you agree to be bound by these Terms.
             </p>
             
             <h2>Use of Service</h2>
             <p>
-              NoteMedAI provides an AI-powered clinical documentation platform that assists healthcare 
+              Documedly provides an AI-powered clinical documentation platform that assists healthcare 
               professionals in generating medical notes and documentation.
             </p>
             <p>
@@ -72,12 +72,12 @@ const Terms = () => {
             
             <h2>Medical Responsibility</h2>
             <p>
-              NoteMedAI is a tool designed to assist healthcare professionals in their documentation tasks. 
+              Documedly is a tool designed to assist healthcare professionals in their documentation tasks. 
               Our Service does not replace professional medical judgment. Healthcare professionals are 
               responsible for reviewing and verifying all documentation generated using our Service.
             </p>
             <p>
-              By using the Service, you acknowledge that NoteMedAI does not provide medical advice, diagnosis, 
+              By using the Service, you acknowledge that Documedly does not provide medical advice, diagnosis, 
               or treatment, and is not a substitute for professional medical care.
             </p>
             
@@ -87,7 +87,7 @@ const Terms = () => {
               Service, you agree to the collection and use of information in accordance with this policy.
             </p>
             <p>
-              You retain all rights to your data. However, you grant NoteMedAI a license to use, modify, 
+              You retain all rights to your data. However, you grant Documedly a license to use, modify, 
               perform, display, and distribute your content in order to provide the Service.
             </p>
             
@@ -103,7 +103,7 @@ const Terms = () => {
             
             <h2>Limitation of Liability</h2>
             <p>
-              To the maximum extent permitted by law, NoteMedAI shall not be liable for any indirect, 
+              To the maximum extent permitted by law, Documedly shall not be liable for any indirect, 
               incidental, special, consequential or punitive damages resulting from your use of or 
               inability to use the Service.
             </p>
@@ -116,7 +116,7 @@ const Terms = () => {
             
             <h2>Contact Us</h2>
             <p>
-              If you have any questions about these Terms, please contact us at legal@notemed.ai
+              If you have any questions about these Terms, please contact us at legal@documedly.com
             </p>
           </div>
         </FadeIn>
@@ -128,9 +128,9 @@ const Terms = () => {
             <div className="mb-6 md:mb-0">
               <Link to="/" className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">N</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">NoteMedAI</span>
+                <span className="ml-2 text-lg font-medium">Documedly</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -168,7 +168,7 @@ const Terms = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 NoteMedAI, Inc. All rights reserved.</p>
+            <p>© 2023 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>

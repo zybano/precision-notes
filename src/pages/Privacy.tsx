@@ -10,9 +10,9 @@ const Privacy = () => {
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">N</span>
+              <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">NoteMedAI</span>
+            <span className="ml-3 text-xl font-medium">Documedly</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -45,7 +45,7 @@ const Privacy = () => {
           
           <div className="prose prose-slate max-w-none">
             <p>
-              At NoteMedAI, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, 
+              At Documedly, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, 
               and safeguard your information when you visit our website or use our service.
             </p>
             
@@ -67,7 +67,7 @@ const Privacy = () => {
             
             <h2>HIPAA Compliance</h2>
             <p>
-              As a healthcare technology provider, NoteMedAI is committed to maintaining HIPAA compliance. 
+              As a healthcare technology provider, Documedly is committed to maintaining HIPAA compliance. 
               We implement physical, technical, and administrative safeguards to protect personal health information.
             </p>
             <p>
@@ -108,7 +108,7 @@ const Privacy = () => {
             
             <h2>Contact Us</h2>
             <p>
-              If you have any questions about this Privacy Policy, please contact us at privacy@notemed.ai
+              If you have any questions about this Privacy Policy, please contact us at privacy@documedly.com
             </p>
           </div>
         </FadeIn>
@@ -120,9 +120,9 @@ const Privacy = () => {
             <div className="mb-6 md:mb-0">
               <Link to="/" className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">N</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">NoteMedAI</span>
+                <span className="ml-2 text-lg font-medium">Documedly</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -160,7 +160,7 @@ const Privacy = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 NoteMedAI, Inc. All rights reserved.</p>
+            <p>© 2023 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>
