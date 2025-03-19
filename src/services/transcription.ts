@@ -58,7 +58,7 @@ export const transcribeAudio = async (
     }
     
     // Check if API key exists in options or env variables
-    const apiKey = options.apiKey || import.meta.env.VITE_ASSEMBLYAI_API_KEY || '2d0b8970736a42b4a316c90b339d732a';
+    const apiKey = options.apiKey || import.meta.env.VITE_ASSEMBLYAI_API_KEY || '98aa31b01e9e40a8a33f9a0390665914';
     
     if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
       console.log("No valid API key provided, using mock data instead");
