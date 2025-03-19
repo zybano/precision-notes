@@ -31,8 +31,9 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     
     // Start transcription process with the uploaded file's URL
     const transcript = await client.transcripts.transcribe({
-      audio_url: uploadResponse.url, // Use the URL from the upload response
-      language_model: 'nova-2' // Using the Nova-2 model for medical transcription
+      audio: uploadResponse,
+      language_code: 'en_us', // English (US)
+      speaker_labels: true // Enable speaker detection, similar to the Java example
     });
     
     console.log("Transcription completed:", transcript);
