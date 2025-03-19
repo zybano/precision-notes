@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2 } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2, Pause, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +26,7 @@ const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [transcriptSummary, setTranscriptSummary] = useState("");
@@ -34,7 +34,8 @@ const DocumentationPage = () => {
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
+  const [showSummary, setShowSummary] = useState(true);
+  const [recordingTimer, setRecordingTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   
   const form = useForm({
@@ -51,7 +52,6 @@ const DocumentationPage = () => {
       description: "Your new document has been created from this template.",
       duration: 3000,
     });
-    // In a real app, this would create a new document from the template
     setNewDocumentOpen(true);
     form.setValue("type", templateTitle);
   };
@@ -65,7 +65,6 @@ const DocumentationPage = () => {
     setNewDocumentOpen(false);
     form.reset();
     stopRecording();
-    // In a real app, this would create a new document with the provided details
   };
 
   const startRecording = async () => {
@@ -83,24 +82,27 @@ const DocumentationPage = () => {
       recorder.onstop = async () => {
         setAudioChunks(chunks);
         
-        // Start transcription process with the recorded audio
         processRecording(chunks);
         
-        // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
       
       setMediaRecorder(recorder);
-      recorder.start();
+      recorder.start(1000);
       setIsRecording(true);
+      setIsPaused(false);
       
-      // Start timer
       const timer = setInterval(() => {
         setRecordingTime(prevTime => prevTime + 1);
       }, 1000);
       
-      // Store timer ID for cleanup
-      return () => clearInterval(timer);
+      setRecordingTimer(timer);
+      
+      toast({
+        title: "Recording Started",
+        description: "Speak clearly into your microphone.",
+        duration: 3000,
+      });
     } catch (error) {
       console.error("Error starting recording:", error);
       toast({
@@ -111,18 +113,62 @@ const DocumentationPage = () => {
     }
   };
   
+  const pauseRecording = () => {
+    if (mediaRecorder && isRecording && !isPaused) {
+      mediaRecorder.pause();
+      setIsPaused(true);
+      
+      if (recordingTimer) {
+        clearInterval(recordingTimer);
+        setRecordingTimer(null);
+      }
+      
+      toast({
+        title: "Recording Paused",
+        description: "Click resume to continue recording.",
+        duration: 3000,
+      });
+    } else if (mediaRecorder && isRecording && isPaused) {
+      mediaRecorder.resume();
+      setIsPaused(false);
+      
+      const timer = setInterval(() => {
+        setRecordingTime(prevTime => prevTime + 1);
+      }, 1000);
+      
+      setRecordingTimer(timer);
+      
+      toast({
+        title: "Recording Resumed",
+        description: "Recording has been resumed.",
+        duration: 3000,
+      });
+    }
+  };
+  
   const stopRecording = () => {
     if (mediaRecorder && isRecording) {
       mediaRecorder.stop();
       setIsRecording(false);
+      setIsPaused(false);
+      
+      if (recordingTimer) {
+        clearInterval(recordingTimer);
+        setRecordingTimer(null);
+      }
       setRecordingTime(0);
+      
+      toast({
+        title: "Recording Stopped",
+        description: "Your recording will be processed shortly.",
+        duration: 3000,
+      });
     }
   };
   
   const processRecording = async (chunks: BlobPart[]) => {
     const audioBlob = new Blob(chunks, { type: 'audio/webm' });
     
-    // Show transcribing status
     setIsTranscribing(true);
     toast({
       title: "Processing Audio",
@@ -131,7 +177,6 @@ const DocumentationPage = () => {
     });
     
     try {
-      // Call the AssemblyAI transcription service with options
       const transcribedText = await transcribeAudio(audioBlob, {
         speakerLabels: true,
         useSpeechModelNano: useSpeechModelNano
@@ -140,7 +185,6 @@ const DocumentationPage = () => {
       setTranscript(transcribedText);
       form.setValue("notes", transcribedText);
       
-      // Generate summary
       const summary = generateBriefSummary(transcribedText);
       setTranscriptSummary(summary);
       setShowSummary(true);
@@ -167,6 +211,27 @@ const DocumentationPage = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  const copyTranscription = () => {
+    const textToCopy = form.getValues("notes");
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        toast({
+          title: "Copied to Clipboard",
+          description: "Transcription has been copied to your clipboard.",
+          duration: 2000,
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to copy:", error);
+        toast({
+          title: "Copy Failed",
+          description: "Could not copy text to clipboard.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      });
   };
   
   return (
@@ -343,7 +408,7 @@ const DocumentationPage = () => {
           stopRecording();
           setTranscript("");
           setTranscriptSummary("");
-          setShowSummary(false);
+          setShowSummary(true);
           form.reset();
         }
       }}>
@@ -397,27 +462,59 @@ const DocumentationPage = () => {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium">Voice Recording</h4>
                   <div className="flex items-center gap-2">
-                    {isRecording && <span className="text-xs text-muted-foreground">{formatTime(recordingTime)}</span>}
-                    <Button 
-                      type="button" 
-                      size="sm" 
-                      variant={isRecording ? "destructive" : "secondary"}
-                      onClick={isRecording ? stopRecording : startRecording}
-                      className="h-8 px-3"
-                      disabled={isTranscribing}
-                    >
-                      {isRecording ? (
-                        <>
-                          <StopCircle className="h-4 w-4 mr-1" />
-                          Stop
-                        </>
-                      ) : (
-                        <>
+                    {(isRecording || isPaused) && <span className="text-xs text-muted-foreground">{formatTime(recordingTime)}</span>}
+                    <div className="flex items-center gap-1">
+                      {!isRecording && !isPaused && (
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          variant="secondary"
+                          onClick={startRecording}
+                          className="h-8 px-3"
+                          disabled={isTranscribing}
+                        >
                           <Mic className="h-4 w-4 mr-1" />
                           Record
+                        </Button>
+                      )}
+                      
+                      {(isRecording || isPaused) && (
+                        <>
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant={isPaused ? "outline" : "secondary"}
+                            onClick={pauseRecording}
+                            className="h-8 px-2"
+                            disabled={isTranscribing}
+                          >
+                            {isPaused ? (
+                              <>
+                                <Play className="h-4 w-4 mr-1" />
+                                Resume
+                              </>
+                            ) : (
+                              <>
+                                <Pause className="h-4 w-4 mr-1" />
+                                Pause
+                              </>
+                            )}
+                          </Button>
+                          
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={stopRecording}
+                            className="h-8 px-2"
+                            disabled={isTranscribing}
+                          >
+                            <StopCircle className="h-4 w-4 mr-1" />
+                            Stop
+                          </Button>
                         </>
                       )}
-                    </Button>
+                    </div>
                   </div>
                 </div>
                 
@@ -436,13 +533,22 @@ const DocumentationPage = () => {
                   </div>
                 </div>
                 
-                {isRecording && (
+                {isRecording && !isPaused && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-red-500">●</span>
                       <span className="text-xs">Recording in progress...</span>
                     </div>
                     <Progress value={recordingTime % 60} max={60} className="h-1" />
+                  </div>
+                )}
+                
+                {isPaused && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-amber-500">●</span>
+                      <span className="text-xs">Recording paused</span>
+                    </div>
                   </div>
                 )}
 
@@ -506,7 +612,20 @@ const DocumentationPage = () => {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notes</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Notes</FormLabel>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs flex items-center gap-1"
+                        onClick={copyTranscription}
+                        disabled={!field.value}
+                      >
+                        <Copy className="h-3 w-3" />
+                        Copy Transcription
+                      </Button>
+                    </div>
                     <FormControl>
                       <Textarea 
                         placeholder="Enter notes or record audio to transcribe" 
@@ -524,7 +643,7 @@ const DocumentationPage = () => {
                   stopRecording();
                   setTranscript("");
                   setTranscriptSummary("");
-                  setShowSummary(false);
+                  setShowSummary(true);
                   form.reset();
                 }}>
                   Cancel
