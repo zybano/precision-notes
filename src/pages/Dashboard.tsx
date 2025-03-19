@@ -1,11 +1,24 @@
 
 import { FadeIn } from "@/components/ui/motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart, Clipboard, Clock, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Clipboard, Clock, FileText, Users, Eye, Trash } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const Dashboard = () => {
+  const { toast } = useToast();
+  
   const metrics = [
     { 
       title: "Documentation Time", 
@@ -40,6 +53,65 @@ const Dashboard = () => {
       positive: true
     }
   ];
+
+  const recentDocuments = [
+    { 
+      id: "doc-1", 
+      patient: "Sarah Johnson", 
+      type: "Progress Note", 
+      date: "Today, 9:32 AM", 
+      status: "Completed",
+      preview: "Patient reports improvement in symptoms following medication adjustment..."
+    },
+    { 
+      id: "doc-2", 
+      patient: "Michael Chen", 
+      type: "Assessment", 
+      date: "Yesterday, 3:15 PM", 
+      status: "Draft",
+      preview: "Initial assessment indicates potential anxiety disorder with comorbid insomnia..."
+    },
+    { 
+      id: "doc-3", 
+      patient: "Emily Rodriguez", 
+      type: "Consultation", 
+      date: "Aug 24, 2023", 
+      status: "Signed",
+      preview: "Consultation for chronic lower back pain. Patient reports pain level of 7/10..."
+    },
+    { 
+      id: "doc-4", 
+      patient: "Robert Williams", 
+      type: "Discharge Summary", 
+      date: "Aug 22, 2023", 
+      status: "Reviewed",
+      preview: "Patient is being discharged following successful treatment of pneumonia..."
+    },
+    { 
+      id: "doc-5", 
+      patient: "Jennifer Martinez", 
+      type: "Progress Note", 
+      date: "Aug 20, 2023", 
+      status: "Completed",
+      preview: "Follow-up visit shows significant improvement in mobility following physical therapy..."
+    },
+  ];
+
+  const handleViewDocument = (doc: typeof recentDocuments[0]) => {
+    toast({
+      title: "Viewing Document",
+      description: `Opening ${doc.patient}'s ${doc.type}`,
+      duration: 3000,
+    });
+  };
+
+  const handleDeleteDocument = (doc: typeof recentDocuments[0]) => {
+    toast({
+      title: "Document Deleted",
+      description: `${doc.patient}'s ${doc.type} has been deleted`,
+      duration: 3000,
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -118,50 +190,264 @@ const Dashboard = () => {
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="rounded-md border overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="py-3 px-4 text-left font-medium text-sm text-muted-foreground">Patient</th>
-                    <th className="py-3 px-4 text-left font-medium text-sm text-muted-foreground">Type</th>
-                    <th className="py-3 px-4 text-left font-medium text-sm text-muted-foreground">Date</th>
-                    <th className="py-3 px-4 text-left font-medium text-sm text-muted-foreground">Status</th>
-                    <th className="py-3 px-4 text-left font-medium text-sm text-muted-foreground">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { name: "Sarah Johnson", type: "Progress Note", date: "Today, 9:32 AM", status: "Completed" },
-                    { name: "Michael Chen", type: "Assessment", date: "Yesterday, 3:15 PM", status: "Draft" },
-                    { name: "Emily Rodriguez", type: "Consultation", date: "Aug 24, 2023", status: "Signed" },
-                    { name: "Robert Williams", type: "Discharge Summary", date: "Aug 22, 2023", status: "Reviewed" },
-                  ].map((doc, i) => (
-                    <tr key={i} className="border-t border-border hover:bg-muted/50 transition-colors">
-                      <td className="py-3 px-4 text-sm">{doc.name}</td>
-                      <td className="py-3 px-4 text-sm">{doc.type}</td>
-                      <td className="py-3 px-4 text-sm text-muted-foreground">{doc.date}</td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          doc.status === "Completed" ? "bg-green-100 text-green-800" :
-                          doc.status === "Draft" ? "bg-yellow-100 text-yellow-800" :
-                          doc.status === "Signed" ? "bg-blue-100 text-blue-800" :
-                          "bg-gray-100 text-gray-800"
-                        }`}>
-                          {doc.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/documentation/${i}`}>View</Link>
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
+          
+          <Tabs defaultValue="all" className="px-6">
+            <TabsList>
+              <TabsTrigger value="all">All Documents</TabsTrigger>
+              <TabsTrigger value="recent">Recent</TabsTrigger>
+              <TabsTrigger value="drafts">Drafts</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all" className="mt-4">
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentDocuments.map((doc) => (
+                      <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium">{doc.patient}</TableCell>
+                        <TableCell>{doc.type}</TableCell>
+                        <TableCell className="text-muted-foreground">{doc.date}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            doc.status === "Completed" ? "bg-green-100 text-green-800" :
+                            doc.status === "Draft" ? "bg-yellow-100 text-yellow-800" :
+                            doc.status === "Signed" ? "bg-blue-100 text-blue-800" :
+                            "bg-gray-100 text-gray-800"
+                          }`}>
+                            {doc.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewDocument(doc)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteDocument(doc)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              <div className="mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious href="#" />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#" isActive>1</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#">2</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#">3</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext href="#" />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="recent" className="mt-4">
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentDocuments.slice(0, 3).map((doc) => (
+                      <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium">{doc.patient}</TableCell>
+                        <TableCell>{doc.type}</TableCell>
+                        <TableCell className="text-muted-foreground">{doc.date}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            doc.status === "Completed" ? "bg-green-100 text-green-800" :
+                            doc.status === "Draft" ? "bg-yellow-100 text-yellow-800" :
+                            doc.status === "Signed" ? "bg-blue-100 text-blue-800" :
+                            "bg-gray-100 text-gray-800"
+                          }`}>
+                            {doc.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewDocument(doc)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteDocument(doc)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="drafts" className="mt-4">
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentDocuments.filter(doc => doc.status === "Draft").map((doc) => (
+                      <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium">{doc.patient}</TableCell>
+                        <TableCell>{doc.type}</TableCell>
+                        <TableCell className="text-muted-foreground">{doc.date}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">
+                            {doc.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewDocument(doc)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteDocument(doc)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="completed" className="mt-4">
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentDocuments.filter(doc => doc.status === "Completed").map((doc) => (
+                      <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium">{doc.patient}</TableCell>
+                        <TableCell>{doc.type}</TableCell>
+                        <TableCell className="text-muted-foreground">{doc.date}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
+                            {doc.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewDocument(doc)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteDocument(doc)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <CardFooter className="flex justify-between pt-0">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/documentation">View More Documents</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/documentation?new=true">Create New</Link>
+            </Button>
+          </CardFooter>
         </Card>
       </FadeIn>
     </div>
