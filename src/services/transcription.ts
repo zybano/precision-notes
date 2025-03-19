@@ -1,10 +1,8 @@
 
-import AssemblyAI from 'assemblyai';
+import * as assemblyai from 'assemblyai';
 
 // Configure AssemblyAI client
-const client = new AssemblyAI({
-  apiKey: "2d0b8970736a42b4a316c90b339d732a"
-});
+const client = assemblyai.client("2d0b8970736a42b4a316c90b339d732a");
 
 /**
  * Converts an audio Blob to a suitable format for AssemblyAI
