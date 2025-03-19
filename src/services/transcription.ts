@@ -37,7 +37,7 @@ export const transcribeAudio = async (
     console.log("Starting transcription with options:", options);
     
     // Mock response for local development
-    if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_MOCK_TRANSCRIPTION === 'true') {
+    if (import.meta.env.DEV && import.meta.env.VITE_MOCK_TRANSCRIPTION === 'true') {
       console.log("Using mock transcription data");
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
       
@@ -58,7 +58,7 @@ export const transcribeAudio = async (
     }
     
     // Check if API key exists in options or env variables
-    const apiKey = options.apiKey || process.env.REACT_APP_ASSEMBLYAI_API_KEY || '2d0b8970736a42b4a316c90b339d732a';
+    const apiKey = options.apiKey || import.meta.env.VITE_ASSEMBLYAI_API_KEY || '2d0b8970736a42b4a316c90b339d732a';
     
     if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
       console.log("No valid API key provided, using mock data instead");

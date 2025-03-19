@@ -188,7 +188,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                   <FormControl>
                     <Textarea 
                       placeholder="Enter notes or record audio to transcribe" 
-                      className="min-h-[120px]" 
+                      className="min-h-[200px]" 
                       {...field} 
                     />
                   </FormControl>
