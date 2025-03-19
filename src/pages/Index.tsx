@@ -144,6 +144,52 @@ const Index = () => {
     }
   ];
 
+  const plans = [
+    {
+      name: "Basic",
+      price: "$9",
+      description: "Essential features for small practices",
+      features: [
+        "5 Patient Records",
+        "3 Templates",
+        "Basic Transcription",
+        "Email Support"
+      ],
+      highlighted: false,
+      buttonText: "Get Started"
+    },
+    {
+      name: "Professional",
+      price: "$29",
+      description: "Comprehensive tools for growing practices",
+      features: [
+        "Unlimited Patient Records",
+        "All Templates",
+        "Advanced Transcription with Diarization",
+        "Priority Support",
+        "Calendar Integration",
+        "Analytics Dashboard"
+      ],
+      highlighted: true,
+      buttonText: "Start Free Trial"
+    },
+    {
+      name: "Enterprise",
+      price: "$99",
+      description: "Custom solutions for large healthcare organizations",
+      features: [
+        "Everything in Professional",
+        "Custom Templates",
+        "Advanced Analytics",
+        "API Access",
+        "Dedicated Account Manager",
+        "HIPAA Compliance Assistance"
+      ],
+      highlighted: false,
+      buttonText: "Contact Sales"
+    }
+  ];
+
   return (
     <div className={`min-h-screen bg-background ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
       <nav className="px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
@@ -157,7 +203,7 @@ const Index = () => {
           
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -316,6 +362,63 @@ const Index = () => {
         </div>
       </section>
       
+      <section id="pricing" className="py-16 md:py-24 bg-white border-t border-border">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-semibold mb-4">Simple, Transparent Pricing</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Choose the perfect plan for your practice. All plans include core features with flexible options as you grow.
+              </p>
+            </div>
+          </FadeIn>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {plans.map((plan, index) => (
+              <FadeIn key={index} delay={0.1 + index * 0.1}>
+                <Card className={`flex flex-col h-full ${plan.highlighted ? 'border-primary shadow-lg' : ''}`}>
+                  <CardHeader>
+                    <CardTitle className="text-xl">{plan.name}</CardTitle>
+                    <div className="mt-2">
+                      <span className="text-3xl font-bold">{plan.price}</span>
+                      <span className="text-muted-foreground ml-1">/month</span>
+                    </div>
+                    <CardDescription className="mt-2">{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, i) => (
+                        <li key={i} className="flex items-start">
+                          <Check size={18} className="mr-2 text-primary shrink-0 mt-0.5" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Link to="/dashboard">
+                      <Button 
+                        className={`w-full ${plan.highlighted ? 'bg-primary' : ''}`} 
+                        variant={plan.highlighted ? "default" : "outline"}
+                      >
+                        {plan.buttonText}
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              </FadeIn>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-muted-foreground mb-4">Have questions about our plans?</p>
+            <Button variant="outline" className="shadow-sm hover:shadow-md transition-all">
+              Contact Sales
+            </Button>
+          </div>
+        </div>
+      </section>
+      
       <section className="py-16 md:py-24 bg-white border-t border-border">
         <div className="container mx-auto px-6 max-w-7xl">
           <FadeIn>
@@ -453,7 +556,7 @@ const Index = () => {
                 <h4 className="font-medium mb-3">Product</h4>
                 <ul className="space-y-2">
                   <li><Link to="/features" className="text-muted-foreground hover:text-foreground text-sm">Features</Link></li>
-                  <li><Link to="/pricing" className="text-muted-foreground hover:text-foreground text-sm">Pricing</Link></li>
+                  <li><a href="#pricing" className="text-muted-foreground hover:text-foreground text-sm">Pricing</a></li>
                   <li><Link to="/integrations" className="text-muted-foreground hover:text-foreground text-sm">Integrations</Link></li>
                 </ul>
               </div>
