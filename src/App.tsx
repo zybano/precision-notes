@@ -14,6 +14,14 @@ import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
 import Calendar from "./pages/Calendar";
 import Pricing from "./pages/Pricing";
+import Features from "./pages/Features";
+import About from "./pages/About";
+import Integrations from "./pages/Integrations";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Security from "./pages/Security";
+import Blog from "./pages/Blog";
+import Careers from "./pages/Careers";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +34,14 @@ const App = () => (
         <SidebarProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/integrations" element={<Integrations />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/security" element={<Security />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/careers" element={<Careers />} />
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/patients" element={<Patients />} />
