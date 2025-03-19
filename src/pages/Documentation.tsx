@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { transcribeAudio } from "@/services/transcription";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
@@ -27,6 +28,8 @@ const DocumentationPage = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const { toast } = useToast();
   
   const form = useForm({
@@ -71,10 +74,10 @@ const DocumentationPage = () => {
       };
       
       recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        // Here we would normally send this blob to a transcription service
-        // For demo purposes, we'll simulate a response
-        simulateTranscription(blob);
+        setAudioChunks(chunks);
+        
+        // Start transcription process with the recorded audio
+        processRecording(chunks);
         
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
@@ -109,26 +112,40 @@ const DocumentationPage = () => {
     }
   };
   
-  const simulateTranscription = (audioBlob: Blob) => {
-    // In a real app, we would send the audio blob to a transcription API
-    // For demo purposes, we'll simulate a response after a short delay
+  const processRecording = async (chunks: BlobPart[]) => {
+    const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+    
+    // Show transcribing status
+    setIsTranscribing(true);
     toast({
-      title: "Transcribing Audio",
-      description: "Please wait while we process your recording...",
+      title: "Processing Audio",
+      description: "Your recording is being transcribed with AssemblyAI...",
       duration: 3000,
     });
     
-    setTimeout(() => {
-      const simulatedText = "Patient presents with symptoms of seasonal allergies. Recommended treatment includes antihistamines and nasal spray. Follow-up in two weeks if symptoms persist.";
-      setTranscript(simulatedText);
-      form.setValue("notes", simulatedText);
+    try {
+      // Call the AssemblyAI transcription service
+      const transcribedText = await transcribeAudio(audioBlob);
+      
+      setTranscript(transcribedText);
+      form.setValue("notes", transcribedText);
       
       toast({
         title: "Transcription Complete",
         description: "Your recording has been transcribed successfully.",
         duration: 3000,
       });
-    }, 2000);
+    } catch (error) {
+      console.error("Transcription error:", error);
+      toast({
+        title: "Transcription Error",
+        description: "There was an error transcribing your audio. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsTranscribing(false);
+    }
   };
   
   const formatTime = (seconds: number) => {
@@ -359,6 +376,7 @@ const DocumentationPage = () => {
                       variant={isRecording ? "destructive" : "secondary"}
                       onClick={isRecording ? stopRecording : startRecording}
                       className="h-8 px-3"
+                      disabled={isTranscribing}
                     >
                       {isRecording ? (
                         <>
@@ -382,6 +400,16 @@ const DocumentationPage = () => {
                       <span className="text-xs">Recording in progress...</span>
                     </div>
                     <Progress value={recordingTime % 60} max={60} className="h-1" />
+                  </div>
+                )}
+
+                {isTranscribing && (
+                  <div className="space-y-2 mt-2">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span className="text-xs">Transcribing with AssemblyAI...</span>
+                    </div>
+                    <Progress value={50} max={100} className="h-1" />
                   </div>
                 )}
               </div>
@@ -412,7 +440,7 @@ const DocumentationPage = () => {
                 }}>
                   Cancel
                 </Button>
-                <Button type="submit">Create Document</Button>
+                <Button type="submit" disabled={isTranscribing}>Create Document</Button>
               </DialogFooter>
             </form>
           </Form>
