@@ -27,11 +27,12 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     
     // Upload the file to AssemblyAI
     const uploadResponse = await client.files.upload(audioFile);
+    console.log("File uploaded:", uploadResponse);
     
-    // Start transcription process with the uploaded file
+    // Start transcription process with the uploaded file's URL
     const transcript = await client.transcripts.transcribe({
-      audio: uploadResponse.id,
-      model: 'nova-2', // Using the Nova-2 model for medical transcription
+      audio_url: uploadResponse.url, // Use the URL from the upload response
+      language_model: 'nova-2' // Using the Nova-2 model for medical transcription
     });
     
     console.log("Transcription completed:", transcript);
