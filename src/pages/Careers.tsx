@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { Link } from "react-router-dom";
@@ -35,6 +36,33 @@ const Careers = () => {
       title: "Global Mindset",
       description: "We're building for healthcare professionals around the world.",
       icon: <Globe className="h-8 w-8 text-primary" />
+    }
+  ];
+
+  const openPositions = [
+    {
+      title: "Senior Machine Learning Engineer",
+      department: "Engineering",
+      location: "San Francisco / Remote",
+      type: "Full-time"
+    },
+    {
+      title: "Frontend Developer",
+      department: "Engineering",
+      location: "Boston / Remote",
+      type: "Full-time"
+    },
+    {
+      title: "Healthcare Solutions Architect",
+      department: "Product",
+      location: "Remote",
+      type: "Full-time"
+    },
+    {
+      title: "Clinical Documentation Specialist",
+      department: "Healthcare",
+      location: "Remote",
+      type: "Contract"
     }
   ];
 
@@ -139,24 +167,27 @@ const Careers = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-semibold mb-6">Open Positions</h2>
             <p className="text-muted-foreground max-w-3xl mx-auto mb-12">
-              We're constantly growing and looking for talented individuals to join our team.
+              Join our team and help us transform healthcare with AI.
             </p>
           </div>
         </FadeIn>
         
         <FadeIn delay={0.5}>
-          <Card className="mb-16 text-center p-10">
-            <CardContent>
-              <h3 className="text-xl font-medium mb-4">No Open Positions at the Moment</h3>
-              <p className="text-muted-foreground mb-6">
-                We don't have any open positions right now, but we're always on the lookout for exceptional talent. 
-                If you're passionate about healthcare and AI, we'd love to hear from you!
-              </p>
-              <Button size="lg" className="shadow hover:shadow-md transition-all">
-                Submit Your Resume
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+            {openPositions.map((position, index) => (
+              <Card key={index} className="hover:shadow-md transition-shadow duration-300">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-medium mb-2">{position.title}</h3>
+                  <div className="flex flex-col gap-1 text-muted-foreground mb-4">
+                    <p>{position.department}</p>
+                    <p>{position.location}</p>
+                    <p>{position.type}</p>
+                  </div>
+                  <Button variant="outline" className="w-full">View Details</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </FadeIn>
         
         <FadeIn delay={0.5}>
