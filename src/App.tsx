@@ -15,7 +15,6 @@ import Layout from "./components/Layout";
 import Calendar from "./pages/Calendar";
 import Pricing from "./pages/Pricing";
 import Features from "./pages/Features";
-import About from "./pages/About";
 import Integrations from "./pages/Integrations";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -35,7 +34,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<Features />} />
-            <Route path="/about" element={<About />} />
             <Route path="/integrations" element={<Integrations />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
