@@ -5,51 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BriefcaseMedical, Code, LineChart, Globe, Heart, Users } from "lucide-react";
 
 const Careers = () => {
-  const openPositions = [
-    {
-      title: "Senior Machine Learning Engineer",
-      department: "Engineering",
-      location: "San Francisco, CA",
-      type: "Full-time",
-      description: "We're looking for an experienced ML engineer to help us improve our NLP models for medical documentation."
-    },
-    {
-      title: "Healthcare Solutions Specialist",
-      department: "Sales",
-      location: "Remote",
-      type: "Full-time",
-      description: "Join our sales team to help healthcare organizations transform their clinical documentation processes."
-    },
-    {
-      title: "Clinical Implementation Manager",
-      department: "Customer Success",
-      location: "Boston, MA",
-      type: "Full-time",
-      description: "Guide our healthcare customers through the implementation and adoption of Documedly."
-    },
-    {
-      title: "Front-End Developer",
-      department: "Engineering",
-      location: "San Francisco, CA",
-      type: "Full-time",
-      description: "Create beautiful and intuitive interfaces for our medical documentation platform."
-    },
-    {
-      title: "UX Researcher (Healthcare)",
-      department: "Product",
-      location: "Remote",
-      type: "Full-time",
-      description: "Conduct research with healthcare professionals to inform our product development."
-    },
-    {
-      title: "Data Privacy Officer",
-      department: "Legal",
-      location: "San Francisco, CA",
-      type: "Full-time",
-      description: "Ensure our platform maintains the highest standards of data privacy and HIPAA compliance."
-    }
-  ];
-
   const values = [
     {
       title: "Patient First",
@@ -184,34 +139,28 @@ const Careers = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-semibold mb-6">Open Positions</h2>
             <p className="text-muted-foreground max-w-3xl mx-auto mb-12">
-              Join our team and help us transform healthcare documentation.
+              We're constantly growing and looking for talented individuals to join our team.
             </p>
           </div>
         </FadeIn>
         
-        <div className="space-y-4">
-          {openPositions.map((position, i) => (
-            <FadeIn key={i} delay={0.1 + i * 0.05}>
-              <Card className="hover:shadow-md transition-shadow duration-300">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="text-xl font-medium">{position.title}</h3>
-                      <p className="text-muted-foreground">{position.department} • {position.location} • {position.type}</p>
-                      <p className="mt-2">{position.description}</p>
-                    </div>
-                    <Button className="mt-4 md:mt-0 md:ml-4 shadow-sm hover:shadow-md transition-all">
-                      Apply Now
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </FadeIn>
-          ))}
-        </div>
+        <FadeIn delay={0.5}>
+          <Card className="mb-16 text-center p-10">
+            <CardContent>
+              <h3 className="text-xl font-medium mb-4">No Open Positions at the Moment</h3>
+              <p className="text-muted-foreground mb-6">
+                We don't have any open positions right now, but we're always on the lookout for exceptional talent. 
+                If you're passionate about healthcare and AI, we'd love to hear from you!
+              </p>
+              <Button size="lg" className="shadow hover:shadow-md transition-all">
+                Submit Your Resume
+              </Button>
+            </CardContent>
+          </Card>
+        </FadeIn>
         
         <FadeIn delay={0.5}>
-          <div className="mt-20 p-8 rounded-xl bg-accent text-center">
+          <div className="mt-8 p-8 rounded-xl bg-accent text-center">
             <h2 className="text-3xl font-semibold mb-6">Don't See the Right Fit?</h2>
             <p className="text-muted-foreground max-w-3xl mx-auto mb-8">
               We're always looking for talented individuals passionate about healthcare and AI.
