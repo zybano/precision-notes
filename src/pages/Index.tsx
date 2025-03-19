@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -284,7 +283,7 @@ const Index = () => {
           <FadeIn delay={0.3} className="hidden lg:block">
             <div className="glass rounded-2xl shadow-xl overflow-hidden hero-image-container">
               <img 
-                src="/lovable-uploads/ab1cd913-2fb9-450f-884d-8f72ebd060fc.png" 
+                src="/lovable-uploads/ca75513c-6138-4d63-88ef-522ae1d55ad1.png" 
                 alt="Medical professional using Documedly" 
                 className="w-full h-full object-cover"
               />
