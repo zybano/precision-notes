@@ -102,7 +102,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Document</DialogTitle>
           <DialogDescription>
@@ -112,38 +112,40 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Document Type</FormLabel>
-                  <FormControl>
-                    <select 
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      {...field}
-                    >
-                      {documentTemplates.map((template, index) => (
-                        <option key={index} value={template.title}>{template.title}</option>
-                      ))}
-                    </select>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="patientName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Patient Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter patient name" {...field} required />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Document Type</FormLabel>
+                    <FormControl>
+                      <select 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        {...field}
+                      >
+                        {documentTemplates.map((template, index) => (
+                          <option key={index} value={template.title}>{template.title}</option>
+                        ))}
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="patientName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter patient name" {...field} required />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <RecordingInterface
               isRecording={isRecording}
@@ -158,14 +160,16 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
               formatTime={formatTime}
             />
             
-            <TranscriptDisplay
-              transcriptResult={transcriptResult}
-              transcript={transcript}
-              transcriptSummary={transcriptSummary}
-              showSummary={showSummary}
-              setShowSummary={setShowSummary}
-              form={form}
-            />
+            {transcriptResult && (
+              <TranscriptDisplay
+                transcriptResult={transcriptResult}
+                transcript={transcript}
+                transcriptSummary={transcriptSummary}
+                showSummary={showSummary}
+                setShowSummary={setShowSummary}
+                form={form}
+              />
+            )}
             
             <FormField
               control={form.control}
