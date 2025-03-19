@@ -39,33 +39,6 @@ const Careers = () => {
     }
   ];
 
-  const openPositions = [
-    {
-      title: "Senior Machine Learning Engineer",
-      department: "Engineering",
-      location: "San Francisco / Remote",
-      type: "Full-time"
-    },
-    {
-      title: "Frontend Developer",
-      department: "Engineering",
-      location: "Boston / Remote",
-      type: "Full-time"
-    },
-    {
-      title: "Healthcare Solutions Architect",
-      department: "Product",
-      location: "Remote",
-      type: "Full-time"
-    },
-    {
-      title: "Clinical Documentation Specialist",
-      department: "Healthcare",
-      location: "Remote",
-      type: "Contract"
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <nav className="px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
@@ -163,42 +136,15 @@ const Careers = () => {
           ))}
         </div>
         
-        <FadeIn delay={0.4}>
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-semibold mb-6">Open Positions</h2>
-            <p className="text-muted-foreground max-w-3xl mx-auto mb-12">
-              Join our team and help us transform healthcare with AI.
-            </p>
-          </div>
-        </FadeIn>
-        
-        <FadeIn delay={0.5}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-            {openPositions.map((position, index) => (
-              <Card key={index} className="hover:shadow-md transition-shadow duration-300">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-medium mb-2">{position.title}</h3>
-                  <div className="flex flex-col gap-1 text-muted-foreground mb-4">
-                    <p>{position.department}</p>
-                    <p>{position.location}</p>
-                    <p>{position.type}</p>
-                  </div>
-                  <Button variant="outline" className="w-full">View Details</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </FadeIn>
-        
         <FadeIn delay={0.5}>
           <div className="mt-8 p-8 rounded-xl bg-accent text-center">
-            <h2 className="text-3xl font-semibold mb-6">Don't See the Right Fit?</h2>
+            <h2 className="text-3xl font-semibold mb-6">Join Our Team</h2>
             <p className="text-muted-foreground max-w-3xl mx-auto mb-8">
               We're always looking for talented individuals passionate about healthcare and AI.
               Send us your resume and we'll keep you in mind for future opportunities.
             </p>
             <Button size="lg" className="shadow hover:shadow-md transition-all">
-              Send General Application
+              Send Your Application
             </Button>
           </div>
         </FadeIn>
