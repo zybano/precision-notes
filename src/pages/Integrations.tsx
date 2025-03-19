@@ -45,15 +45,14 @@ const Integrations = () => {
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">N</span>
+              <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">NoteMedAI</span>
+            <span className="ml-3 text-xl font-medium">Documedly</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -76,7 +75,7 @@ const Integrations = () => {
           <div className="text-center mb-16">
             <h1 className="text-4xl font-semibold mb-6">Integrations</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              NoteMedAI seamlessly connects with your existing healthcare systems and workflows.
+              Documedly seamlessly connects with your existing healthcare systems and workflows.
             </p>
           </div>
         </FadeIn>
@@ -121,9 +120,9 @@ const Integrations = () => {
             <div className="mb-6 md:mb-0">
               <Link to="/" className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">N</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">NoteMedAI</span>
+                <span className="ml-2 text-lg font-medium">Documedly</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -143,7 +142,6 @@ const Integrations = () => {
               <div>
                 <h4 className="font-medium mb-3">Company</h4>
                 <ul className="space-y-2">
-                  <li><Link to="/about" className="text-muted-foreground hover:text-foreground text-sm">About</Link></li>
                   <li><Link to="/careers" className="text-muted-foreground hover:text-foreground text-sm">Careers</Link></li>
                   <li><Link to="/blog" className="text-muted-foreground hover:text-foreground text-sm">Blog</Link></li>
                 </ul>
@@ -161,7 +159,7 @@ const Integrations = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 NoteMedAI, Inc. All rights reserved.</p>
+            <p>© 2023 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>
