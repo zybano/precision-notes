@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,6 +52,8 @@ const DocumentationPage = () => {
       duration: 3000,
     });
     // In a real app, this would create a new document from the template
+    setNewDocumentOpen(true);
+    form.setValue("type", templateTitle);
   };
 
   const handleCreateNewDocument = (data: any) => {
@@ -140,6 +143,7 @@ const DocumentationPage = () => {
       // Generate summary
       const summary = generateBriefSummary(transcribedText);
       setTranscriptSummary(summary);
+      setShowSummary(true);
       
       toast({
         title: "Transcription Complete",
@@ -268,11 +272,16 @@ const DocumentationPage = () => {
                           <span>{doc.type} • {doc.date}</span>
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => toast({
-                        title: "Continuing Document",
-                        description: `Opening ${doc.title} for editing`,
-                        duration: 3000,
-                      })}>Continue</Button>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        toast({
+                          title: "Continuing Document",
+                          description: `Opening ${doc.title} for editing`,
+                          duration: 3000,
+                        });
+                        setNewDocumentOpen(true);
+                        form.setValue("type", doc.type);
+                        form.setValue("patientName", doc.title.split(" - ")[0]);
+                      }}>Continue</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -305,11 +314,17 @@ const DocumentationPage = () => {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => toast({
-                          title: "Viewing Shared Document",
-                          description: `Opening ${doc.title}`,
-                          duration: 3000,
-                        })}
+                        onClick={() => {
+                          toast({
+                            title: "Viewing Shared Document",
+                            description: `Opening ${doc.title}`,
+                            duration: 3000,
+                          });
+                          setNewDocumentOpen(true);
+                          form.setValue("type", "Shared Document");
+                          form.setValue("patientName", doc.title);
+                          form.setValue("notes", `Shared by ${doc.author} on ${doc.date.split(" on ")[1]}`);
+                        }}
                       >
                         View
                       </Button>
