@@ -3,6 +3,7 @@ import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Clipboard, Clock, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const metrics = [
@@ -112,7 +113,9 @@ const Dashboard = () => {
                 <CardTitle>Recent Documents</CardTitle>
                 <CardDescription>Your recently created documentation</CardDescription>
               </div>
-              <Button variant="outline" size="sm">View All</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/documentation">View All</Link>
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -149,7 +152,9 @@ const Dashboard = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <Button variant="ghost" size="sm">View</Button>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/documentation/${i}`}>View</Link>
+                        </Button>
                       </td>
                     </tr>
                   ))}
