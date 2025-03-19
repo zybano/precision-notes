@@ -21,6 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { useForm } from "react-hook-form";
 import { transcribeAudio, SpeakerUtterance, TranscriptionResult } from "@/services/transcription";
 import { generateBriefSummary, extractKeyPoints } from "@/services/summaryUtils";
+import SpecialtyTemplates from "@/components/SpecialtyTemplates";
 
 const documentTemplates = [
   { 
@@ -145,6 +146,22 @@ const DocumentationPage = () => {
   const handleViewTemplateDetails = (template: typeof documentTemplates[0]) => {
     setSelectedTemplate(template);
     setTemplateDetailsOpen(true);
+  };
+
+  const handleUseSpecialtyTemplate = (template: any) => {
+    toast({
+      title: `Specialty Template Selected: ${template.title}`,
+      description: "Your new document has been created from this specialty template.",
+      duration: 3000,
+    });
+    setNewDocumentOpen(true);
+    form.setValue("type", template.title);
+    
+    const parameterStructure = template.parameters
+      .map((param: any) => `${param.label}:\n\n`)
+      .join('\n');
+    
+    form.setValue("notes", parameterStructure);
   };
 
   const handleCreateNewDocument = (data: any) => {
@@ -364,8 +381,9 @@ const DocumentationPage = () => {
 
       <FadeIn delay={0.2}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
+          <TabsList className="grid grid-cols-4 w-full max-w-md">
             <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="specialties">Specialties</TabsTrigger>
             <TabsTrigger value="recent">Recent</TabsTrigger>
             <TabsTrigger value="shared">Shared</TabsTrigger>
           </TabsList>
@@ -411,6 +429,10 @@ const DocumentationPage = () => {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="specialties" className="space-y-6">
+            <SpecialtyTemplates onUseTemplate={handleUseSpecialtyTemplate} />
           </TabsContent>
           
           <TabsContent value="recent" className="space-y-6">
@@ -850,4 +872,3 @@ const DocumentationPage = () => {
 };
 
 export default DocumentationPage;
-
