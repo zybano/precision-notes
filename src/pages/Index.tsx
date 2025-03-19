@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ const Index = () => {
 
   const testimonials = [
     {
-      quote: "Nabla has transformed our clinical documentation process. We've reduced administrative time by 60% and can focus more on patient care.",
+      quote: "Documedly has transformed our clinical documentation process. We've reduced administrative time by 60% and can focus more on patient care.",
       author: "Dr. Sarah Johnson",
       role: "Chief Medical Officer",
       organization: "Northside Medical Group"
@@ -110,7 +111,7 @@ const Index = () => {
       organization: "Heart & Vascular Institute"
     },
     {
-      quote: "Implementation was seamless, and the ROI was evident within weeks. Our clinicians actually enjoy using Nabla.",
+      quote: "Implementation was seamless, and the ROI was evident within weeks. Our clinicians actually enjoy using Documedly.",
       author: "Emma Rodriguez",
       role: "Healthcare IT Director",
       organization: "City Health Partners"
@@ -128,7 +129,7 @@ const Index = () => {
       name: "Dr. Sarah Johnson",
       specialty: "Cardiologist",
       image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop",
-      quote: "NoteMedAI has transformed how I document patient visits, reducing my administrative burden by 70%."
+      quote: "Documedly has transformed how I document patient visits, reducing my administrative burden by 70%."
     },
     {
       name: "Dr. Michael Chen",
@@ -150,9 +151,9 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <div className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">N</span>
+              <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">NoteMedAI</span>
+            <span className="ml-3 text-xl font-medium">Documedly</span>
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -206,7 +207,7 @@ const Index = () => {
             <div className="glass rounded-2xl shadow-xl overflow-hidden">
               <img 
                 src="https://images.unsplash.com/photo-1571772996211-2f02974a9f91?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.0.3" 
-                alt="Medical professional using NoteMedAI" 
+                alt="Medical professional using Documedly" 
                 className="w-full h-full object-cover"
               />
             </div>
@@ -218,7 +219,7 @@ const Index = () => {
         <div className="container mx-auto px-6 max-w-7xl">
           <FadeIn>
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold mb-4">Why Choose Nabla</h2>
+              <h2 className="text-3xl font-semibold mb-4">Why Choose Documedly</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Our platform delivers measurable benefits for healthcare professionals and organizations.
               </p>
@@ -279,7 +280,7 @@ const Index = () => {
               <div className="space-y-6">
                 <h2 className="text-3xl font-semibold leading-tight">Fully Customizable <span className="text-primary">To Your Practice</span></h2>
                 <p className="text-lg text-muted-foreground">
-                  Configure Nabla to match your specific workflow and requirements. Personalize settings to maximize efficiency.
+                  Configure Documedly to match your specific workflow and requirements. Personalize settings to maximize efficiency.
                 </p>
                 <div className="space-y-4 pt-4">
                   {settings.map((setting, i) => (
@@ -308,7 +309,7 @@ const Index = () => {
               <div className="glass rounded-2xl shadow-xl overflow-hidden">
                 <img 
                   src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.0.3" 
-                  alt="Nabla settings interface" 
+                  alt="Documedly settings interface" 
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -323,7 +324,7 @@ const Index = () => {
             <div className="text-center mb-16">
               <h2 className="text-3xl font-semibold mb-4">Trusted by Medical Professionals</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Join thousands of healthcare professionals who use NoteMedAI to streamline their documentation process.
+                Join thousands of healthcare professionals who use Documedly to streamline their documentation process.
               </p>
             </div>
           </FadeIn>
@@ -397,7 +398,7 @@ const Index = () => {
                           ))}
                         </div>
                         <blockquote className="text-lg font-medium mb-4 italic">
-                          "{testimonial.quote.replace(/Nabla/g, "NoteMedAI")}"
+                          "{testimonial.quote}"
                         </blockquote>
                         <div>
                           <p className="font-semibold">{testimonial.author}</p>
@@ -440,9 +441,9 @@ const Index = () => {
             <div className="mb-6 md:mb-0">
               <div className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">N</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">NoteMedAI</span>
+                <span className="ml-2 text-lg font-medium">Documedly</span>
               </div>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -480,7 +481,7 @@ const Index = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 NoteMedAI, Inc. All rights reserved.</p>
+            <p>© 2023 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <Link to="#" className="hover:text-foreground">Twitter</Link>
               <Link to="#" className="hover:text-foreground">LinkedIn</Link>
