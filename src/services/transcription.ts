@@ -42,8 +42,9 @@ export const transcribeAudio = async (
     console.log("File uploaded:", uploadResponse);
     
     // Start transcription process with the uploaded file's URL
+    // In AssemblyAI SDK v4, the upload method returns an object with the audio URL
     const transcript = await client.transcripts.transcribe({
-      audio: uploadResponse.url, // Changed from audio_url to audio for AssemblyAI SDK v4
+      audio: uploadResponse, // Pass the whole uploadResponse object as audio
       language_code: options.languageCode || 'en_us', // English (US) by default
       speaker_labels: options.speakerLabels !== undefined ? options.speakerLabels : true,
       speech_model: options.useSpeechModelNano ? 'nano' : undefined // Fixed type issue by using undefined
