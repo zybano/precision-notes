@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2 } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2, FileText2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { transcribeAudio } from "@/services/transcription";
+import { generateBriefSummary, extractKeyPoints } from "@/services/summaryUtils";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
@@ -27,10 +29,12 @@ const DocumentationPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcript, setTranscript] = useState("");
+  const [transcriptSummary, setTranscriptSummary] = useState("");
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const { toast } = useToast();
   
   const form = useForm({
@@ -133,6 +137,10 @@ const DocumentationPage = () => {
       
       setTranscript(transcribedText);
       form.setValue("notes", transcribedText);
+      
+      // Generate summary
+      const summary = generateBriefSummary(transcribedText);
+      setTranscriptSummary(summary);
       
       toast({
         title: "Transcription Complete",
@@ -320,6 +328,8 @@ const DocumentationPage = () => {
         if (!open) {
           stopRecording();
           setTranscript("");
+          setTranscriptSummary("");
+          setShowSummary(false);
           form.reset();
         }
       }}>
@@ -433,6 +443,50 @@ const DocumentationPage = () => {
                 )}
               </div>
               
+              {transcript && (
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium">Transcript Summary</h4>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setShowSummary(!showSummary)}
+                    >
+                      {showSummary ? "Hide Summary" : "Show Summary"}
+                    </Button>
+                  </div>
+                  
+                  {showSummary && (
+                    <>
+                      <div className="text-sm border-l-2 border-primary pl-3 py-1 my-2 bg-muted/50 rounded-sm">
+                        {transcriptSummary}
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs flex items-center gap-1"
+                          onClick={() => {
+                            toast({
+                              title: "Summary Copied",
+                              description: "Transcript summary copied to clipboard",
+                              duration: 2000,
+                            });
+                            navigator.clipboard.writeText(transcriptSummary);
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                          Copy Summary
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              
               <FormField
                 control={form.control}
                 name="notes"
@@ -455,6 +509,8 @@ const DocumentationPage = () => {
                   setNewDocumentOpen(false);
                   stopRecording();
                   setTranscript("");
+                  setTranscriptSummary("");
+                  setShowSummary(false);
                   form.reset();
                 }}>
                   Cancel
