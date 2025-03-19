@@ -30,6 +30,7 @@ const DocumentationPage = () => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
   const { toast } = useToast();
   
   const form = useForm({
@@ -124,8 +125,11 @@ const DocumentationPage = () => {
     });
     
     try {
-      // Call the AssemblyAI transcription service
-      const transcribedText = await transcribeAudio(audioBlob);
+      // Call the AssemblyAI transcription service with options
+      const transcribedText = await transcribeAudio(audioBlob, {
+        speakerLabels: true,
+        useSpeechModelNano: useSpeechModelNano
+      });
       
       setTranscript(transcribedText);
       form.setValue("notes", transcribedText);
@@ -390,6 +394,21 @@ const DocumentationPage = () => {
                         </>
                       )}
                     </Button>
+                  </div>
+                </div>
+                
+                <div className="mb-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="nanoModelToggle"
+                      checked={useSpeechModelNano}
+                      onChange={(e) => setUseSpeechModelNano(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="nanoModelToggle" className="text-xs text-muted-foreground">
+                      Use Nano Speech Model (faster but less accurate)
+                    </label>
                   </div>
                 </div>
                 

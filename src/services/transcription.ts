@@ -1,4 +1,3 @@
-
 // Import the AssemblyAI SDK correctly
 import { AssemblyAI, RealtimeTranscript } from 'assemblyai';
 
@@ -16,9 +15,21 @@ const prepareAudioFile = async (audioBlob: Blob): Promise<File> => {
 };
 
 /**
+ * Transcription options
+ */
+export interface TranscriptionOptions {
+  languageCode?: string;
+  speakerLabels?: boolean;
+  useSpeechModelNano?: boolean;
+}
+
+/**
  * Transcribes audio using AssemblyAI's SDK
  */
-export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
+export const transcribeAudio = async (
+  audioBlob: Blob, 
+  options: TranscriptionOptions = {}
+): Promise<string> => {
   try {
     // Convert audio blob to file
     const audioFile = await prepareAudioFile(audioBlob);
@@ -31,9 +42,10 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     
     // Start transcription process with the uploaded file's URL
     const transcript = await client.transcripts.transcribe({
-      audio: uploadResponse,
-      language_code: 'en_us', // English (US)
-      speaker_labels: true // Enable speaker detection, similar to the Java example
+      audio_url: uploadResponse.url,
+      language_code: options.languageCode || 'en_us', // English (US) by default
+      speaker_labels: options.speakerLabels !== undefined ? options.speakerLabels : true,
+      speech_model: options.useSpeechModelNano ? 'nano' : 'default'
     });
     
     console.log("Transcription completed:", transcript);
