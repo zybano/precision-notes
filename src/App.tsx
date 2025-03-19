@@ -13,6 +13,7 @@ import Documentation from "./pages/Documentation";
 import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
 import Calendar from "./pages/Calendar";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/patients" element={<Patients />} />
               <Route path="/documentation" element={<Documentation />} />
               <Route path="/calendar" element={<Calendar />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />

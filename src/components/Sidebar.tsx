@@ -6,7 +6,8 @@ import {
   Users, 
   Calendar,
   Settings, 
-  Menu
+  Menu,
+  DollarSign
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,8 @@ const Sidebar = () => {
             { path: "/dashboard", name: "Dashboard", icon: File },
             { path: "/documentation", name: "Documentation", icon: FileText },
             { path: "/patients", name: "Patients", icon: Users },
-            { path: "/calendar", name: "Calendar", icon: Calendar }
+            { path: "/calendar", name: "Calendar", icon: Calendar },
+            { path: "/pricing", name: "Pricing", icon: DollarSign }
           ].map((item) => (
             <li key={item.path}>
               <NavLink
