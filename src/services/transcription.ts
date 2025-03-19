@@ -1,8 +1,11 @@
 
-import * as assemblyai from 'assemblyai';
+// Import the AssemblyAI SDK correctly
+import { AssemblyAI } from 'assemblyai';
 
-// Configure AssemblyAI client
-const client = assemblyai.client("2d0b8970736a42b4a316c90b339d732a");
+// Configure AssemblyAI client with the API key
+const client = new AssemblyAI({
+  apiKey: "2d0b8970736a42b4a316c90b339d732a"
+});
 
 /**
  * Converts an audio Blob to a suitable format for AssemblyAI
@@ -22,9 +25,12 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     
     console.log("Starting transcription with AssemblyAI SDK...");
     
-    // Start transcription process
+    // Upload the file to AssemblyAI
+    const uploadResponse = await client.files.upload(audioFile);
+    
+    // Start transcription process with the uploaded file
     const transcript = await client.transcripts.transcribe({
-      audio: audioFile,
+      audio: uploadResponse.id,
       model: 'nova-2', // Using the Nova-2 model for medical transcription
     });
     
