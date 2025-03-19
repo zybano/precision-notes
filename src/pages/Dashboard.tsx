@@ -52,7 +52,6 @@ const Dashboard = () => {
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
             <Button variant="outline" size="sm">Export Data</Button>
-            <Button size="sm">New Document</Button>
           </div>
         </div>
       </FadeIn>
@@ -87,8 +86,8 @@ const Dashboard = () => {
         </div>
       </FadeIn>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <FadeIn delay={0.2} className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <FadeIn delay={0.2} className="lg:col-span-1">
           <Card className="border border-border h-full overflow-hidden">
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
@@ -99,35 +98,6 @@ const Dashboard = () => {
                 <div className="rounded-md bg-accent/50 text-muted-foreground p-12 text-center">
                   Activity chart will appear here
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </FadeIn>
-
-        <FadeIn delay={0.3}>
-          <Card className="border border-border h-full">
-            <CardHeader>
-              <CardTitle>Upcoming Appointments</CardTitle>
-              <CardDescription>Your schedule for today</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[1, 2, 3].map((_, i) => (
-                  <div key={i} className="flex items-start p-3 rounded-lg hover:bg-accent/50 transition-colors">
-                    <div className="bg-primary/10 rounded-md p-2 mr-3">
-                      <Clock className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">John Doe</p>
-                      <p className="text-sm text-muted-foreground">
-                        {i === 0 ? "10:00 AM - Follow-up" : i === 1 ? "11:30 AM - New patient" : "2:15 PM - Consultation"}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                <Button variant="ghost" className="w-full mt-2 text-primary">
-                  View All Appointments
-                </Button>
               </div>
             </CardContent>
           </Card>
