@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -159,7 +158,6 @@ const Index = () => {
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -463,7 +461,6 @@ const Index = () => {
               <div>
                 <h4 className="font-medium mb-3">Company</h4>
                 <ul className="space-y-2">
-                  <li><Link to="/about" className="text-muted-foreground hover:text-foreground text-sm">About</Link></li>
                   <li><Link to="/careers" className="text-muted-foreground hover:text-foreground text-sm">Careers</Link></li>
                   <li><Link to="/blog" className="text-muted-foreground hover:text-foreground text-sm">Blog</Link></li>
                 </ul>
