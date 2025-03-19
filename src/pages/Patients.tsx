@@ -6,10 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Search, Plus, MoreVertical, Calendar, Clock, FileText } from "lucide-react";
+import { Search, Plus, MoreVertical, Calendar, Clock, FileText, Filter } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const Patients = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const { toast } = useToast();
   
   const patientData = [
     { 
@@ -59,9 +73,58 @@ const Patients = () => {
     },
   ];
 
+  const recentPatients = patientData.slice(0, 3);
+
   const filteredPatients = patientData.filter(patient => 
     patient.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const displayedPatients = activeTab === "all" ? filteredPatients : recentPatients;
+
+  const handleImport = () => {
+    setIsImportDialogOpen(false);
+    toast({
+      title: "Import Started",
+      description: "Patient data import has begun. You'll be notified when complete.",
+    });
+    
+    // Simulate import completion after 2 seconds
+    setTimeout(() => {
+      toast({
+        title: "Import Complete",
+        description: "5 patient records have been successfully imported.",
+      });
+    }, 2000);
+  };
+
+  const handleAddPatient = () => {
+    setIsAddPatientOpen(false);
+    toast({
+      title: "Patient Added",
+      description: "New patient has been successfully added to your records.",
+    });
+  };
+
+  const handleViewAppointments = () => {
+    toast({
+      title: "Appointments",
+      description: "Navigating to full appointment calendar.",
+    });
+  };
+
+  const handleViewRecords = (patientId: number) => {
+    toast({
+      title: "Medical Records",
+      description: `Viewing medical records for patient #${patientId}.`,
+    });
+  };
+
+  const handleScheduleAppointment = (patientId: number) => {
+    toast({
+      title: "Schedule Appointment",
+      description: `Opening scheduler for patient #${patientId}.`,
+    });
+  };
   
   return (
     <div className="space-y-8">
@@ -74,11 +137,85 @@ const Patients = () => {
             </p>
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
-            <Button variant="outline" size="sm">Import</Button>
-            <Button size="sm" className="shadow-sm hover:shadow-md transition-all btn-premium">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Patient
-            </Button>
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">Import</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Import Patient Records</DialogTitle>
+                  <DialogDescription>
+                    Upload a CSV or Excel file with patient records to import into the system.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <p className="text-muted-foreground">Drag and drop your file here or click to browse</p>
+                    <Button variant="outline" className="mt-4">
+                      Select File
+                    </Button>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleImport}>Import Records</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isAddPatientOpen} onOpenChange={setIsAddPatientOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="shadow-sm hover:shadow-md transition-all btn-premium">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Patient
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Patient</DialogTitle>
+                  <DialogDescription>
+                    Enter the details of the new patient below.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
+                      <Input id="firstName" placeholder="First name" />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
+                      <Input id="lastName" placeholder="Last name" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="birthdate" className="text-sm font-medium">Date of Birth</label>
+                    <Input id="birthdate" type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="gender" className="text-sm font-medium">Gender</label>
+                    <select id="gender" className="w-full border border-gray-300 rounded-md px-4 py-2">
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="phone" className="text-sm font-medium">Phone Number</label>
+                    <Input id="phone" placeholder="Phone number" />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium">Email Address</label>
+                    <Input id="email" type="email" placeholder="Email address" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddPatientOpen(false)}>Cancel</Button>
+                  <Button onClick={handleAddPatient}>Add Patient</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </FadeIn>
@@ -99,7 +236,11 @@ const Patients = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Tabs defaultValue="all" className="w-full md:w-auto">
+              <Tabs 
+                value={activeTab} 
+                onValueChange={setActiveTab} 
+                className="w-full md:w-auto"
+              >
                 <TabsList className="grid grid-cols-2 w-full md:w-[200px]">
                   <TabsTrigger value="all">All Patients</TabsTrigger>
                   <TabsTrigger value="recent">Recent</TabsTrigger>
@@ -121,14 +262,14 @@ const Patients = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPatients.length === 0 ? (
+                  {displayedPatients.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-muted-foreground">
                         No patients found matching your search criteria.
                       </td>
                     </tr>
                   ) : (
-                    filteredPatients.map((patient) => (
+                    displayedPatients.map((patient) => (
                       <tr key={patient.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                         <td className="py-3 px-4 font-medium">{patient.name}</td>
                         <td className="py-3 px-4">{patient.age}</td>
@@ -141,15 +282,63 @@ const Patients = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex justify-end items-center space-x-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleViewRecords(patient.id)}
+                            >
                               <FileText className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleScheduleAppointment(patient.id)}
+                            >
                               <Calendar className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Patient Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleViewRecords(patient.id)}>
+                                  View Medical Records
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleScheduleAppointment(patient.id)}>
+                                  Schedule Appointment
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => {
+                                  toast({
+                                    title: "Message Sent",
+                                    description: `Message sent to ${patient.name}.`,
+                                  });
+                                }}>Send Message</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  toast({
+                                    title: "Edit Patient",
+                                    description: `Editing ${patient.name}'s information.`,
+                                  });
+                                }}>Edit Patient</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => {
+                                    toast({
+                                      title: "Patient Archived",
+                                      description: `${patient.name} has been archived.`,
+                                    });
+                                  }}
+                                >
+                                  Archive Patient
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </td>
                       </tr>
@@ -186,7 +375,7 @@ const Patients = () => {
                   </div>
                 ))}
                 <Separator className="my-2" />
-                <Button variant="ghost" className="w-full text-primary">
+                <Button variant="ghost" className="w-full text-primary" onClick={handleViewAppointments}>
                   View All Appointments
                 </Button>
               </div>
