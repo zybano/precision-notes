@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2, Pause, Play } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2, Pause, Play, CheckCircle, ListFilter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,84 @@ import { useForm } from "react-hook-form";
 import { transcribeAudio } from "@/services/transcription";
 import { generateBriefSummary, extractKeyPoints } from "@/services/summaryUtils";
 
+// Template data structure with parameters
+const documentTemplates = [
+  { 
+    title: "SOAP Note", 
+    description: "Subjective, Objective, Assessment, Plan", 
+    icon: FileText,
+    parameters: [
+      { name: "subjective", label: "Subjective", description: "Patient's complaints and symptoms in their own words", type: "textarea" },
+      { name: "objective", label: "Objective", description: "Measurable and observable findings, vital signs, exam results", type: "textarea" },
+      { name: "assessment", label: "Assessment", description: "Diagnosis or clinical impression based on subjective and objective data", type: "textarea" },
+      { name: "plan", label: "Plan", description: "Treatment plan, medications, follow-up instructions", type: "textarea" }
+    ]
+  },
+  { 
+    title: "Progress Note", 
+    description: "Follow-up documentation", 
+    icon: ClipboardList,
+    parameters: [
+      { name: "currentStatus", label: "Current Status", description: "Patient's current condition", type: "textarea" },
+      { name: "changes", label: "Changes Since Last Visit", description: "Note any improvements or deterioration", type: "textarea" },
+      { name: "treatmentResponse", label: "Treatment Response", description: "How the patient is responding to current treatment", type: "textarea" },
+      { name: "nextSteps", label: "Next Steps", description: "Adjustments to treatment plan and follow-up schedule", type: "textarea" }
+    ]
+  },
+  { 
+    title: "Consultation Note", 
+    description: "For specialist referrals", 
+    icon: Calendar,
+    parameters: [
+      { name: "referralReason", label: "Referral Reason", description: "Why the patient was referred", type: "textarea" },
+      { name: "specialistFindings", label: "Specialist Findings", description: "Results of specialist evaluation", type: "textarea" },
+      { name: "recommendations", label: "Recommendations", description: "Specialist's recommended course of action", type: "textarea" },
+      { name: "followUp", label: "Follow-up Plan", description: "When and how to follow up with specialist", type: "textarea" }
+    ]
+  },
+  { 
+    title: "Discharge Summary", 
+    description: "Post-discharge documentation", 
+    icon: FileText,
+    parameters: [
+      { name: "admissionReason", label: "Admission Reason", description: "Why the patient was admitted", type: "textarea" },
+      { name: "hospitalCourse", label: "Hospital Course", description: "Summary of treatment during hospitalization", type: "textarea" },
+      { name: "dischargeDiagnosis", label: "Discharge Diagnosis", description: "Final diagnosis at time of discharge", type: "textarea" },
+      { name: "dischargeMedications", label: "Discharge Medications", description: "Medications prescribed at discharge", type: "textarea" },
+      { name: "followUpInstructions", label: "Follow-up Instructions", description: "Post-discharge care instructions", type: "textarea" }
+    ]
+  },
+  { 
+    title: "Procedure Note", 
+    description: "Documenting medical procedures", 
+    icon: ClipboardList,
+    parameters: [
+      { name: "procedureType", label: "Procedure Type", description: "Name and type of procedure performed", type: "input" },
+      { name: "indication", label: "Indication", description: "Reason for performing the procedure", type: "textarea" },
+      { name: "technique", label: "Technique", description: "How the procedure was performed", type: "textarea" },
+      { name: "findings", label: "Findings", description: "Results and observations during the procedure", type: "textarea" },
+      { name: "complications", label: "Complications", description: "Any complications encountered", type: "textarea" },
+      { name: "postProcedurePlan", label: "Post-Procedure Plan", description: "Follow-up care after procedure", type: "textarea" }
+    ]
+  },
+  { 
+    title: "History & Physical", 
+    description: "Comprehensive patient assessment", 
+    icon: Calendar,
+    parameters: [
+      { name: "chiefComplaint", label: "Chief Complaint", description: "Patient's main reason for visit", type: "textarea" },
+      { name: "historyOfPresentIllness", label: "History of Present Illness", description: "Detailed chronology of the patient's illness", type: "textarea" },
+      { name: "pastMedicalHistory", label: "Past Medical History", description: "Previous medical conditions and surgeries", type: "textarea" },
+      { name: "medications", label: "Medications", description: "Current medications and allergies", type: "textarea" },
+      { name: "familyHistory", label: "Family History", description: "Relevant family medical history", type: "textarea" },
+      { name: "socialHistory", label: "Social History", description: "Relevant lifestyle factors", type: "textarea" },
+      { name: "physicalExam", label: "Physical Exam", description: "Findings from physical examination", type: "textarea" },
+      { name: "impression", label: "Impression", description: "Clinical impression and diagnosis", type: "textarea" },
+      { name: "plan", label: "Plan", description: "Treatment and follow-up plan", type: "textarea" }
+    ]
+  },
+];
+
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
@@ -36,6 +115,8 @@ const DocumentationPage = () => {
   const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
   const [showSummary, setShowSummary] = useState(true);
   const [recordingTimer, setRecordingTimer] = useState<NodeJS.Timeout | null>(null);
+  const [templateDetailsOpen, setTemplateDetailsOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<typeof documentTemplates[0] | null>(null);
   const { toast } = useToast();
   
   const form = useForm({
@@ -46,14 +127,26 @@ const DocumentationPage = () => {
     },
   });
 
-  const handleUseTemplate = (templateTitle: string) => {
+  const handleUseTemplate = (template: typeof documentTemplates[0]) => {
     toast({
-      title: `Template Selected: ${templateTitle}`,
+      title: `Template Selected: ${template.title}`,
       description: "Your new document has been created from this template.",
       duration: 3000,
     });
     setNewDocumentOpen(true);
-    form.setValue("type", templateTitle);
+    form.setValue("type", template.title);
+    
+    // Optionally pre-populate the notes field with parameter structure
+    const parameterStructure = template.parameters
+      .map(param => `${param.label}:\n\n`)
+      .join('\n');
+    
+    form.setValue("notes", parameterStructure);
+  };
+  
+  const handleViewTemplateDetails = (template: typeof documentTemplates[0]) => {
+    setSelectedTemplate(template);
+    setTemplateDetailsOpen(true);
   };
 
   const handleCreateNewDocument = (data: any) => {
@@ -280,14 +373,7 @@ const DocumentationPage = () => {
           
           <TabsContent value="templates" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { title: "SOAP Note", description: "Subjective, Objective, Assessment, Plan", icon: FileText },
-                { title: "Progress Note", description: "Follow-up documentation", icon: ClipboardList },
-                { title: "Consultation Note", description: "For specialist referrals", icon: Calendar },
-                { title: "Discharge Summary", description: "Post-discharge documentation", icon: FileText },
-                { title: "Procedure Note", description: "Documenting medical procedures", icon: ClipboardList },
-                { title: "History & Physical", description: "Comprehensive patient assessment", icon: Calendar },
-              ].map((template, index) => (
+              {documentTemplates.map((template, index) => (
                 <Card key={index} className="hover:shadow-md transition-all cursor-pointer border border-border overflow-hidden">
                   <CardContent className="p-0">
                     <div className="p-6">
@@ -302,11 +388,20 @@ const DocumentationPage = () => {
                       </div>
                     </div>
                     <Separator />
-                    <div className="p-4 flex justify-end">
+                    <div className="p-4 flex justify-between">
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleUseTemplate(template.title)}
+                        onClick={() => handleViewTemplateDetails(template)}
+                        className="gap-1.5"
+                      >
+                        <ListFilter className="h-3.5 w-3.5" />
+                        View Parameters
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleUseTemplate(template)}
                         className="gap-1.5"
                       >
                         <Copy className="h-3.5 w-3.5" />
@@ -402,6 +497,51 @@ const DocumentationPage = () => {
         </Tabs>
       </FadeIn>
 
+      {/* Template details dialog */}
+      <Dialog open={templateDetailsOpen} onOpenChange={setTemplateDetailsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedTemplate?.icon && <selectedTemplate.icon className="h-5 w-5" />}
+              {selectedTemplate?.title} Template
+            </DialogTitle>
+            <DialogDescription>
+              {selectedTemplate?.description}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 my-2">
+            <h3 className="text-sm font-medium">Template Parameters</h3>
+            <div className="space-y-4">
+              {selectedTemplate?.parameters.map((param, index) => (
+                <div key={index} className="bg-muted/40 p-3 rounded-md space-y-1">
+                  <div className="flex items-center">
+                    <h4 className="text-sm font-medium">{param.label}</h4>
+                    <span className="ml-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
+                      {param.type === 'textarea' ? 'Multi-line text' : 'Single-line text'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{param.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setTemplateDetailsOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              handleUseTemplate(selectedTemplate!);
+              setTemplateDetailsOpen(false);
+            }}>
+              Use Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New document dialog */}
       <Dialog open={newDocumentOpen} onOpenChange={(open) => {
         setNewDocumentOpen(open);
         if (!open) {
@@ -433,12 +573,9 @@ const DocumentationPage = () => {
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         {...field}
                       >
-                        <option value="SOAP Note">SOAP Note</option>
-                        <option value="Progress Note">Progress Note</option>
-                        <option value="Consultation Note">Consultation Note</option>
-                        <option value="Discharge Summary">Discharge Summary</option>
-                        <option value="Procedure Note">Procedure Note</option>
-                        <option value="History & Physical">History & Physical</option>
+                        {documentTemplates.map((template, index) => (
+                          <option key={index} value={template.title}>{template.title}</option>
+                        ))}
                       </select>
                     </FormControl>
                   </FormItem>
