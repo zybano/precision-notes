@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2, Pause, Play, CheckCircle, ListFilter } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Search, Copy, Plus, Mic, StopCircle, Loader2, Pause, Play, CheckCircle, ListFilter, User, UserRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -20,10 +19,9 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { transcribeAudio } from "@/services/transcription";
+import { transcribeAudio, SpeakerUtterance, TranscriptionResult } from "@/services/transcription";
 import { generateBriefSummary, extractKeyPoints } from "@/services/summaryUtils";
 
-// Template data structure with parameters
 const documentTemplates = [
   { 
     title: "SOAP Note", 
@@ -117,6 +115,7 @@ const DocumentationPage = () => {
   const [recordingTimer, setRecordingTimer] = useState<NodeJS.Timeout | null>(null);
   const [templateDetailsOpen, setTemplateDetailsOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<typeof documentTemplates[0] | null>(null);
+  const [transcriptResult, setTranscriptResult] = useState<TranscriptionResult | null>(null);
   const { toast } = useToast();
   
   const form = useForm({
@@ -136,7 +135,6 @@ const DocumentationPage = () => {
     setNewDocumentOpen(true);
     form.setValue("type", template.title);
     
-    // Optionally pre-populate the notes field with parameter structure
     const parameterStructure = template.parameters
       .map(param => `${param.label}:\n\n`)
       .join('\n');
@@ -270,21 +268,22 @@ const DocumentationPage = () => {
     });
     
     try {
-      const transcribedText = await transcribeAudio(audioBlob, {
+      const result = await transcribeAudio(audioBlob, {
         speakerLabels: true,
         useSpeechModelNano: useSpeechModelNano
       });
       
-      setTranscript(transcribedText);
-      form.setValue("notes", transcribedText);
+      setTranscriptResult(result);
+      setTranscript(result.text);
+      form.setValue("notes", result.text);
       
-      const summary = generateBriefSummary(transcribedText);
+      const summary = generateBriefSummary(result.text);
       setTranscriptSummary(summary);
       setShowSummary(true);
       
       toast({
         title: "Transcription Complete",
-        description: "Your recording has been transcribed successfully.",
+        description: "Your recording has been transcribed successfully with speaker diarization.",
         duration: 3000,
       });
     } catch (error) {
@@ -497,7 +496,6 @@ const DocumentationPage = () => {
         </Tabs>
       </FadeIn>
 
-      {/* Template details dialog */}
       <Dialog open={templateDetailsOpen} onOpenChange={setTemplateDetailsOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -541,7 +539,6 @@ const DocumentationPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* New document dialog */}
       <Dialog open={newDocumentOpen} onOpenChange={(open) => {
         setNewDocumentOpen(open);
         if (!open) {
@@ -549,6 +546,7 @@ const DocumentationPage = () => {
           setTranscript("");
           setTranscriptSummary("");
           setShowSummary(true);
+          setTranscriptResult(null);
           form.reset();
         }
       }}>
@@ -700,6 +698,61 @@ const DocumentationPage = () => {
                 )}
               </div>
               
+              {transcriptResult && transcriptResult.utterances && transcriptResult.utterances.length > 0 && (
+                <div className="border rounded-md p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium">Conversation Transcript</h4>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs flex items-center gap-1"
+                      onClick={() => {
+                        const formattedTranscript = transcriptResult.utterances
+                          .map(u => `${u.speaker}: ${u.text}`)
+                          .join('\n\n');
+                        navigator.clipboard.writeText(formattedTranscript);
+                        toast({
+                          title: "Transcript Copied",
+                          description: "Conversation transcript copied to clipboard",
+                          duration: 2000,
+                        });
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                      Copy Conversation
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 mt-2">
+                    {transcriptResult.utterances.map((utterance, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`flex gap-2 ${utterance.speaker === "Doctor" ? "justify-start" : "justify-end"}`}
+                      >
+                        <div 
+                          className={`max-w-[80%] rounded-lg p-2.5 ${
+                            utterance.speaker === "Doctor" 
+                              ? "bg-primary text-primary-foreground" 
+                              : "bg-muted"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {utterance.speaker === "Doctor" ? (
+                              <UserRound className="h-3.5 w-3.5" />
+                            ) : (
+                              <User className="h-3.5 w-3.5" />
+                            )}
+                            <span className="text-xs font-medium">{utterance.speaker}</span>
+                          </div>
+                          <p className="text-sm">{utterance.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {transcript && (
                 <div className="border rounded-md p-3">
                   <div className="flex items-center justify-between mb-2">
@@ -781,6 +834,7 @@ const DocumentationPage = () => {
                   setTranscript("");
                   setTranscriptSummary("");
                   setShowSummary(true);
+                  setTranscriptResult(null);
                   form.reset();
                 }}>
                   Cancel
@@ -796,3 +850,4 @@ const DocumentationPage = () => {
 };
 
 export default DocumentationPage;
+
