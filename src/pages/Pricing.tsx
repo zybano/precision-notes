@@ -11,9 +11,22 @@ const Pricing = () => {
 
   const plans = [
     {
+      name: "Free",
+      price: "$0",
+      description: "Get started with essential features",
+      features: [
+        "3 Patient Records",
+        "1 Template",
+        "Basic Transcription",
+        "Community Support"
+      ],
+      highlighted: false,
+      buttonText: "Get Started"
+    },
+    {
       name: "Basic",
       price: "$9",
-      description: "Essential features for small practices",
+      description: "Essential features for individuals",
       features: [
         "5 Patient Records",
         "3 Templates",
@@ -26,7 +39,7 @@ const Pricing = () => {
     {
       name: "Professional",
       price: "$29",
-      description: "Comprehensive tools for growing practices",
+      description: "Comprehensive tools for growing teams",
       features: [
         "Unlimited Patient Records",
         "All Templates",
@@ -64,7 +77,7 @@ const Pricing = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {plans.map((plan) => (
           <Card key={plan.name} className={`flex flex-col h-full ${plan.highlighted ? 'border-primary shadow-lg' : ''}`}>
             <CardHeader>
