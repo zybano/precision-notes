@@ -355,27 +355,34 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <FadeIn delay={0.1}>
               <div className="space-y-6">
-                <h2 className="text-3xl font-semibold leading-tight">Fully Customizable <span className="text-primary">To Your Practice</span></h2>
+                <h2 className="text-3xl font-semibold leading-tight">Real-world <span className="text-primary">Patient Care</span></h2>
                 <p className="text-lg text-muted-foreground">
-                  Configure Documedly to match your specific workflow and requirements. Personalize settings to maximize efficiency.
+                  Documedly seamlessly integrates into healthcare environments, enabling medical professionals to focus on what matters most - the patient.
                 </p>
                 <div className="space-y-4 pt-4">
-                  {settings.map((setting, i) => (
-                    <div key={i} className="flex items-start space-x-4">
-                      <div className="mt-1 w-10 h-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                        {setting.icon}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-lg">{setting.title}</h3>
-                        <p className="text-muted-foreground">{setting.description}</p>
-                      </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="mt-1 w-10 h-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <UserCheck className="h-6 w-6 text-primary" />
                     </div>
-                  ))}
+                    <div>
+                      <h3 className="font-medium text-lg">Enhanced Patient Interaction</h3>
+                      <p className="text-muted-foreground">Maintain eye contact and engagement with patients while documenting care.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="mt-1 w-10 h-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Shield className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg">Patient Data Security</h3>
+                      <p className="text-muted-foreground">All patient information is securely stored and HIPAA-compliant.</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="pt-4">
                   <Link to="/dashboard">
                     <Button className="shadow hover:shadow-md transition-all btn-premium">
-                      Explore Settings
+                      Start Improving Patient Care
                     </Button>
                   </Link>
                 </div>
@@ -385,12 +392,39 @@ const Index = () => {
             <FadeIn delay={0.3} className="hidden lg:block">
               <div className="glass rounded-2xl shadow-xl overflow-hidden">
                 <img 
-                  src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.0.3" 
-                  alt="Documedly settings interface" 
+                  src="/lovable-uploads/4bd82587-fbd6-4058-a99a-676d50f51bb4.png" 
+                  alt="Doctor using Documedly with patient" 
                   className="w-full h-full object-cover"
                 />
               </div>
             </FadeIn>
+          </div>
+        </div>
+      </section>
+      
+      <section className="py-16 md:py-24 bg-white border-y border-border">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-semibold mb-4">Fully Customizable <span className="text-primary">To Your Practice</span></h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Configure Documedly to match your specific workflow and requirements. Personalize settings to maximize efficiency.
+              </p>
+            </div>
+          </FadeIn>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {settings.map((setting, i) => (
+              <FadeIn key={i} delay={0.2 + i * 0.1}>
+                <div className="bg-background p-6 rounded-xl border border-border hover:shadow-md transition-all duration-300">
+                  <div className="h-12 w-12 bg-accent rounded-lg flex items-center justify-center mb-4">
+                    <div className="h-6 w-6 bg-primary rounded-md"></div>
+                  </div>
+                  <h3 className="text-xl font-medium mb-2">{setting.title}</h3>
+                  <p className="text-muted-foreground">{setting.description}</p>
+                </div>
+              </FadeIn>
+            ))}
           </div>
         </div>
       </section>

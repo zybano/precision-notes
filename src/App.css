@@ -132,3 +132,14 @@
     padding: 2rem 3rem;
   }
 }
+
+/* Show the image on mobile too */
+@media (max-width: 1023px) {
+  .lg\:block {
+    display: block !important;
+  }
+  
+  .hidden.lg\:block {
+    display: block !important;
+  }
+}
