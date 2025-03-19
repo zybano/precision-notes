@@ -282,7 +282,7 @@ const Index = () => {
           </FadeIn>
           
           <FadeIn delay={0.3} className="hidden lg:block">
-            <div className="glass rounded-2xl shadow-xl overflow-hidden">
+            <div className="glass rounded-2xl shadow-xl overflow-hidden hero-image-container">
               <img 
                 src="/lovable-uploads/ab1cd913-2fb9-450f-884d-8f72ebd060fc.png" 
                 alt="Medical professional using Documedly" 
