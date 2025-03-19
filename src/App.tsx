@@ -12,7 +12,6 @@ import Patients from "./pages/Patients";
 import Documentation from "./pages/Documentation";
 import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
-import Calendar from "./pages/Calendar";
 import Pricing from "./pages/Pricing";
 import Features from "./pages/Features";
 import Integrations from "./pages/Integrations";
@@ -44,7 +43,6 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/patients" element={<Patients />} />
               <Route path="/documentation" element={<Documentation />} />
-              <Route path="/calendar" element={<Calendar />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/settings" element={<Settings />} />
             </Route>

@@ -1,10 +1,8 @@
-
 import { NavLink } from "react-router-dom";
 import { 
   File, 
   FileText, 
   Users, 
-  Calendar,
   Settings, 
   Menu,
   DollarSign,
@@ -34,7 +32,6 @@ const Sidebar = () => {
     { path: "/dashboard", name: "Dashboard", icon: File },
     { path: "/documentation", name: "Documentation", icon: FileText },
     { path: "/patients", name: "Patients", icon: Users },
-    { path: "/calendar", name: "Calendar", icon: Calendar },
     { path: "/pricing", name: "Pricing", icon: DollarSign }
   ];
   
@@ -63,7 +60,6 @@ const Sidebar = () => {
     </ul>
   );
 
-  // Mobile sidebar
   if (isMobile) {
     return (
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -112,7 +108,6 @@ const Sidebar = () => {
     );
   }
 
-  // Desktop sidebar
   return (
     <div className={`h-screen bg-white border-r border-border relative transition-all duration-300 ease-in-out hidden md:block ${expanded ? 'w-60' : 'w-20'}`}>
       <div className="p-4 flex items-center justify-between border-b border-border">
