@@ -456,56 +456,6 @@ const Index = () => {
         <div className="container mx-auto px-6 max-w-7xl">
           <FadeIn>
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold mb-4">Trusted by Medical Professionals</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Join thousands of healthcare professionals who use Documedly to streamline their documentation process.
-              </p>
-            </div>
-          </FadeIn>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {medicalProfessionals.map((professional, i) => (
-              <FadeIn key={i} delay={0.1 + i * 0.1}>
-                <Card className="h-full border-none shadow-md hover:shadow-lg transition-shadow bg-white overflow-hidden">
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={professional.image} 
-                      alt={professional.name} 
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                      <div className="p-4 text-white">
-                        <h3 className="text-xl font-medium">{professional.name}</h3>
-                        <p className="text-white/80">{professional.specialty}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center mb-4 gap-2">
-                      <Stethoscope className="h-5 w-5 text-primary" />
-                      <span className="text-sm font-medium text-primary">Medical Professional</span>
-                    </div>
-                    <p className="text-muted-foreground italic">"{professional.quote}"</p>
-                  </CardContent>
-                </Card>
-              </FadeIn>
-            ))}
-          </div>
-          
-          <div className="mt-12 text-center">
-            <Link to="/dashboard">
-              <Button variant="outline" className="shadow-sm hover:shadow-md transition-all">
-                See More Success Stories
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-      
-      <section className="py-16 md:py-24 bg-white border-t border-border">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <FadeIn>
-            <div className="text-center mb-16">
               <h2 className="text-3xl font-semibold mb-4">What Healthcare Professionals Say</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Hear from doctors, nurses, and healthcare administrators who have transformed their documentation process.
