@@ -54,8 +54,29 @@ export const transcribeAudio = async (
       return mockResult;
     }
     
+    // Check if API key exists and is not default placeholder
+    const apiKey = process.env.REACT_APP_ASSEMBLYAI_API_KEY;
+    
+    if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+      console.log("No valid API key provided, using mock data instead");
+      
+      // Return mock data when no valid API key is provided
+      const mockResult: TranscriptionResult = {
+        text: "This is a mock transcription since no valid AssemblyAI API key was provided. To use the actual transcription service, please add your AssemblyAI API key to the environment variables.",
+        utterances: [
+          { speaker: "Doctor", text: "How have you been feeling since our last appointment?" },
+          { speaker: "Patient", text: "I've been feeling better since the medication adjustment." },
+          { speaker: "Doctor", text: "That's great to hear. How are your energy levels?" },
+          { speaker: "Patient", text: "Much improved, but I still get tired in the afternoons." },
+          { speaker: "Doctor", text: "Your vital signs look stable. I recommend we follow up in two weeks." },
+          { speaker: "Patient", text: "That sounds good to me. Thank you, doctor." }
+        ]
+      };
+      
+      return mockResult;
+    }
+    
     // Initialize AssemblyAI client
-    const apiKey = process.env.REACT_APP_ASSEMBLYAI_API_KEY || 'YOUR_API_KEY_HERE';
     const client = new AssemblyAI({ apiKey });
     
     console.log("Uploading audio file...");
@@ -106,6 +127,26 @@ export const transcribeAudio = async (
     
   } catch (error) {
     console.error("Transcription error:", error);
+    
+    // Check if the error is related to an invalid API key
+    if (error instanceof Error && error.message.includes("Invalid API key")) {
+      console.log("Invalid API key detected, using mock data instead");
+      
+      // Return mock data when invalid API key is detected
+      const mockResult: TranscriptionResult = {
+        text: "There was an error with the AssemblyAI API key. Please check your API key and try again. In the meantime, here's a mock transcription.",
+        utterances: [
+          { speaker: "Doctor", text: "How have you been feeling since our last appointment?" },
+          { speaker: "Patient", text: "I've been feeling better since the medication adjustment." },
+          { speaker: "Doctor", text: "Your vital signs look stable. I recommend we follow up in two weeks." },
+          { speaker: "Patient", text: "That sounds good to me. Thank you, doctor." }
+        ]
+      };
+      
+      return mockResult;
+    }
+    
+    // For other errors, throw a more user-friendly message
     throw new Error(`Failed to transcribe audio: ${error instanceof Error ? error.message : String(error)}`);
   }
 };

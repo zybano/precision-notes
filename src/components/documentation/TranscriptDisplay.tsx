@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, User, UserRound } from "lucide-react";
+import { Copy, User, UserRound, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "@/services/transcription";
 
@@ -50,6 +50,10 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   if (!transcriptResult) return null;
 
+  // Check if this is a mock/error transcript
+  const isMockTranscript = transcript.includes("mock transcription") || 
+                         transcript.includes("API key");
+
   return (
     <>
       {transcriptResult.utterances && transcriptResult.utterances.length > 0 && (
@@ -67,6 +71,13 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               Copy Conversation
             </Button>
           </div>
+          
+          {isMockTranscript && (
+            <div className="flex gap-2 items-center p-2 mb-3 bg-yellow-50 border border-yellow-200 rounded-md text-xs text-yellow-800">
+              <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
+              <span>Using mock data. Add your AssemblyAI API key in environment variables to enable actual transcription.</span>
+            </div>
+          )}
           
           <div className="space-y-3 max-h-60 overflow-y-auto pr-2 mt-2">
             {transcriptResult.utterances.map((utterance, idx) => (

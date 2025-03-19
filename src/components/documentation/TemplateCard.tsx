@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ListFilter, Copy, LucideIcon } from "lucide-react";
+import { ListFilter, Copy, Star, LucideIcon } from "lucide-react";
 
 export interface TemplateParameter {
   name: string;
@@ -19,6 +19,7 @@ export interface TemplateCardProps {
   parameters: TemplateParameter[];
   onViewDetails: () => void;
   onUseTemplate: () => void;
+  isFeatured?: boolean;
 }
 
 const TemplateCard: React.FC<TemplateCardProps> = ({
@@ -28,17 +29,23 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   parameters,
   onViewDetails,
   onUseTemplate,
+  isFeatured = false,
 }) => {
   return (
-    <Card className="hover:shadow-md transition-all cursor-pointer border border-border overflow-hidden">
+    <Card className={`hover:shadow-md transition-all cursor-pointer border ${isFeatured ? 'border-primary/50 bg-primary/5' : 'border-border'} overflow-hidden`}>
       <CardContent className="p-0">
         <div className="p-6">
           <div className="flex items-center">
-            <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center mr-4">
-              <Icon className="h-5 w-5 text-primary" />
+            <div className={`h-10 w-10 rounded-lg ${isFeatured ? 'bg-primary/20' : 'bg-accent'} flex items-center justify-center mr-4`}>
+              <Icon className={`h-5 w-5 ${isFeatured ? 'text-primary' : 'text-primary'}`} />
             </div>
-            <div>
-              <h3 className="font-medium">{title}</h3>
+            <div className="flex-1">
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-medium">{title}</h3>
+                {isFeatured && (
+                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">{description}</p>
             </div>
           </div>
