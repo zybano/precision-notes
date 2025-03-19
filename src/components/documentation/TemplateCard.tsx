@@ -1,0 +1,72 @@
+
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ListFilter, Copy, LucideIcon } from "lucide-react";
+
+export interface TemplateParameter {
+  name: string;
+  label: string;
+  description: string;
+  type: "textarea" | "input";
+}
+
+export interface TemplateCardProps {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  parameters: TemplateParameter[];
+  onViewDetails: () => void;
+  onUseTemplate: () => void;
+}
+
+const TemplateCard: React.FC<TemplateCardProps> = ({
+  title,
+  description,
+  icon: Icon,
+  parameters,
+  onViewDetails,
+  onUseTemplate,
+}) => {
+  return (
+    <Card className="hover:shadow-md transition-all cursor-pointer border border-border overflow-hidden">
+      <CardContent className="p-0">
+        <div className="p-6">
+          <div className="flex items-center">
+            <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center mr-4">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-medium">{title}</h3>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+          </div>
+        </div>
+        <Separator />
+        <div className="p-4 flex justify-between">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onViewDetails}
+            className="gap-1.5"
+          >
+            <ListFilter className="h-3.5 w-3.5" />
+            View Parameters
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onUseTemplate}
+            className="gap-1.5"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Use Template
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default TemplateCard;
