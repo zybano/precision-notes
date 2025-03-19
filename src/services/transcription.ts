@@ -45,7 +45,7 @@ export const transcribeAudio = async (
       audio_url: uploadResponse.url,
       language_code: options.languageCode || 'en_us', // English (US) by default
       speaker_labels: options.speakerLabels !== undefined ? options.speakerLabels : true,
-      speech_model: options.useSpeechModelNano ? 'nano' : 'default'
+      speech_model: options.useSpeechModelNano ? 'nano' : undefined
     });
     
     console.log("Transcription completed:", transcript);
