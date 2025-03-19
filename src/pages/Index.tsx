@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,8 @@ import {
   UserCheck, 
   FileText, 
   Check, 
-  Star 
+  Star,
+  Stethoscope
 } from "lucide-react";
 import { 
   Card, 
@@ -31,6 +31,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
@@ -122,9 +123,29 @@ const Index = () => {
     }
   ];
 
+  const medicalProfessionals = [
+    {
+      name: "Dr. Sarah Johnson",
+      specialty: "Cardiologist",
+      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop",
+      quote: "NoteMedAI has transformed how I document patient visits, reducing my administrative burden by 70%."
+    },
+    {
+      name: "Dr. Michael Chen",
+      specialty: "Family Physician",
+      image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop",
+      quote: "I can now focus more on my patients instead of my computer screen during consultations."
+    },
+    {
+      name: "Dr. Lisa Rodriguez",
+      specialty: "Pediatrician",
+      image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=1887&auto=format&fit=crop",
+      quote: "The AI assistant accurately captures all the nuances of patient interactions, even with children."
+    }
+  ];
+
   return (
     <div className={`min-h-screen bg-background ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
-      {/* Navigation */}
       <nav className="px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <div className="flex items-center">
@@ -155,7 +176,6 @@ const Index = () => {
         </div>
       </nav>
       
-      {/* Hero Section */}
       <section className="container mx-auto px-6 py-16 md:py-24 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <FadeIn delay={0.1}>
@@ -194,7 +214,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Advantages Section */}
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-6 max-w-7xl">
           <FadeIn>
@@ -226,7 +245,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Features Section */}
       <section className="bg-white py-16 md:py-24 border-y border-border">
         <div className="container mx-auto px-6 max-w-7xl">
           <FadeIn>
@@ -254,7 +272,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Settings Section */}
       <section className="py-16 md:py-24 bg-accent/40">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -300,7 +317,56 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Testimonials Section */}
+      <section className="py-16 md:py-24 bg-white border-t border-border">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-semibold mb-4">Trusted by Medical Professionals</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Join thousands of healthcare professionals who use NoteMedAI to streamline their documentation process.
+              </p>
+            </div>
+          </FadeIn>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {medicalProfessionals.map((professional, i) => (
+              <FadeIn key={i} delay={0.1 + i * 0.1}>
+                <Card className="h-full border-none shadow-md hover:shadow-lg transition-shadow bg-white overflow-hidden">
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={professional.image} 
+                      alt={professional.name} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                      <div className="p-4 text-white">
+                        <h3 className="text-xl font-medium">{professional.name}</h3>
+                        <p className="text-white/80">{professional.specialty}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center mb-4 gap-2">
+                      <Stethoscope className="h-5 w-5 text-primary" />
+                      <span className="text-sm font-medium text-primary">Medical Professional</span>
+                    </div>
+                    <p className="text-muted-foreground italic">"{professional.quote}"</p>
+                  </CardContent>
+                </Card>
+              </FadeIn>
+            ))}
+          </div>
+          
+          <div className="mt-12 text-center">
+            <Link to="/dashboard">
+              <Button variant="outline" className="shadow-sm hover:shadow-md transition-all">
+                See More Success Stories
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+      
       <section className="py-16 md:py-24 bg-white border-t border-border">
         <div className="container mx-auto px-6 max-w-7xl">
           <FadeIn>
@@ -352,7 +418,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* CTA Section */}
       <section className="container mx-auto px-6 py-16 md:py-24 max-w-7xl">
         <FadeIn>
           <div className="bg-accent rounded-2xl p-8 md:p-12 text-center">
@@ -369,7 +434,6 @@ const Index = () => {
         </FadeIn>
       </section>
       
-      {/* Footer */}
       <footer className="bg-white border-t border-border py-12">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex flex-col md:flex-row justify-between items-center">
