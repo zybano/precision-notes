@@ -68,7 +68,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
               Details
             </Button>
             <Button 
-              variant="primary" 
+              variant="default" 
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
