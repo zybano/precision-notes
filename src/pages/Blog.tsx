@@ -32,7 +32,7 @@ const Blog = () => {
       author: {
         name: "Dr. Emmanuel Egberuare",
         role: "CEO & Founder",
-        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1976&auto=format&fit=crop"
+        image: "/lovable-uploads/7b3ffde1-30a8-40c7-af74-8f1bed121068.png"
       },
       image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1170&auto=format&fit=crop"
     },
