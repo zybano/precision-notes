@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -28,6 +28,19 @@ import { Badge } from "@/components/ui/badge";
 import { Database, User, PlugZap, KeyRound, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+const profileSchema = z.object({
+  fullName: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email.",
+  }),
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  bio: z.string().optional(),
+});
 
 const authSettingsSchema = z.object({
   email: z.string().email({
@@ -66,6 +79,17 @@ const Settings = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isUpdatingAuth, setIsUpdatingAuth] = useState(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  const profileForm = useForm<z.infer<typeof profileSchema>>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      fullName: "Dr. Alex Johnson",
+      email: "alex.johnson@medicalpractice.com",
+      title: "Cardiologist",
+      bio: "Board-certified cardiologist with over 10 years of experience in treating heart diseases and related conditions. Special interest in preventative cardiology and heart health education.",
+    },
+  });
 
   const authForm = useForm<z.infer<typeof authSettingsSchema>>({
     resolver: zodResolver(authSettingsSchema),
@@ -85,6 +109,29 @@ const Settings = () => {
       endpointUrl: "",
     },
   });
+
+  // Fetch current user email on component mount
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user?.email) {
+        authForm.setValue('email', data.user.email);
+      }
+    };
+    
+    fetchUserEmail();
+  }, []);
+
+  const onProfileSubmit = (data: z.infer<typeof profileSchema>) => {
+    setIsUpdatingProfile(true);
+    
+    // Simulate profile update
+    setTimeout(() => {
+      setIsUpdatingProfile(false);
+      toast.success("Profile updated successfully");
+      console.log("Profile update data:", data);
+    }, 1500);
+  };
 
   const onAuthSubmit = async (data: z.infer<typeof authSettingsSchema>) => {
     try {
@@ -157,18 +204,6 @@ const Settings = () => {
     }, 2000);
   };
 
-  // Fetch current user email on component mount
-  useState(() => {
-    const fetchUserEmail = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user?.email) {
-        authForm.setValue('email', data.user.email);
-      }
-    };
-    
-    fetchUserEmail();
-  });
-
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex justify-between items-center">
@@ -176,6 +211,96 @@ const Settings = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Profile Card */}
+        <Card className="medical-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-4 mb-2">
+              <Avatar className="h-16 w-16 border-2 border-primary/20">
+                <AvatarImage src="https://ui.shadcn.com/avatars/01.png" alt="Doctor" />
+                <AvatarFallback>AJ</AvatarFallback>
+              </Avatar>
+              <div>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Update your personal details</CardDescription>
+              </div>
+            </div>
+            <Badge variant="outline" className="w-fit gap-1 px-2 py-1 text-xs">
+              <User size={14} /> Personal
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                <FormField
+                  control={profileForm.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={profileForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={profileForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Professional Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Cardiologist, Radiologist" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={profileForm.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bio</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Brief description of your professional background" 
+                          className="min-h-[120px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <CardFooter className="px-0 pt-2">
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isUpdatingProfile}
+                  >
+                    {isUpdatingProfile ? "Updating..." : "Update Profile"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
         {/* Authentication Settings Card */}
         <Card className="medical-card">
           <CardHeader className="pb-4">
