@@ -139,17 +139,19 @@ const Dashboard = () => {
         
         // Calculate week-over-week change - ensure numerical types for calculation
         let weekChange = 0;
+        
+        // Explicit number conversions to ensure numeric types
         const docsThisWeekNum = Number(docsThisWeek);
         const docsPrevWeekNum = Number(docsPrevWeek);
         
         if (docsPrevWeekNum > 0) {
+          // Ensure both operands are numbers by using Number() conversion
           weekChange = Math.round(((docsThisWeekNum - docsPrevWeekNum) / docsPrevWeekNum) * 100);
         } else if (docsThisWeekNum > 0) {
           weekChange = 100; // If no docs previous week but some this week, that's a 100% increase
         }
         
-        // Update metrics with proper number conversions
-        // Calculate efficiency score as a number first
+        // Calculate efficiency score as a number
         const efficiencyScoreNum = allDocs.length > 5 ? 94 : (allDocs.length * 10 + 50);
         
         setMetrics([
