@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,6 @@ import {
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -239,30 +237,7 @@ const Index = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
-            <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
-              <DialogTrigger asChild>
-                <button className="text-muted-foreground hover:text-foreground transition-colors">About</button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>About Documedly</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <p>
-                    Documedly was created by physicians who were burnt out from clinical documentation and realized the poor eye contact and suboptimal patient experience during hospital visits.
-                  </p>
-                  <p>
-                    Our solution addresses all use cases: in-patient, outpatient, emergency & operating rooms, and on-the-field assessments.
-                  </p>
-                  <p>
-                    We have a global vision with a mandate to optimize and simplify clinical documentation in every healthcare setting across Africa and beyond.
-                  </p>
-                  <p>
-                    Our team combines expertise in healthcare, AI, and user experience to create a platform that transforms the documentation process without compromising patient care.
-                  </p>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
           </div>
