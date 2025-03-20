@@ -311,7 +311,21 @@ const DocumentationPage = () => {
               ))}
               
               {documentTemplates
-                .filter(template => template.title !== "Dictation (Blank)")
+                .filter(template => template.title === "History & Physical")
+                .map((template, index) => (
+                <TemplateCard
+                  key={`history-physical-${index}`}
+                  title={template.title}
+                  description={template.description}
+                  icon={template.icon}
+                  parameters={template.parameters}
+                  onViewDetails={() => handleViewTemplateDetails(template)}
+                  onUseTemplate={() => handleUseTemplate(template)}
+                />
+              ))}
+              
+              {documentTemplates
+                .filter(template => template.title !== "Dictation (Blank)" && template.title !== "History & Physical")
                 .map((template, index) => (
                 <TemplateCard
                   key={index}
