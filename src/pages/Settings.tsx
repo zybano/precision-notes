@@ -25,7 +25,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Database, User, PlugZap, KeyRound, Lock } from "lucide-react";
+import { Database, User, PlugZap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,27 +40,6 @@ const profileSchema = z.object({
     message: "Title must be at least 2 characters.",
   }),
   bio: z.string().optional(),
-});
-
-const authSettingsSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email.",
-  }),
-  currentPassword: z.string().min(6, {
-    message: "Current password must be at least 6 characters.",
-  }),
-  newPassword: z.string().min(6, {
-    message: "New password must be at least 6 characters.",
-  }).optional(),
-  confirmPassword: z.string().optional(),
-}).refine((data) => {
-  if (data.newPassword && !data.confirmPassword) return false;
-  if (!data.newPassword && data.confirmPassword) return false;
-  if (data.newPassword && data.confirmPassword && data.newPassword !== data.confirmPassword) return false;
-  return true;
-}, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 const emrConnectionSchema = z.object({
@@ -78,26 +57,15 @@ const emrConnectionSchema = z.object({
 const Settings = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [isUpdatingAuth, setIsUpdatingAuth] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: "Dr. Alex Johnson",
-      email: "alex.johnson@medicalpractice.com",
-      title: "Cardiologist",
-      bio: "Board-certified cardiologist with over 10 years of experience in treating heart diseases and related conditions. Special interest in preventative cardiology and heart health education.",
-    },
-  });
-
-  const authForm = useForm<z.infer<typeof authSettingsSchema>>({
-    resolver: zodResolver(authSettingsSchema),
-    defaultValues: {
+      fullName: "",
       email: "",
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+      title: "",
+      bio: "",
     },
   });
 
@@ -110,85 +78,52 @@ const Settings = () => {
     },
   });
 
-  // Fetch current user email on component mount
+  // Fetch current user data on component mount
   useEffect(() => {
-    const fetchUserEmail = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user?.email) {
-        authForm.setValue('email', data.user.email);
+    const fetchUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Set email from auth data
+        profileForm.setValue('email', user.email || '');
+        
+        // Get additional user metadata
+        const fullName = user.user_metadata?.full_name || '';
+        const title = user.user_metadata?.title || '';
+        const bio = user.user_metadata?.bio || '';
+        
+        profileForm.setValue('fullName', fullName);
+        profileForm.setValue('title', title);
+        profileForm.setValue('bio', bio);
       }
     };
     
-    fetchUserEmail();
+    fetchUserData();
   }, []);
 
-  const onProfileSubmit = (data: z.infer<typeof profileSchema>) => {
+  const onProfileSubmit = async (data: z.infer<typeof profileSchema>) => {
     setIsUpdatingProfile(true);
     
-    // Simulate profile update
-    setTimeout(() => {
-      setIsUpdatingProfile(false);
-      toast.success("Profile updated successfully");
-      console.log("Profile update data:", data);
-    }, 1500);
-  };
-
-  const onAuthSubmit = async (data: z.infer<typeof authSettingsSchema>) => {
     try {
-      setIsUpdatingAuth(true);
-      
-      // Check current password by trying to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.currentPassword,
+      // Update user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: data.fullName,
+          title: data.title,
+          bio: data.bio
+        }
       });
       
-      if (signInError) {
-        toast.error("Current password is incorrect");
-        setIsUpdatingAuth(false);
-        return;
+      if (error) {
+        throw error;
       }
       
-      // If user wants to update password
-      if (data.newPassword) {
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: data.newPassword
-        });
-        
-        if (updateError) {
-          toast.error("Failed to update password: " + updateError.message);
-          setIsUpdatingAuth(false);
-          return;
-        }
-      }
-      
-      // Update email if needed
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user && userData.user.email !== data.email) {
-        const { error: emailUpdateError } = await supabase.auth.updateUser({
-          email: data.email
-        });
-        
-        if (emailUpdateError) {
-          toast.error("Failed to update email: " + emailUpdateError.message);
-          setIsUpdatingAuth(false);
-          return;
-        }
-      }
-      
-      toast.success("Authentication settings updated successfully");
-      // Reset form fields
-      authForm.reset({
-        email: data.email,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      toast.success("Profile updated successfully");
     } catch (error) {
-      console.error("Error updating auth settings:", error);
-      toast.error("Failed to update authentication settings");
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
     } finally {
-      setIsUpdatingAuth(false);
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -217,7 +152,13 @@ const Settings = () => {
             <div className="flex items-center gap-4 mb-2">
               <Avatar className="h-16 w-16 border-2 border-primary/20">
                 <AvatarImage src="https://ui.shadcn.com/avatars/01.png" alt="Doctor" />
-                <AvatarFallback>AJ</AvatarFallback>
+                <AvatarFallback>
+                  {profileForm.getValues().fullName
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase() || 'U'}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <CardTitle>Profile Information</CardTitle>
@@ -251,8 +192,11 @@ const Settings = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your email" {...field} />
+                        <Input placeholder="Enter your email" {...field} disabled />
                       </FormControl>
+                      <FormDescription>
+                        Email cannot be changed here. Contact support if needed.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -294,94 +238,6 @@ const Settings = () => {
                     disabled={isUpdatingProfile}
                   >
                     {isUpdatingProfile ? "Updating..." : "Update Profile"}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Authentication Settings Card */}
-        <Card className="medical-card">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="h-16 w-16 rounded-full flex items-center justify-center bg-primary/20 text-primary">
-                <KeyRound size={32} />
-              </div>
-              <div>
-                <CardTitle>Authentication Settings</CardTitle>
-                <CardDescription>Update your login information</CardDescription>
-              </div>
-            </div>
-            <Badge variant="outline" className="w-fit gap-1 px-2 py-1 text-xs">
-              <Lock size={14} /> Security
-            </Badge>
-          </CardHeader>
-          <CardContent>
-            <Form {...authForm}>
-              <form onSubmit={authForm.handleSubmit(onAuthSubmit)} className="space-y-4">
-                <FormField
-                  control={authForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={authForm.control}
-                  name="currentPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Enter your current password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={authForm.control}
-                  name="newPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password (Optional)</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Enter new password" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Leave blank if you don't want to change your password
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={authForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Confirm new password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <CardFooter className="px-0 pt-2">
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={isUpdatingAuth}
-                  >
-                    {isUpdatingAuth ? "Updating..." : "Update Authentication"}
                   </Button>
                 </CardFooter>
               </form>
