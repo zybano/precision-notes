@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { Link } from "react-router-dom";
@@ -6,7 +5,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Clock } from "lucide-react";
 
-// Create unique IDs for blog posts to use in routing
 const Blog = () => {
   const blogPosts = [
     {
@@ -90,7 +88,6 @@ const Blog = () => {
   ];
 
   const BlogPost = () => {
-    // Find the current blog post based on URL
     const pathname = window.location.pathname;
     const postId = pathname.split('/blog/')[1];
     const post = blogPosts.find(post => post.id === postId);
@@ -151,7 +148,6 @@ const Blog = () => {
     );
   };
 
-  // Check if we're on a blog post page
   const pathname = window.location.pathname;
   if (pathname.startsWith('/blog/') && pathname !== '/blog/') {
     return (
@@ -232,7 +228,7 @@ const Blog = () => {
             </div>
             
             <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-              <p>© 2023 Documedly, Inc. All rights reserved.</p>
+              <p>© 2025 Documedly, Inc. All rights reserved.</p>
               <div className="mt-4 md:mt-0 flex space-x-4">
                 <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
                 <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>
@@ -383,7 +379,7 @@ const Blog = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 Documedly, Inc. All rights reserved.</p>
+            <p>© 2025 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>

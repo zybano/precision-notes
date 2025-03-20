@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 
 const About = () => {
+  
   return (
     <div className="min-h-screen bg-background">
       <div className="relative bg-gradient-to-r from-medical-50 to-medical-100 h-[40vh] md:h-[50vh]">
