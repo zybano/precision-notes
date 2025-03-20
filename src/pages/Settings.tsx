@@ -25,22 +25,29 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Database, User, PlugZap } from "lucide-react";
+import { Database, User, PlugZap, KeyRound, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-const userProfileSchema = z.object({
-  fullName: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
+const authSettingsSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email.",
   }),
-  role: z.string().min(2, {
-    message: "Role must be at least 2 characters.",
+  currentPassword: z.string().min(6, {
+    message: "Current password must be at least 6 characters.",
   }),
-  bio: z.string().max(160, {
-    message: "Bio must not be longer than 160 characters.",
-  }),
+  newPassword: z.string().min(6, {
+    message: "New password must be at least 6 characters.",
+  }).optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  if (data.newPassword && !data.confirmPassword) return false;
+  if (!data.newPassword && data.confirmPassword) return false;
+  if (data.newPassword && data.confirmPassword && data.newPassword !== data.confirmPassword) return false;
+  return true;
+}, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 const emrConnectionSchema = z.object({
@@ -58,14 +65,15 @@ const emrConnectionSchema = z.object({
 const Settings = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [isUpdatingAuth, setIsUpdatingAuth] = useState(false);
 
-  const userForm = useForm<z.infer<typeof userProfileSchema>>({
-    resolver: zodResolver(userProfileSchema),
+  const authForm = useForm<z.infer<typeof authSettingsSchema>>({
+    resolver: zodResolver(authSettingsSchema),
     defaultValues: {
-      fullName: "Dr. Sarah Johnson",
-      email: "sarah.johnson@notemed.ai",
-      role: "Medical Director",
-      bio: "Board-certified physician with over 10 years of experience in internal medicine."
+      email: "",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -78,9 +86,63 @@ const Settings = () => {
     },
   });
 
-  const onUserSubmit = (data: z.infer<typeof userProfileSchema>) => {
-    toast.success("Profile updated successfully");
-    console.log("User profile data:", data);
+  const onAuthSubmit = async (data: z.infer<typeof authSettingsSchema>) => {
+    try {
+      setIsUpdatingAuth(true);
+      
+      // Check current password by trying to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.currentPassword,
+      });
+      
+      if (signInError) {
+        toast.error("Current password is incorrect");
+        setIsUpdatingAuth(false);
+        return;
+      }
+      
+      // If user wants to update password
+      if (data.newPassword) {
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: data.newPassword
+        });
+        
+        if (updateError) {
+          toast.error("Failed to update password: " + updateError.message);
+          setIsUpdatingAuth(false);
+          return;
+        }
+      }
+      
+      // Update email if needed
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user && userData.user.email !== data.email) {
+        const { error: emailUpdateError } = await supabase.auth.updateUser({
+          email: data.email
+        });
+        
+        if (emailUpdateError) {
+          toast.error("Failed to update email: " + emailUpdateError.message);
+          setIsUpdatingAuth(false);
+          return;
+        }
+      }
+      
+      toast.success("Authentication settings updated successfully");
+      // Reset form fields
+      authForm.reset({
+        email: data.email,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      console.error("Error updating auth settings:", error);
+      toast.error("Failed to update authentication settings");
+    } finally {
+      setIsUpdatingAuth(false);
+    }
   };
 
   const onEmrSubmit = (data: z.infer<typeof emrConnectionSchema>) => {
@@ -95,6 +157,18 @@ const Settings = () => {
     }, 2000);
   };
 
+  // Fetch current user email on component mount
+  useState(() => {
+    const fetchUserEmail = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user?.email) {
+        authForm.setValue('email', data.user.email);
+      }
+    };
+    
+    fetchUserEmail();
+  });
+
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex justify-between items-center">
@@ -102,41 +176,27 @@ const Settings = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* User Profile Card */}
+        {/* Authentication Settings Card */}
         <Card className="medical-card">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-4 mb-2">
-              <Avatar className="h-16 w-16 border-2 border-primary">
-                <AvatarImage src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" />
-                <AvatarFallback className="bg-primary text-white text-xl">SJ</AvatarFallback>
-              </Avatar>
+              <div className="h-16 w-16 rounded-full flex items-center justify-center bg-primary/20 text-primary">
+                <KeyRound size={32} />
+              </div>
               <div>
-                <CardTitle>User Profile</CardTitle>
-                <CardDescription>Update your personal information</CardDescription>
+                <CardTitle>Authentication Settings</CardTitle>
+                <CardDescription>Update your login information</CardDescription>
               </div>
             </div>
             <Badge variant="outline" className="w-fit gap-1 px-2 py-1 text-xs">
-              <User size={14} /> Active Account
+              <Lock size={14} /> Security
             </Badge>
           </CardHeader>
           <CardContent>
-            <Form {...userForm}>
-              <form onSubmit={userForm.handleSubmit(onUserSubmit)} className="space-y-4">
+            <Form {...authForm}>
+              <form onSubmit={authForm.handleSubmit(onAuthSubmit)} className="space-y-4">
                 <FormField
-                  control={userForm.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={userForm.control}
+                  control={authForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -149,41 +209,54 @@ const Settings = () => {
                   )}
                 />
                 <FormField
-                  control={userForm.control}
-                  name="role"
+                  control={authForm.control}
+                  name="currentPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Professional Role</FormLabel>
+                      <FormLabel>Current Password</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your role" {...field} />
+                        <Input type="password" placeholder="Enter your current password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
-                  control={userForm.control}
-                  name="bio"
+                  control={authForm.control}
+                  name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bio</FormLabel>
+                      <FormLabel>New Password (Optional)</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Tell us about yourself" 
-                          className="resize-none" 
-                          {...field} 
-                        />
+                        <Input type="password" placeholder="Enter new password" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Brief professional description (max 160 characters)
+                        Leave blank if you don't want to change your password
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={authForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Confirm new password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <CardFooter className="px-0 pt-2">
-                  <Button type="submit" className="w-full">
-                    Update Profile
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isUpdatingAuth}
+                  >
+                    {isUpdatingAuth ? "Updating..." : "Update Authentication"}
                   </Button>
                 </CardFooter>
               </form>
