@@ -28,6 +28,7 @@ interface Document {
   status: string;
   created_at: string;
   updated_at: string;
+  notes: string | null; // Add notes property to the Document interface
 }
 
 const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
