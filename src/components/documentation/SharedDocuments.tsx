@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
+import { FolderOpen } from "lucide-react";
 
 interface SharedDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
@@ -13,10 +14,8 @@ interface SharedDocumentsProps {
 const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, form }) => {
   const { toast } = useToast();
   
-  const sharedDocuments = [
-    { title: "Team Meeting Notes", author: "Dr. Jessica Kim", date: "Shared with you on Aug 26, 2023" },
-    { title: "Clinical Guidelines 2023", author: "Dr. Andrew Martinez", date: "Shared with you on Aug 20, 2023" },
-  ];
+  // Empty array for shared documents
+  const sharedDocuments: Array<{ title: string; author: string; date: string }> = [];
 
   const handleViewDocument = (doc: typeof sharedDocuments[0]) => {
     toast({
@@ -29,6 +28,18 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
     form.setValue("patientName", doc.title);
     form.setValue("notes", `Shared by ${doc.author} on ${doc.date.split(" on ")[1]}`);
   };
+
+  if (sharedDocuments.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-10 text-center border border-dashed rounded-lg border-border bg-muted/40">
+        <FolderOpen className="w-10 h-10 mb-4 text-muted-foreground" />
+        <h3 className="mb-2 text-lg font-medium">No shared documents</h3>
+        <p className="text-sm text-muted-foreground">
+          Documents shared with you will appear here.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
