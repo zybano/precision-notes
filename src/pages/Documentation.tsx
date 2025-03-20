@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +15,7 @@ import TemplateDetailsDialog from "@/components/documentation/TemplateDetailsDia
 import NewDocumentDialog from "@/components/documentation/NewDocumentDialog";
 import RecentDocuments from "@/components/documentation/RecentDocuments";
 import SharedDocuments from "@/components/documentation/SharedDocuments";
+import { useNavigate } from "react-router-dom";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
@@ -35,7 +35,8 @@ const DocumentationPage = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<typeof documentTemplates[0] | null>(null);
   const [transcriptResult, setTranscriptResult] = useState<TranscriptionResult | null>(null);
   const { toast } = useToast();
-  
+  const navigate = useNavigate();
+
   const form = useForm({
     defaultValues: {
       type: "SOAP Note",
@@ -50,6 +51,14 @@ const DocumentationPage = () => {
       description: "Your new document has been created from this template.",
       duration: 3000,
     });
+    
+    if (template.title === "Dictation (Blank)") {
+      form.setValue("type", template.title);
+      form.setValue("notes", "");
+      setNewDocumentOpen(true);
+      return;
+    }
+    
     setNewDocumentOpen(true);
     form.setValue("type", template.title);
     
@@ -286,7 +295,24 @@ const DocumentationPage = () => {
           
           <TabsContent value="templates" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {documentTemplates.map((template, index) => (
+              {documentTemplates
+                .filter(template => template.title === "Dictation (Blank)")
+                .map((template, index) => (
+                <TemplateCard
+                  key={`dictation-${index}`}
+                  title={template.title}
+                  description={template.description}
+                  icon={template.icon}
+                  parameters={template.parameters}
+                  onViewDetails={() => handleViewTemplateDetails(template)}
+                  onUseTemplate={() => handleUseTemplate(template)}
+                  isFeatured={true}
+                />
+              ))}
+              
+              {documentTemplates
+                .filter(template => template.title !== "Dictation (Blank)")
+                .map((template, index) => (
                 <TemplateCard
                   key={index}
                   title={template.title}
@@ -299,7 +325,7 @@ const DocumentationPage = () => {
               ))}
             </div>
           </TabsContent>
-
+          
           <TabsContent value="specialties" className="space-y-6">
             <SpecialtyTemplates onUseTemplate={handleUseSpecialtyTemplate} />
           </TabsContent>

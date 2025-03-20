@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,13 +30,15 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   onUseTemplate,
   isFeatured = false,
 }) => {
+  const isDictation = title === "Dictation (Blank)";
+  
   return (
-    <Card className={`hover:shadow-md transition-all cursor-pointer border ${isFeatured ? 'border-primary/50 bg-primary/5' : 'border-border'} overflow-hidden`}>
+    <Card className={`hover:shadow-md transition-all cursor-pointer border ${isDictation ? 'border-primary/80 bg-primary/5' : isFeatured ? 'border-primary/50 bg-primary/5' : 'border-border'} overflow-hidden`}>
       <CardContent className="p-0">
         <div className="p-6">
           <div className="flex items-center">
-            <div className={`h-10 w-10 rounded-lg ${isFeatured ? 'bg-primary/20' : 'bg-accent'} flex items-center justify-center mr-4`}>
-              <Icon className={`h-5 w-5 ${isFeatured ? 'text-primary' : 'text-primary'}`} />
+            <div className={`h-10 w-10 rounded-lg ${isDictation ? 'bg-primary/20' : isFeatured ? 'bg-primary/20' : 'bg-accent'} flex items-center justify-center mr-4`}>
+              <Icon className={`h-5 w-5 ${isDictation ? 'text-primary' : isFeatured ? 'text-primary' : 'text-primary'}`} />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-1.5">

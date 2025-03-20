@@ -1,5 +1,4 @@
-
-import { FileText, Calendar, ClipboardList } from "lucide-react";
+import { FileText, Calendar, ClipboardList, Mic } from "lucide-react";
 import { TemplateParameter } from "@/components/documentation/TemplateCard";
 
 export interface DocumentTemplate {
@@ -10,6 +9,14 @@ export interface DocumentTemplate {
 }
 
 export const documentTemplates: DocumentTemplate[] = [
+  { 
+    title: "Dictation (Blank)", 
+    description: "Free-form dictation without structure", 
+    icon: Mic,
+    parameters: [
+      { name: "content", label: "Content", description: "Dictated content without predefined structure", type: "textarea" }
+    ]
+  },
   { 
     title: "SOAP Note", 
     description: "Subjective, Objective, Assessment, Plan", 
