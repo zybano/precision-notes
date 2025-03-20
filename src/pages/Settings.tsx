@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Card, 
@@ -25,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Database, User, PlugZap } from "lucide-react";
+import { Database, User, PlugZap, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -80,13 +79,10 @@ const Settings = () => {
     },
   });
 
-  // Fetch current user data on component mount
   useEffect(() => {
     if (user) {
-      // Set email from auth data
       profileForm.setValue('email', user.email || '');
       
-      // Get additional user metadata
       const fullName = user.user_metadata?.full_name || '';
       const title = user.user_metadata?.title || '';
       const bio = user.user_metadata?.bio || '';
@@ -101,7 +97,6 @@ const Settings = () => {
     setIsUpdatingProfile(true);
     
     try {
-      // Update user metadata
       const { error } = await supabase.auth.updateUser({
         data: {
           full_name: data.fullName,
@@ -126,7 +121,6 @@ const Settings = () => {
   const onEmrSubmit = (data: z.infer<typeof emrConnectionSchema>) => {
     setIsConnecting(true);
     
-    // Simulate connection process
     setTimeout(() => {
       setIsConnecting(false);
       setIsConnected(true);
@@ -142,18 +136,13 @@ const Settings = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Profile Card */}
         <Card className="medical-card">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-4 mb-2">
               <Avatar className="h-16 w-16 border-2 border-primary/20">
                 <AvatarImage src="https://ui.shadcn.com/avatars/01.png" alt="Doctor" />
-                <AvatarFallback>
-                  {profileForm.getValues().fullName
-                    .split(' ')
-                    .map(n => n[0])
-                    .join('')
-                    .toUpperCase() || 'U'}
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  <Stethoscope size={24} />
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -241,7 +230,6 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* EMR/EHR Connection Card */}
         <Card className="medical-card">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-4 mb-2">
