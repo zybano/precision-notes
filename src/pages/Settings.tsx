@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Database, User, PlugZap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const profileSchema = z.object({
   fullName: z.string().min(2, {
@@ -38,7 +39,7 @@ const profileSchema = z.object({
   }),
   title: z.string().min(2, {
     message: "Title must be at least 2 characters.",
-  }),
+  }).optional().or(z.literal('')),
   bio: z.string().optional(),
 });
 
@@ -55,6 +56,7 @@ const emrConnectionSchema = z.object({
 });
 
 const Settings = () => {
+  const { user } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -80,26 +82,20 @@ const Settings = () => {
 
   // Fetch current user data on component mount
   useEffect(() => {
-    const fetchUserData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      // Set email from auth data
+      profileForm.setValue('email', user.email || '');
       
-      if (user) {
-        // Set email from auth data
-        profileForm.setValue('email', user.email || '');
-        
-        // Get additional user metadata
-        const fullName = user.user_metadata?.full_name || '';
-        const title = user.user_metadata?.title || '';
-        const bio = user.user_metadata?.bio || '';
-        
-        profileForm.setValue('fullName', fullName);
-        profileForm.setValue('title', title);
-        profileForm.setValue('bio', bio);
-      }
-    };
-    
-    fetchUserData();
-  }, []);
+      // Get additional user metadata
+      const fullName = user.user_metadata?.full_name || '';
+      const title = user.user_metadata?.title || '';
+      const bio = user.user_metadata?.bio || '';
+      
+      profileForm.setValue('fullName', fullName);
+      profileForm.setValue('title', title);
+      profileForm.setValue('bio', bio);
+    }
+  }, [user]);
 
   const onProfileSubmit = async (data: z.infer<typeof profileSchema>) => {
     setIsUpdatingProfile(true);

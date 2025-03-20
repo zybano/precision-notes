@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   ThumbsUp, 
   Shield, 
@@ -46,6 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     setLoaded(true);
@@ -231,16 +233,26 @@ const Index = () => {
           </div>
           
           <div className="flex items-center space-x-3">
-            <Link to="/dashboard">
-              <Button variant="outline" className="hidden sm:inline-flex transition-all hover:shadow-sm">
-                Log in
-              </Button>
-            </Link>
-            <Link to="/dashboard">
-              <Button className="shadow-sm hover:shadow-md transition-all btn-premium">
-                Get Started
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/dashboard">
+                <Button variant="outline" className="hidden sm:inline-flex transition-all hover:shadow-sm">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="outline" className="hidden sm:inline-flex transition-all hover:shadow-sm">
+                    Log in
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button className="shadow-sm hover:shadow-md transition-all btn-premium">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -259,9 +271,9 @@ const Index = () => {
                 Transform your medical documentation workflow with real-time transcription and AI-powered assistance.
               </p>
               <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                <Link to="/dashboard">
+                <Link to={user ? "/dashboard" : "/signup"}>
                   <Button size="lg" className="w-full sm:w-auto shadow hover:shadow-md transition-all btn-premium">
-                    Start Free Trial
+                    {user ? "Go to Dashboard" : "Start Free Trial"}
                   </Button>
                 </Link>
                 <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
