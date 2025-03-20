@@ -148,7 +148,9 @@ const Dashboard = () => {
           weekChange = 100; // If no docs previous week but some this week, that's a 100% increase
         }
         
-        // Update metrics
+        // Update metrics with proper number conversions
+        const efficiencyScore = allDocs.length > 5 ? 94 : (allDocs.length * 10 + 50);
+        
         setMetrics([
           { 
             title: "Documentation Time", 
@@ -176,7 +178,7 @@ const Dashboard = () => {
           },
           { 
             title: "Efficiency Score", 
-            value: allDocs.length > 5 ? "94" : (allDocs.length * 10 + 50).toString(), 
+            value: efficiencyScore.toString(), 
             change: "+5", 
             description: "Documentation quality metric", 
             icon: BarChart,
