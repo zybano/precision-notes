@@ -1,7 +1,7 @@
 
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "@/components/Sidebar";
-import { SidebarToggle } from "@/components/ui/sidebar";
+import Sidebar from "@/components/Sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRound, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ const Layout = () => {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <header className="h-14 flex items-center justify-between gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-          <SidebarToggle />
+          <SidebarTrigger />
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
