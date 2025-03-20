@@ -138,9 +138,12 @@ const Dashboard = () => {
         ).length;
         
         // Calculate week-over-week change
-        const weekChange = docsPrevWeek > 0 
-          ? Math.round((docsThisWeek - docsPrevWeek) / docsPrevWeek * 100) 
-          : 100;
+        let weekChange = 0;
+        if (docsPrevWeek > 0) {
+          weekChange = Math.round(((docsThisWeek - docsPrevWeek) / docsPrevWeek) * 100);
+        } else if (docsThisWeek > 0) {
+          weekChange = 100; // If no docs previous week but some this week, that's a 100% increase
+        }
         
         // Update metrics
         setMetrics([
@@ -163,7 +166,7 @@ const Dashboard = () => {
           { 
             title: "Patient Encounters", 
             value: uniquePatients.toString(), 
-            change: `${weekChange > 0 ? '+' : ''}${weekChange}%`, 
+            change: `${weekChange >= 0 ? '+' : ''}${weekChange}%`, 
             description: "Compared to last week", 
             icon: Users,
             positive: weekChange >= 0
