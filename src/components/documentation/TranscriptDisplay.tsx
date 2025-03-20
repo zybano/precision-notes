@@ -1,13 +1,14 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, User, UserRound, AlertCircle, FileText } from "lucide-react";
+import { Copy, User, UserRound, AlertCircle, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "@/services/transcription";
 import { formatTranscriptionToNoteText } from "@/services/noteConversion";
 import { documentTemplates } from "@/data/documentTemplates";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult | null;
@@ -30,6 +31,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   const [selectedFormat, setSelectedFormat] = useState("SOAP Note");
   const [formattedNote, setFormattedNote] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
 
   const handleCopyConversation = () => {
     if (!transcriptResult || !transcriptResult.utterances) return;
@@ -76,18 +78,6 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       title: "Note Structured",
       description: `Transcript has been converted to ${selectedFormat} format`,
       duration: 3000,
-    });
-  };
-
-  const handleApplyNote = () => {
-    if (!form || !formattedNote) return;
-    
-    form.setValue("notes", formattedNote);
-    
-    toast({
-      title: "Note Applied",
-      description: "Structured note has been applied to the document",
-      duration: 2000,
     });
   };
 
@@ -222,18 +212,6 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                         Convert to Note
                       </Button>
                     </div>
-                    
-                    {showPreview && form && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="h-7 px-2 text-xs"
-                        onClick={handleApplyNote}
-                      >
-                        Apply to Document
-                      </Button>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -245,6 +223,20 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium">Transcript Summary</h4>
                 <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setSummaryExpanded(!summaryExpanded)}
+                  >
+                    {summaryExpanded ? (
+                      <><ChevronUp className="h-3.5 w-3.5 mr-1" /> Collapse</>
+                    ) : (
+                      <><ChevronDown className="h-3.5 w-3.5 mr-1" /> Expand</>
+                    )}
+                  </Button>
+                  
                   <Button
                     type="button"
                     size="sm"
@@ -271,8 +263,10 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               </div>
               
               {showSummary && (
-                <div className="text-sm border-l-2 border-primary pl-3 py-1 my-2 bg-muted/50 rounded-sm">
-                  {transcriptSummary}
+                <div className={`text-sm border-l-2 border-primary pl-3 py-1 my-2 bg-muted/50 rounded-sm ${summaryExpanded ? 'h-auto max-h-[300px]' : 'max-h-24 overflow-hidden'}`}>
+                  <ScrollArea className={summaryExpanded ? 'h-[280px]' : 'h-auto'}>
+                    {transcriptSummary}
+                  </ScrollArea>
                 </div>
               )}
             </div>

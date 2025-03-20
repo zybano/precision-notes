@@ -1,9 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
@@ -84,27 +82,6 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
-  const copyTranscription = () => {
-    const textToCopy = form.getValues("notes");
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => {
-        toast({
-          title: "Copied to Clipboard",
-          description: "Transcription has been copied to your clipboard.",
-          duration: 2000,
-        });
-      })
-      .catch((error) => {
-        console.error("Failed to copy:", error);
-        toast({
-          title: "Copy Failed",
-          description: "Could not copy text to clipboard.",
-          variant: "destructive",
-          duration: 3000,
-        });
-      });
-  };
-
   const handleDialogOpenChange = (open: boolean) => {
     onOpenChange(open);
     if (!open) {
@@ -131,7 +108,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Document</DialogTitle>
             <DialogDescription>
@@ -204,27 +181,9 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                 control={form.control}
                 name="notes"
                 render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel>Notes</FormLabel>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs flex items-center gap-1"
-                        onClick={copyTranscription}
-                        disabled={!field.value}
-                      >
-                        <Copy className="h-3 w-3" />
-                        Copy Text
-                      </Button>
-                    </div>
+                  <FormItem className="hidden">
                     <FormControl>
-                      <Textarea 
-                        placeholder="Enter notes or record audio to transcribe" 
-                        className="min-h-[200px]" 
-                        {...field} 
-                      />
+                      <Input type="hidden" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
