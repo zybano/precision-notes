@@ -1,8 +1,7 @@
 
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye, Trash } from "lucide-react";
+import { Eye, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
 import {
@@ -13,51 +12,60 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
   form: UseFormReturn<any>;
 }
 
+interface Document {
+  id: string;
+  title: string;
+  type: string;
+  patient_name: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
   const { toast } = useToast();
+  const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const recentDocuments = [
-    { 
-      id: "doc-1",
-      title: "Sarah Johnson - Progress Note", 
-      date: "Edited 2 hours ago", 
-      type: "Progress Note",
-      status: "Draft", 
-      patient: "Sarah Johnson"
-    },
-    { 
-      id: "doc-2",
-      title: "Michael Chen - Assessment", 
-      date: "Edited yesterday", 
-      type: "Assessment", 
-      status: "Completed",
-      patient: "Michael Chen"
-    },
-    { 
-      id: "doc-3",
-      title: "Emily Rodriguez - Consultation", 
-      date: "Edited Aug 24, 2023", 
-      type: "Consultation",
-      status: "Signed",
-      patient: "Emily Rodriguez"
-    },
-    { 
-      id: "doc-4",
-      title: "Robert Williams - Discharge Summary", 
-      date: "Edited Aug 22, 2023", 
-      type: "Discharge Summary",
-      status: "Reviewed",
-      patient: "Robert Williams"
-    },
-  ];
+  useEffect(() => {
+    fetchRecentDocuments();
+  }, []);
+  
+  const fetchRecentDocuments = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('medical_documents')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(10);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setRecentDocuments(data || []);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch recent documents",
+        duration: 3000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleOpenDocument = (doc: typeof recentDocuments[0]) => {
+  const handleOpenDocument = (doc: Document) => {
     toast({
       title: "Continuing Document",
       description: `Opening ${doc.title} for editing`,
@@ -65,16 +73,101 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
     });
     setNewDocumentOpen(true);
     form.setValue("type", doc.type);
-    form.setValue("patientName", doc.patient);
+    form.setValue("patientName", doc.patient_name);
+    form.setValue("notes", doc.notes || "");
+    form.setValue("documentId", doc.id);
   };
   
-  const handleDeleteDocument = (doc: typeof recentDocuments[0]) => {
-    toast({
-      title: "Document Deleted",
-      description: `${doc.title} has been deleted`,
-      duration: 3000,
-    });
+  const handleDeleteDocument = async (doc: Document) => {
+    try {
+      const { error } = await supabase
+        .from('medical_documents')
+        .delete()
+        .eq('id', doc.id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Document Deleted",
+        description: `${doc.title} has been deleted`,
+        duration: 3000,
+      });
+      
+      // Refresh the list
+      fetchRecentDocuments();
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        duration: 3000,
+      });
+    }
   };
+  
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return `Edited ${formatDistanceToNow(date, { addSuffix: true })}`;
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const loadMoreDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('medical_documents')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .range(recentDocuments.length, recentDocuments.length + 10);
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        setRecentDocuments(prev => [...prev, ...data]);
+        toast({
+          title: "Documents Loaded",
+          description: `Loaded ${data.length} more documents`,
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: "No More Documents",
+          description: "You've reached the end of your document list",
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading more documents:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load more documents",
+        duration: 3000,
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <div className="animate-pulse">Loading recent documents...</div>
+      </div>
+    );
+  }
+
+  if (recentDocuments.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <p className="text-muted-foreground mb-4">You haven't created any documents yet</p>
+        <Button onClick={() => setNewDocumentOpen(true)}>Create Your First Document</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -92,9 +185,9 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           <TableBody>
             {recentDocuments.map((doc) => (
               <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
-                <TableCell className="font-medium">{doc.patient}</TableCell>
+                <TableCell className="font-medium">{doc.patient_name}</TableCell>
                 <TableCell>{doc.type}</TableCell>
-                <TableCell className="text-muted-foreground">{doc.date}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(doc.updated_at)}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                     doc.status === "Completed" ? "bg-green-100 text-green-800" :
@@ -133,13 +226,11 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         </Table>
       </div>
 
-      <div className="flex justify-center">
-        <Button variant="outline" onClick={() => toast({
-          title: "Loading More Documents",
-          description: "Retrieving your additional documents",
-          duration: 3000,
-        })}>Load More</Button>
-      </div>
+      {recentDocuments.length > 0 && (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={loadMoreDocuments}>Load More</Button>
+        </div>
+      )}
     </div>
   );
 };

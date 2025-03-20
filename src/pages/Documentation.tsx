@@ -15,7 +15,6 @@ import TemplateDetailsDialog from "@/components/documentation/TemplateDetailsDia
 import NewDocumentDialog from "@/components/documentation/NewDocumentDialog";
 import RecentDocuments from "@/components/documentation/RecentDocuments";
 import SharedDocuments from "@/components/documentation/SharedDocuments";
-import { useNavigate } from "react-router-dom";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("templates");
@@ -35,13 +34,13 @@ const DocumentationPage = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<typeof documentTemplates[0] | null>(null);
   const [transcriptResult, setTranscriptResult] = useState<TranscriptionResult | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const form = useForm({
     defaultValues: {
       type: "SOAP Note",
       patientName: "",
       notes: "",
+      documentId: "",
     },
   });
 
@@ -52,15 +51,19 @@ const DocumentationPage = () => {
       duration: 3000,
     });
     
+    form.reset({
+      type: template.title,
+      patientName: "",
+      notes: "",
+      documentId: "",
+    });
+    
     if (template.title === "Dictation (Blank)") {
-      form.setValue("type", template.title);
-      form.setValue("notes", "");
       setNewDocumentOpen(true);
       return;
     }
     
     setNewDocumentOpen(true);
-    form.setValue("type", template.title);
     
     const parameterStructure = template.parameters
       .map(param => `${param.label}:\n\n`)
@@ -80,8 +83,15 @@ const DocumentationPage = () => {
       description: "Your new document has been created from this specialty template.",
       duration: 3000,
     });
+    
+    form.reset({
+      type: template.title,
+      patientName: "",
+      notes: "",
+      documentId: "",
+    });
+    
     setNewDocumentOpen(true);
-    form.setValue("type", template.title);
     
     const parameterStructure = template.parameters
       .map((param: any) => `${param.label}:\n\n`)
@@ -91,14 +101,15 @@ const DocumentationPage = () => {
   };
 
   const handleCreateNewDocument = (data: any) => {
-    toast({
-      title: "Document Created",
-      description: `Your new ${data.type} for ${data.patientName} has been created.`,
-      duration: 3000,
-    });
-    setNewDocumentOpen(false);
+    setActiveTab("recent");
     form.reset();
     stopRecording();
+    
+    toast({
+      title: "Document Saved",
+      description: `Your ${data.type} for ${data.patientName} has been saved.`,
+      duration: 3000,
+    });
   };
 
   const startRecording = async () => {
@@ -262,7 +273,15 @@ const DocumentationPage = () => {
             <Button 
               size="sm" 
               className="shadow-sm hover:shadow-md transition-all btn-premium"
-              onClick={() => setNewDocumentOpen(true)}
+              onClick={() => {
+                form.reset({
+                  type: "SOAP Note",
+                  patientName: "",
+                  notes: "",
+                  documentId: "",
+                });
+                setNewDocumentOpen(true);
+              }}
             >
               <Plus className="h-4 w-4 mr-1" />
               New Document

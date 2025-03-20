@@ -18,6 +18,7 @@ import RecordingInterface from "./RecordingInterface";
 import TranscriptDisplay from "./TranscriptDisplay";
 import { TemplateParameter } from "./TemplateCard";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +82,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const handleDialogOpenChange = (open: boolean) => {
     onOpenChange(open);
@@ -89,20 +91,97 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
     }
   };
 
-  const handleDeleteDocument = () => {
+  const handleDeleteDocument = async () => {
+    const documentId = form.getValues("documentId");
     const patientName = form.getValues("patientName");
     const documentType = form.getValues("type");
     
-    toast({
-      title: "Document Deleted",
-      description: `The ${documentType} for ${patientName} has been deleted.`,
-      duration: 3000,
-    });
+    if (documentId) {
+      try {
+        const { error } = await supabase
+          .from('medical_documents')
+          .delete()
+          .eq('id', documentId);
+          
+        if (error) throw error;
+        
+        toast({
+          title: "Document Deleted",
+          description: `The ${documentType} for ${patientName} has been deleted.`,
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error("Error deleting document:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete the document. Please try again.",
+          duration: 3000,
+        });
+      }
+    } else {
+      toast({
+        title: "Document Deleted",
+        description: `The ${documentType} for ${patientName} has been deleted.`,
+        duration: 3000,
+      });
+    }
     
     setDeleteDialogOpen(false);
     onOpenChange(false);
     form.reset();
     stopRecording();
+  };
+
+  const handleFormSubmit = async (data: any) => {
+    setIsSaving(true);
+    
+    try {
+      const documentData = {
+        title: `${data.patientName} - ${data.type}`,
+        type: data.type,
+        patient_name: data.patientName,
+        notes: data.notes,
+        status: "Draft"
+      };
+      
+      let result;
+      
+      if (data.documentId) {
+        // Update existing document
+        result = await supabase
+          .from('medical_documents')
+          .update(documentData)
+          .eq('id', data.documentId)
+          .select();
+      } else {
+        // Create new document
+        result = await supabase
+          .from('medical_documents')
+          .insert(documentData)
+          .select();
+      }
+      
+      if (result.error) throw result.error;
+      
+      toast({
+        title: "Document Saved",
+        description: `Your ${data.type} for ${data.patientName} has been saved.`,
+        duration: 3000,
+      });
+      
+      onOpenChange(false);
+      onSubmit(data);
+    } catch (error) {
+      console.error("Error saving document:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save the document. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -117,7 +196,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
           </DialogHeader>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -189,6 +268,18 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                 )}
               />
               
+              <FormField
+                control={form.control}
+                name="documentId"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormControl>
+                      <Input type="hidden" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
               <DialogFooter className="flex justify-between">
                 <div>
                   <Button 
@@ -208,7 +299,9 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                   }}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isTranscribing}>Create Document</Button>
+                  <Button type="submit" disabled={isTranscribing || isSaving}>
+                    {isSaving ? "Saving..." : "Save Document"}
+                  </Button>
                 </div>
               </DialogFooter>
             </form>
