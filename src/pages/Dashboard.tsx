@@ -137,11 +137,14 @@ const Dashboard = () => {
           doc.status === "Completed"
         ).length;
         
-        // Calculate week-over-week change
+        // Calculate week-over-week change - ensure numerical types for calculation
         let weekChange = 0;
-        if (docsPrevWeek > 0) {
-          weekChange = Math.round(((docsThisWeek - docsPrevWeek) / docsPrevWeek) * 100);
-        } else if (docsThisWeek > 0) {
+        const docsThisWeekNum = Number(docsThisWeek);
+        const docsPrevWeekNum = Number(docsPrevWeek);
+        
+        if (docsPrevWeekNum > 0) {
+          weekChange = Math.round(((docsThisWeekNum - docsPrevWeekNum) / docsPrevWeekNum) * 100);
+        } else if (docsThisWeekNum > 0) {
           weekChange = 100; // If no docs previous week but some this week, that's a 100% increase
         }
         
@@ -158,7 +161,7 @@ const Dashboard = () => {
           { 
             title: "Notes Completed", 
             value: completedDocs.toString(), 
-            change: `+${docsThisWeek}`, 
+            change: `+${docsThisWeekNum}`, 
             description: "Notes completed this week", 
             icon: Clipboard,
             positive: true
