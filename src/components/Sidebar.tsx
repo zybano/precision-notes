@@ -1,9 +1,7 @@
-
 import { NavLink } from "react-router-dom";
 import { 
   File, 
   FileText, 
-  Users, 
   Settings, 
   Menu,
   DollarSign,
@@ -32,7 +30,6 @@ const Sidebar = () => {
   const navigation = [
     { path: "/dashboard", name: "Dashboard", icon: File },
     { path: "/documentation", name: "Documentation", icon: FileText },
-    { path: "/patients", name: "Patients", icon: Users },
     { path: "/pricing", name: "Pricing", icon: DollarSign }
   ];
   
