@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type DocumentType = {
@@ -87,7 +86,7 @@ export const calculateUserMetrics = async (): Promise<MetricType[]> => {
       const docsPrevWeekNum = Number(docsPrevWeek);
       
       if (docsPrevWeekNum > 0) {
-        // Ensure both operands are numbers by using Number() conversion
+        // Calculate percentage change using numeric values
         weekChange = Math.round(((docsThisWeekNum - docsPrevWeekNum) / docsPrevWeekNum) * 100);
       } else if (docsThisWeekNum > 0) {
         weekChange = 100; // If no docs previous week but some this week, that's a 100% increase
@@ -96,7 +95,6 @@ export const calculateUserMetrics = async (): Promise<MetricType[]> => {
       // Calculate efficiency score as a number
       const efficiencyScoreNum = allDocs.length > 5 ? 94 : (allDocs.length * 10 + 50);
       
-      // Import statements will be resolved by the calling component
       return [
         { 
           title: "Documentation Time", 
