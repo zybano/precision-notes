@@ -3,10 +3,11 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { SEO } from "@/components/SEO";
 
 const Pricing = () => {
   useEffect(() => {
-    document.title = "Pricing | NoteMedAI";
+    document.title = "Pricing | Documedly";
   }, []);
 
   const plans = [
@@ -70,6 +71,12 @@ const Pricing = () => {
 
   return (
     <div className="container py-10 max-w-7xl mx-auto">
+      <SEO 
+        title="Pricing"
+        description="Choose the perfect plan for your healthcare practice. Simple, transparent pricing with flexible options for individual providers and large organizations."
+        keywords="medical documentation pricing, healthcare software plans, clinical documentation costs"
+      />
+      
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold tracking-tight mb-3">Simple, Transparent Pricing</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">

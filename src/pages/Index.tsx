@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { SEO } from "@/components/SEO";
 import { 
   ThumbsUp, 
   Shield, 
@@ -227,6 +229,12 @@ const Index = () => {
 
   return (
     <div className={`min-h-screen bg-background ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
+      <SEO 
+        title="Documedly - AI-powered Clinical Documentation Assistant"
+        description="Transform your medical documentation workflow with real-time transcription and AI-powered assistance. Save time and focus more on patient care."
+        keywords="clinical documentation, AI transcription, medical notes, healthcare technology, patient care"
+      />
+      
       <nav className="px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <div className="flex items-center">
