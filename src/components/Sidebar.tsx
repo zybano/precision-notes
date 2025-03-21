@@ -1,10 +1,10 @@
+
 import { NavLink } from "react-router-dom";
 import { 
   File, 
   FileText, 
   Settings, 
   Menu,
-  DollarSign,
   X
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -29,8 +29,7 @@ const Sidebar = () => {
 
   const navigation = [
     { path: "/dashboard", name: "Dashboard", icon: File },
-    { path: "/documentation", name: "Documentation", icon: FileText },
-    { path: "/pricing", name: "Pricing", icon: DollarSign }
+    { path: "/documentation", name: "Documentation", icon: FileText }
   ];
   
   const NavItems = () => (
