@@ -203,7 +203,10 @@ export const PharmacyModule = () => {
                     </div>
                     <div>{prescription.date}</div>
                     <div>
-                      <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800">
+                      <Badge 
+                        variant="outline" 
+                        className="bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800"
+                      >
                         Dispensed
                       </Badge>
                     </div>

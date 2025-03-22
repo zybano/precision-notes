@@ -107,7 +107,8 @@ export const LaboratoryModule = () => {
                     <div>{test.requestDate}</div>
                     <div>
                       <Badge 
-                        variant={test.urgency === "STAT" ? "destructive" : test.urgency === "Urgent" ? "warning" : "outline"}
+                        variant={test.urgency === "STAT" ? "destructive" : test.urgency === "Urgent" ? "secondary" : "outline"}
+                        className={test.urgency === "Urgent" ? "bg-yellow-100 text-yellow-800" : ""}
                       >
                         {test.urgency}
                       </Badge>
@@ -160,7 +161,7 @@ export const LaboratoryModule = () => {
                     <div>{test.completionDate}</div>
                     <div>
                       <Badge 
-                        variant={test.result === "Normal" ? "success" : "destructive"}
+                        variant={test.result === "Normal" ? "outline" : "destructive"}
                         className={test.result === "Normal" ? "bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800" : ""}
                       >
                         {test.result}
