@@ -1,3 +1,4 @@
+
 import { FadeIn } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { BillingModule } from "@/components/hospital/BillingModule";
 import { EmergencyModule } from "@/components/hospital/EmergencyModule";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const HospitalDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -58,7 +60,7 @@ const HospitalDashboard = () => {
       </FadeIn>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-medical-300/50 dark:bg-medical-700/50 border-medical-400">
           <CardHeader className="pb-2">
             <CardTitle>Total Patients</CardTitle>
             <CardDescription>Current patient count</CardDescription>
@@ -69,7 +71,7 @@ const HospitalDashboard = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-sunshine-100 dark:bg-sunshine-700/30 border-sunshine-400">
           <CardHeader className="pb-2">
             <CardTitle>Available Beds</CardTitle>
             <CardDescription>Current bed availability</CardDescription>
@@ -80,7 +82,7 @@ const HospitalDashboard = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-medical-300/50 dark:bg-medical-700/50 border-medical-400">
           <CardHeader className="pb-2">
             <CardTitle>Staff on Duty</CardTitle>
             <CardDescription>Doctors and nurses</CardDescription>
@@ -107,7 +109,7 @@ const HospitalDashboard = () => {
         
         <TabsContent value="overview">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="bg-medical-200/50 dark:bg-medical-800/30 border-medical-300">
               <CardHeader>
                 <CardTitle>Recent Admissions</CardTitle>
                 <CardDescription>Last 5 patient admissions</CardDescription>
@@ -136,7 +138,7 @@ const HospitalDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="bg-sunshine-50 dark:bg-sunshine-900/20 border-sunshine-300">
               <CardHeader>
                 <CardTitle>Upcoming Surgeries</CardTitle>
                 <CardDescription>Scheduled for the next 24 hours</CardDescription>

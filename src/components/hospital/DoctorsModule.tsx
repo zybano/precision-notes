@@ -43,7 +43,7 @@ export const DoctorsModule = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-medical-300/50 dark:bg-medical-700/50 border-medical-400">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Doctors</CardTitle>
           </CardHeader>
@@ -51,7 +51,7 @@ export const DoctorsModule = () => {
             <div className="text-2xl font-bold">{doctors.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-sunshine-100 dark:bg-sunshine-700/30 border-sunshine-400">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">On Duty Today</CardTitle>
           </CardHeader>
@@ -59,7 +59,7 @@ export const DoctorsModule = () => {
             <div className="text-2xl font-bold">15</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-medical-300/50 dark:bg-medical-700/50 border-medical-400">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Available for Consult</CardTitle>
           </CardHeader>
