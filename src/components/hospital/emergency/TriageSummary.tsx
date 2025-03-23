@@ -13,11 +13,11 @@ export const TriageSummary = ({ patients }: TriageSummaryProps) => {
   };
 
   const levels = [
-    { level: 1, title: "Level 1 (Immediate)", color: "text-red-600", bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
-    { level: 2, title: "Level 2 (Very Urgent)", color: "text-orange-500", bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
-    { level: 3, title: "Level 3 (Urgent)", color: "text-yellow-500", bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
-    { level: 4, title: "Level 4 (Standard)", color: "text-blue-500", bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
-    { level: 5, title: "Level 5 (Non-Urgent)", color: "text-green-500", bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
+    { level: 1 as const, title: "Level 1 (Immediate)", color: "text-red-600", bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
+    { level: 2 as const, title: "Level 2 (Very Urgent)", color: "text-orange-500", bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
+    { level: 3 as const, title: "Level 3 (Urgent)", color: "text-yellow-500", bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
+    { level: 4 as const, title: "Level 4 (Standard)", color: "text-blue-500", bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
+    { level: 5 as const, title: "Level 5 (Non-Urgent)", color: "text-green-500", bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
   ];
 
   return (
