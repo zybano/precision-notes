@@ -47,7 +47,7 @@ const Sidebar = () => {
     { path: "/dashboard", name: "Dashboard", icon: File },
     { path: "/documentation", name: "Documentation", icon: FileText },
     { path: "/hospital", name: "Hospital System", icon: Heart },
-    { path: "/hospital/emergency", name: "Emergency", icon: AlertTriangle },
+    { path: "/hospital/emergency", name: "Emergency", icon: Ambulance },
     { path: "/hospital/doctors", name: "Doctors", icon: UserRound },
     { path: "/hospital/nurses", name: "Nurses", icon: UserRound },
     { path: "/hospital/patients", name: "Patients", icon: PlusSquare },
