@@ -11,10 +11,34 @@ import { PharmacyModule } from "@/components/hospital/PharmacyModule";
 import { LaboratoryModule } from "@/components/hospital/LaboratoryModule";
 import { InventoryModule } from "@/components/hospital/InventoryModule";
 import { BillingModule } from "@/components/hospital/BillingModule";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const HospitalDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Determine active tab from location path
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === "/hospital") {
+      setActiveTab("overview");
+    } else if (path.includes("/hospital/")) {
+      const tabName = path.split("/hospital/")[1];
+      setActiveTab(tabName);
+    }
+  }, [location.pathname]);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === "overview") {
+      navigate("/hospital");
+    } else {
+      navigate(`/hospital/${value}`);
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -68,7 +92,7 @@ const HospitalDashboard = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="doctors">Doctors</TabsTrigger>
@@ -166,6 +190,10 @@ const HospitalDashboard = () => {
         
         <TabsContent value="inventory">
           <InventoryModule />
+        </TabsContent>
+        
+        <TabsContent value="billing">
+          <BillingModule />
         </TabsContent>
       </Tabs>
     </div>

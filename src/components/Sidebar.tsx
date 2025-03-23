@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+
+import { NavLink, useNavigate } from "react-router-dom";
 import { 
   File, 
   FileText, 
@@ -22,6 +23,7 @@ const Sidebar = () => {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(!isMobile);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setExpanded(!isMobile);
@@ -31,6 +33,13 @@ const Sidebar = () => {
     if (!isMobile) {
       setExpanded(!expanded);
     }
+  };
+
+  const handleNavigation = (path: string) => {
+    if (isMobile) {
+      setSheetOpen(false);
+    }
+    navigate(path);
   };
 
   const navigation = [
