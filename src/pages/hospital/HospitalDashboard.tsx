@@ -1,4 +1,3 @@
-
 import { FadeIn } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { PharmacyModule } from "@/components/hospital/PharmacyModule";
 import { LaboratoryModule } from "@/components/hospital/LaboratoryModule";
 import { InventoryModule } from "@/components/hospital/InventoryModule";
 import { BillingModule } from "@/components/hospital/BillingModule";
+import { EmergencyModule } from "@/components/hospital/EmergencyModule";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -93,8 +93,9 @@ const HospitalDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full">
+        <TabsList className="grid grid-cols-3 md:grid-cols-9 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="emergency">Emergency</TabsTrigger>
           <TabsTrigger value="doctors">Doctors</TabsTrigger>
           <TabsTrigger value="nurses">Nurses</TabsTrigger>
           <TabsTrigger value="patients">Patients</TabsTrigger>
@@ -162,6 +163,10 @@ const HospitalDashboard = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="emergency">
+          <EmergencyModule />
         </TabsContent>
         
         <TabsContent value="doctors">

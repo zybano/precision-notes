@@ -1,4 +1,3 @@
-
 import { NavLink, useNavigate } from "react-router-dom";
 import { 
   File, 
@@ -12,7 +11,9 @@ import {
   Heart,
   PlusSquare,
   BoxesIcon,
-  DollarSign
+  DollarSign,
+  Ambulance,
+  AlertTriangle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ const Sidebar = () => {
     { path: "/dashboard", name: "Dashboard", icon: File },
     { path: "/documentation", name: "Documentation", icon: FileText },
     { path: "/hospital", name: "Hospital System", icon: Heart },
+    { path: "/hospital/emergency", name: "Emergency", icon: AlertTriangle },
     { path: "/hospital/doctors", name: "Doctors", icon: UserRound },
     { path: "/hospital/nurses", name: "Nurses", icon: UserRound },
     { path: "/hospital/patients", name: "Patients", icon: PlusSquare },
