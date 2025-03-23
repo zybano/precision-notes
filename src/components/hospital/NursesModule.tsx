@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +22,13 @@ export const NursesModule = () => {
              nurse.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  const summaryBoxes = [
+    { title: "Total Nurses", value: nurses.length, bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
+    { title: "Morning Shift", value: nurses.filter(n => n.shift === "Morning").length, bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
+    { title: "Evening Shift", value: nurses.filter(n => n.shift === "Evening").length, bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
+    { title: "Night Shift", value: nurses.filter(n => n.shift === "Night").length, bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -43,38 +49,16 @@ export const NursesModule = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Nurses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{nurses.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Morning Shift</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{nurses.filter(n => n.shift === "Morning").length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Evening Shift</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{nurses.filter(n => n.shift === "Evening").length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Night Shift</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{nurses.filter(n => n.shift === "Night").length}</div>
-          </CardContent>
-        </Card>
+        {summaryBoxes.map((box, index) => (
+          <Card key={box.title} className={`${box.bgClass} ${box.borderClass}`}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">{box.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{box.value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
       
       <Card>

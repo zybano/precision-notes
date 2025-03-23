@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +23,13 @@ export const PatientsModule = () => {
                patient.doctor.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  const summaryBoxes = [
+    { title: "Total Patients", value: patients.length, bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
+    { title: "Inpatients", value: patients.filter(p => p.status === "Inpatient").length, bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
+    { title: "New This Week", value: 12, bgClass: "bg-medical-300/50 dark:bg-medical-700/50", borderClass: "border-medical-400" },
+    { title: "Discharged", value: 8, bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30", borderClass: "border-sunshine-400" },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -44,38 +50,16 @@ export const PatientsModule = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{patients.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Inpatients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{patients.filter(p => p.status === "Inpatient").length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">New This Week</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Discharged</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-          </CardContent>
-        </Card>
+        {summaryBoxes.map((box, index) => (
+          <Card key={box.title} className={`${box.bgClass} ${box.borderClass}`}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">{box.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{box.value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
       
       <Card>
