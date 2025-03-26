@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, User, UserRound, AlertCircle, FileText, ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -62,11 +62,70 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     });
   };
 
+  // Helper function to extract relevant information from transcript
+  const extractInformation = (text: string, section: string): string => {
+    const transcript = text.toLowerCase();
+    
+    // Define keywords for each section
+    const sectionKeywords: Record<string, string[]> = {
+      "chief complaint": ["complaint", "reason", "visit", "problem", "issue", "concerns"],
+      "history of present illness": ["started", "began", "history", "duration", "symptoms", "onset", "course"],
+      "past medical history": ["past", "history", "medical history", "previous", "prior", "diagnosed", "conditions"],
+      "medications": ["medication", "prescriptions", "taking", "drugs", "dose", "regimen"],
+      "allergies": ["allergy", "allergic", "reaction", "sensitivity"],
+      "family history": ["family", "father", "mother", "sibling", "genetic", "inherited"],
+      "social history": ["smoke", "drinking", "alcohol", "occupation", "exercise", "diet", "living situation"],
+      "review of systems": ["systems", "respiratory", "cardiovascular", "gastrointestinal", "neurological"],
+      "physical examination": ["exam", "examination", "vitals", "vital signs", "temperature", "heart rate", "blood pressure"],
+      "assessment": ["assessment", "impression", "diagnosis", "condition", "problem"],
+      "plan": ["plan", "treatment", "recommend", "follow-up", "referral", "schedule", "prescription"]
+    };
+    
+    // Extract information based on keywords
+    const keywords = sectionKeywords[section.toLowerCase()];
+    if (!keywords) return "";
+    
+    // Get sentences that might contain relevant information
+    const allSentences = text.split(/[.!?]+/);
+    const relevantSentences = allSentences.filter(sentence => {
+      const lowercaseSentence = sentence.toLowerCase();
+      return keywords.some(keyword => lowercaseSentence.includes(keyword));
+    });
+    
+    if (relevantSentences.length > 0) {
+      return relevantSentences.join(". ") + ".";
+    }
+    
+    // If no specific sentences found, use a placeholder message
+    return `No specific ${section} information found in the transcript.`;
+  };
+
+  const generateTemplateContent = (templateName: string): string => {
+    if (!transcriptResult || !transcript) {
+      return "No transcript data available.";
+    }
+    
+    const template = documentTemplates.find(t => t.title === templateName);
+    if (!template) return "Template not found.";
+    
+    const lines: string[] = [];
+    
+    // Generate content based on template parameters
+    template.parameters.forEach(param => {
+      lines.push(`${param.label}:`);
+      const content = extractInformation(transcript, param.label);
+      lines.push(content || "Not mentioned in conversation.");
+      lines.push("");  // Add empty line between sections
+    });
+    
+    return lines.join("\n");
+  };
+
   const handleConvertToNote = () => {
     if (!transcriptResult) return;
 
-    // Convert the transcript to a formatted note
-    const formattedText = formatTranscriptionToNoteText(transcriptResult, selectedFormat);
+    // Generate the formatted note based on the selected template
+    const formattedText = generateTemplateContent(selectedFormat);
     
     setFormattedNote(formattedText);
     setShowPreview(true);
@@ -87,8 +146,43 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   const handleConvertToComprehensiveNote = () => {
     if (!transcriptResult) return;
 
-    // Convert the transcript to a comprehensive clinical note
-    const comprehensiveText = convertToComprehensiveNote(transcriptResult);
+    // Create a comprehensive note with all standard sections
+    const sections = [
+      "## Chief Complaint",
+      extractInformation(transcript, "chief complaint"),
+      "",
+      "## History of Present Illness",
+      extractInformation(transcript, "history of present illness"),
+      "",
+      "## Past Medical History",
+      extractInformation(transcript, "past medical history"),
+      "",
+      "## Medications",
+      extractInformation(transcript, "medications"),
+      "",
+      "## Allergies",
+      extractInformation(transcript, "allergies"),
+      "",
+      "## Family History",
+      extractInformation(transcript, "family history"),
+      "",
+      "## Social History",
+      extractInformation(transcript, "social history"),
+      "",
+      "## Review of Systems",
+      extractInformation(transcript, "review of systems"),
+      "",
+      "## Physical Examination",
+      extractInformation(transcript, "physical examination"),
+      "",
+      "## Assessment",
+      extractInformation(transcript, "assessment"),
+      "",
+      "## Plan",
+      extractInformation(transcript, "plan")
+    ];
+    
+    const comprehensiveText = sections.join("\n");
     
     setComprehensiveNote(comprehensiveText);
     setShowPreview(true);
