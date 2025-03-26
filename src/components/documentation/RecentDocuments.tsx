@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Trash } from "lucide-react";
+import { Eye, Trash, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
 import {
@@ -14,6 +14,18 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import TranscriptDisplay from "./TranscriptDisplay";
+import { TranscriptionResult } from "@/services/transcription";
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
@@ -28,13 +40,20 @@ interface Document {
   status: string;
   created_at: string;
   updated_at: string;
-  notes: string | null; // Add notes property to the Document interface
+  notes: string | null;
+  transcript_data: string | null;
 }
 
 const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
   const { toast } = useToast();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [parsedTranscript, setParsedTranscript] = useState<TranscriptionResult | null>(null);
+  const [transcriptText, setTranscriptText] = useState("");
+  const [transcriptSummary, setTranscriptSummary] = useState("");
+  const [showSummary, setShowSummary] = useState(true);
   
   useEffect(() => {
     fetchRecentDocuments();
@@ -72,11 +91,64 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       description: `Opening ${doc.title} for editing`,
       duration: 3000,
     });
+    
+    // If there's transcript data, parse it and set it in the form
+    if (doc.transcript_data) {
+      try {
+        const parsedData = JSON.parse(doc.transcript_data);
+        const transcriptResult: TranscriptionResult = {
+          text: parsedData.text || "",
+          utterances: parsedData.utterances || [],
+          isMock: parsedData.isMock || false
+        };
+        
+        // Make transcript data available to the form
+        form.setValue("transcriptResult", transcriptResult);
+        form.setValue("transcript", parsedData.text || "");
+        form.setValue("transcriptSummary", parsedData.summary || "");
+      } catch (e) {
+        console.error("Error parsing transcript data:", e);
+      }
+    }
+    
     setNewDocumentOpen(true);
     form.setValue("type", doc.type);
     form.setValue("patientName", doc.patient_name);
     form.setValue("notes", doc.notes || "");
     form.setValue("documentId", doc.id);
+  };
+  
+  const handleViewTranscript = (doc: Document) => {
+    setSelectedDocument(doc);
+    
+    if (doc.transcript_data) {
+      try {
+        const parsedData = JSON.parse(doc.transcript_data);
+        
+        setParsedTranscript({
+          text: parsedData.text || "",
+          utterances: parsedData.utterances || [],
+          isMock: parsedData.isMock || false
+        });
+        
+        setTranscriptText(parsedData.text || "");
+        setTranscriptSummary(parsedData.summary || "");
+        setTranscriptDialogOpen(true);
+      } catch (e) {
+        console.error("Error parsing transcript data:", e);
+        toast({
+          title: "Error",
+          description: "Failed to parse transcript data",
+          duration: 3000,
+        });
+      }
+    } else {
+      toast({
+        title: "No Transcript",
+        description: "This document does not have any saved transcript data",
+        duration: 3000,
+      });
+    }
   };
   
   const handleDeleteDocument = async (doc: Document) => {
@@ -153,6 +225,10 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
     }
   };
 
+  const hasTranscript = (doc: Document): boolean => {
+    return !!doc.transcript_data;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-10">
@@ -208,8 +284,19 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
                       className="h-8 w-8 p-0"
                     >
                       <Eye className="h-4 w-4" />
-                      <span className="sr-only">View</span>
+                      <span className="sr-only">Open</span>
                     </Button>
+                    {hasTranscript(doc) && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleViewTranscript(doc)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="sr-only">View Transcript</span>
+                      </Button>
+                    )}
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -232,6 +319,44 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           <Button variant="outline" onClick={loadMoreDocuments}>Load More</Button>
         </div>
       )}
+
+      {/* Transcript Dialog */}
+      <Dialog open={transcriptDialogOpen} onOpenChange={setTranscriptDialogOpen}>
+        <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDocument?.patient_name} - Transcribed Conversation
+            </DialogTitle>
+            <DialogDescription>
+              Transcribed on {selectedDocument?.updated_at ? new Date(selectedDocument.updated_at).toLocaleString() : ""}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4 flex-1 overflow-hidden">
+            {parsedTranscript && (
+              <TranscriptDisplay
+                transcriptResult={parsedTranscript}
+                transcript={transcriptText}
+                transcriptSummary={transcriptSummary}
+                showSummary={showSummary}
+                setShowSummary={setShowSummary}
+                form={form}
+              />
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => {
+              if (selectedDocument) {
+                handleOpenDocument(selectedDocument);
+                setTranscriptDialogOpen(false);
+              }
+            }}>
+              Edit Document
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -136,12 +136,21 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
     setIsSaving(true);
     
     try {
+      // Create a structured transcript object to save
+      const transcriptData = transcriptResult ? {
+        text: transcript,
+        summary: transcriptSummary,
+        utterances: transcriptResult.utterances,
+        isMock: transcriptResult.isMock
+      } : null;
+      
       const documentData = {
         title: `${data.patientName} - ${data.type}`,
         type: data.type,
         patient_name: data.patientName,
         notes: data.notes,
-        status: "Draft"
+        status: "Draft",
+        transcript_data: transcriptData ? JSON.stringify(transcriptData) : null
       };
       
       let result;

@@ -41,6 +41,9 @@ const DocumentationPage = () => {
       patientName: "",
       notes: "",
       documentId: "",
+      transcript: "",
+      transcriptSummary: "",
+      transcriptResult: null,
     },
   });
 
@@ -230,9 +233,12 @@ const DocumentationPage = () => {
       setTranscriptResult(result);
       setTranscript(result.text);
       form.setValue("notes", result.text);
+      form.setValue("transcript", result.text);
+      form.setValue("transcriptResult", result);
       
       const summary = generateBriefSummary(result.text);
       setTranscriptSummary(summary);
+      form.setValue("transcriptSummary", summary);
       setShowSummary(true);
       
       toast({
