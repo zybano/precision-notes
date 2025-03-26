@@ -72,7 +72,21 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         throw error;
       }
       
-      setRecentDocuments(data || []);
+      // Convert the data to Document[] type
+      if (data) {
+        const mappedDocuments: Document[] = data.map(doc => ({
+          id: doc.id,
+          title: doc.title,
+          type: doc.type,
+          patient_name: doc.patient_name,
+          status: doc.status,
+          created_at: doc.created_at,
+          updated_at: doc.updated_at,
+          notes: doc.notes,
+          transcript_data: doc.transcript_data
+        }));
+        setRecentDocuments(mappedDocuments);
+      }
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast({
@@ -202,7 +216,21 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       }
       
       if (data && data.length > 0) {
-        setRecentDocuments(prev => [...prev, ...data]);
+        // Convert the data to Document[] type
+        const mappedDocuments: Document[] = data.map(doc => ({
+          id: doc.id,
+          title: doc.title,
+          type: doc.type,
+          patient_name: doc.patient_name,
+          status: doc.status,
+          created_at: doc.created_at,
+          updated_at: doc.updated_at,
+          notes: doc.notes,
+          transcript_data: doc.transcript_data
+        }));
+        
+        setRecentDocuments(prev => [...prev, ...mappedDocuments]);
+        
         toast({
           title: "Documents Loaded",
           description: `Loaded ${data.length} more documents`,
