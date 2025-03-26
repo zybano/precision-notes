@@ -44,6 +44,19 @@ interface Document {
   transcript_data: string | null;
 }
 
+// Type for the raw data coming from Supabase
+interface RawDocumentData {
+  id: string;
+  title: string;
+  type: string;
+  patient_name: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  notes: string | null;
+  transcript_data?: string | null;  // Make this optional since it's not in the TypeScript definition
+}
+
 const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
   const { toast } = useToast();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
@@ -74,7 +87,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       
       // Convert the data to Document[] type
       if (data) {
-        const mappedDocuments: Document[] = data.map(doc => ({
+        const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
           id: doc.id,
           title: doc.title,
           type: doc.type,
@@ -83,7 +96,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           created_at: doc.created_at,
           updated_at: doc.updated_at,
           notes: doc.notes,
-          transcript_data: doc.transcript_data
+          transcript_data: doc.transcript_data || null
         }));
         setRecentDocuments(mappedDocuments);
       }
@@ -217,7 +230,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       
       if (data && data.length > 0) {
         // Convert the data to Document[] type
-        const mappedDocuments: Document[] = data.map(doc => ({
+        const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
           id: doc.id,
           title: doc.title,
           type: doc.type,
@@ -226,7 +239,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           created_at: doc.created_at,
           updated_at: doc.updated_at,
           notes: doc.notes,
-          transcript_data: doc.transcript_data
+          transcript_data: doc.transcript_data || null
         }));
         
         setRecentDocuments(prev => [...prev, ...mappedDocuments]);
