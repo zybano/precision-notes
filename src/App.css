@@ -29,7 +29,7 @@
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 2em rgba(76, 255, 0, 0.8));
+  filter: drop-shadow(0 0 2em rgba(250, 204, 21, 0.8));
 }
 .logo.react:hover {
   filter: drop-shadow(0 0 2em rgba(97, 218, 251, 0.7));
@@ -193,5 +193,5 @@
 }
 
 .patient-text {
-  color: #39ff14; /* Neon green */
+  color: #facc15; /* Yellow */
 }
