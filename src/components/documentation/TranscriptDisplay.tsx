@@ -1,14 +1,15 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, User, UserRound, AlertCircle, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { Copy, User, UserRound, AlertCircle, FileText, ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "@/services/transcription";
-import { formatTranscriptionToNoteText } from "@/services/noteConversion";
+import { formatTranscriptionToNoteText, convertToComprehensiveNote } from "@/services/noteConversion";
 import { documentTemplates } from "@/data/documentTemplates";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult | null;
@@ -32,6 +33,8 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   const [formattedNote, setFormattedNote] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<"standard" | "comprehensive">("standard");
+  const [comprehensiveNote, setComprehensiveNote] = useState("");
 
   const handleCopyConversation = () => {
     if (!transcriptResult || !transcriptResult.utterances) return;
@@ -78,6 +81,38 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       title: "Note Structured",
       description: `Transcript has been converted to ${selectedFormat} format`,
       duration: 3000,
+    });
+  };
+
+  const handleConvertToComprehensiveNote = () => {
+    if (!transcriptResult) return;
+
+    // Convert the transcript to a comprehensive clinical note
+    const comprehensiveText = convertToComprehensiveNote(transcriptResult);
+    
+    setComprehensiveNote(comprehensiveText);
+    setShowPreview(true);
+    
+    // Update the form with the comprehensive note if form exists
+    if (form) {
+      form.setValue("type", "Comprehensive Clinical Note");
+      form.setValue("notes", comprehensiveText);
+    }
+    
+    toast({
+      title: "Comprehensive Note Created",
+      description: "Transcript has been converted to a detailed clinical note with all standard sections",
+      duration: 3000,
+    });
+  };
+
+  const handleCopyComprehensiveNote = () => {
+    navigator.clipboard.writeText(comprehensiveNote);
+    
+    toast({
+      title: "Comprehensive Note Copied",
+      description: "Comprehensive clinical note copied to clipboard",
+      duration: 2000,
     });
   };
 
@@ -155,7 +190,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                 <CardContent className="p-3 h-full flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-medium">Structured Clinical Note</h4>
-                    {showPreview && (
+                    {showPreview && activeTab === "standard" && (
                       <Button
                         type="button"
                         size="sm"
@@ -167,52 +202,125 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                         Copy
                       </Button>
                     )}
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto">
-                    {showPreview ? (
-                      <div className="h-full">
-                        <pre className="text-sm whitespace-pre-wrap p-3 bg-muted/30 rounded-md h-full overflow-y-auto">
-                          {formattedNote}
-                        </pre>
-                      </div>
-                    ) : (
-                      <div className="h-full flex items-center justify-center p-6 bg-muted/20 rounded-md">
-                        <div className="text-center space-y-2">
-                          <FileText className="h-10 w-10 text-muted-foreground mx-auto opacity-50" />
-                          <p className="text-sm text-muted-foreground">
-                            Select a format and click "Convert" to generate a structured clinical note
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <select
-                        className="text-xs p-1.5 border rounded"
-                        value={selectedFormat}
-                        onChange={(e) => setSelectedFormat(e.target.value)}
-                      >
-                        {documentTemplates.map((template, idx) => (
-                          <option key={idx} value={template.title}>
-                            {template.title}
-                          </option>
-                        ))}
-                      </select>
-                      
+                    {showPreview && activeTab === "comprehensive" && (
                       <Button
                         type="button"
                         size="sm"
+                        variant="ghost"
                         className="h-7 px-2 text-xs flex items-center gap-1"
-                        onClick={handleConvertToNote}
+                        onClick={handleCopyComprehensiveNote}
                       >
-                        <FileText className="h-3.5 w-3.5 mr-1" />
-                        Convert to Note
+                        <Copy className="h-3 w-3" />
+                        Copy
                       </Button>
-                    </div>
+                    )}
                   </div>
+                  
+                  <Tabs 
+                    value={activeTab} 
+                    onValueChange={(value) => setActiveTab(value as "standard" | "comprehensive")}
+                    className="flex-1 flex flex-col"
+                  >
+                    <TabsList className="mb-2">
+                      <TabsTrigger value="standard" className="text-xs">
+                        <FileText className="h-3.5 w-3.5 mr-1" />
+                        Standard Templates
+                      </TabsTrigger>
+                      <TabsTrigger value="comprehensive" className="text-xs">
+                        <ClipboardList className="h-3.5 w-3.5 mr-1" />
+                        Comprehensive Note
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="standard" className="flex-1 mt-0">
+                      <div className="h-full">
+                        {showPreview ? (
+                          <ScrollArea className="h-full">
+                            <pre className="text-sm whitespace-pre-wrap p-3 bg-muted/30 rounded-md h-full">
+                              {formattedNote}
+                            </pre>
+                          </ScrollArea>
+                        ) : (
+                          <div className="h-full flex items-center justify-center p-6 bg-muted/20 rounded-md">
+                            <div className="text-center space-y-2">
+                              <FileText className="h-10 w-10 text-muted-foreground mx-auto opacity-50" />
+                              <p className="text-sm text-muted-foreground">
+                                Select a format and click "Convert" to generate a structured clinical note
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <select
+                            className="text-xs p-1.5 border rounded"
+                            value={selectedFormat}
+                            onChange={(e) => setSelectedFormat(e.target.value)}
+                          >
+                            {documentTemplates.map((template, idx) => (
+                              <option key={idx} value={template.title}>
+                                {template.title}
+                              </option>
+                            ))}
+                          </select>
+                          
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-7 px-2 text-xs flex items-center gap-1"
+                            onClick={handleConvertToNote}
+                          >
+                            <FileText className="h-3.5 w-3.5 mr-1" />
+                            Convert to Note
+                          </Button>
+                        </div>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="comprehensive" className="flex-1 mt-0">
+                      <div className="h-full">
+                        {comprehensiveNote ? (
+                          <ScrollArea className="h-full">
+                            <div className="text-sm p-3 bg-muted/30 rounded-md h-full whitespace-pre-wrap markdown-content">
+                              {comprehensiveNote.split('\n').map((line, index) => {
+                                if (line.startsWith('##')) {
+                                  return (
+                                    <h3 key={index} className="text-md font-semibold text-primary mt-4 mb-2">
+                                      {line.replace('##', '').trim()}
+                                    </h3>
+                                  );
+                                }
+                                return <p key={index} className="mb-2">{line}</p>;
+                              })}
+                            </div>
+                          </ScrollArea>
+                        ) : (
+                          <div className="h-full flex items-center justify-center p-6 bg-muted/20 rounded-md">
+                            <div className="text-center space-y-2">
+                              <ClipboardList className="h-10 w-10 text-muted-foreground mx-auto opacity-50" />
+                              <p className="text-sm text-muted-foreground">
+                                Click "Create Comprehensive Note" to generate a detailed clinical note with all standard sections
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-7 px-2 text-xs flex items-center gap-1"
+                          onClick={handleConvertToComprehensiveNote}
+                        >
+                          <ClipboardList className="h-3.5 w-3.5 mr-1" />
+                          Create Comprehensive Note
+                        </Button>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </ResizablePanel>

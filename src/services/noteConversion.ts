@@ -1,4 +1,3 @@
-
 import { TranscriptionResult } from "@/services/transcription";
 import { documentTemplates, DocumentTemplate } from "@/data/documentTemplates";
 
@@ -533,4 +532,298 @@ export function formatTranscriptionToNoteText(
       return `${label}:\n${value}`;
     })
     .join('\n\n');
+}
+
+/**
+ * Converts transcribed text into a comprehensive clinical note
+ * with sections for Chief Complaint, HPI, PMH, etc.
+ */
+export function convertToComprehensiveNote(
+  transcriptionResult: TranscriptionResult
+): string {
+  if (!transcriptionResult || !transcriptionResult.text) {
+    return "No transcription available to convert.";
+  }
+
+  const { text, utterances } = transcriptionResult;
+  
+  // Initialize sections with empty content
+  const sections: Record<string, string[]> = {
+    chiefComplaint: [],
+    hpi: [],
+    pastMedicalHistory: [],
+    medications: [],
+    allergies: [],
+    familyHistory: [],
+    socialHistory: [],
+    reviewOfSystems: [],
+    physicalExam: [],
+    assessment: [],
+    plan: []
+  };
+  
+  // Extract information from utterances if available
+  if (utterances && utterances.length > 0) {
+    utterances.forEach(utterance => {
+      const lowerText = utterance.text.toLowerCase();
+      
+      // Chief Complaint - usually patient's own words about why they're seeking care
+      if (utterance.speaker === "Patient" && 
+          (lowerText.includes("here for") || lowerText.includes("problem") || 
+           lowerText.includes("pain") || lowerText.includes("complaint"))) {
+        sections.chiefComplaint.push(utterance.text);
+      }
+      
+      // HPI - patient's description of symptom timeline and details
+      else if (utterance.speaker === "Patient" && 
+              (lowerText.includes("started") || lowerText.includes("began") || 
+               lowerText.includes("since") || lowerText.includes("happened"))) {
+        sections.hpi.push(utterance.text);
+      }
+      
+      // Past Medical History
+      else if (lowerText.includes("previous") || lowerText.includes("history") || 
+               lowerText.includes("diagnosed") || lowerText.includes("condition") ||
+               lowerText.includes("surgery")) {
+        sections.pastMedicalHistory.push(utterance.text);
+      }
+      
+      // Medications
+      else if (lowerText.includes("medication") || lowerText.includes("taking") || 
+               lowerText.includes("prescribe") || lowerText.includes("drug") ||
+               lowerText.includes("dose") || lowerText.includes("mg") || 
+               lowerText.includes("pill")) {
+        sections.medications.push(utterance.text);
+      }
+      
+      // Allergies
+      else if (lowerText.includes("allerg") || lowerText.includes("reaction") || 
+               lowerText.includes("sensitive") || lowerText.includes("anaphylaxis")) {
+        sections.allergies.push(utterance.text);
+      }
+      
+      // Family History
+      else if (lowerText.includes("family") || lowerText.includes("mother") || 
+               lowerText.includes("father") || lowerText.includes("sister") ||
+               lowerText.includes("brother") || lowerText.includes("genetic")) {
+        sections.familyHistory.push(utterance.text);
+      }
+      
+      // Social History
+      else if (lowerText.includes("smoke") || lowerText.includes("alcohol") || 
+               lowerText.includes("drug") || lowerText.includes("occupation") ||
+               lowerText.includes("exercise") || lowerText.includes("social") ||
+               lowerText.includes("tobacco") || lowerText.includes("married") ||
+               lowerText.includes("children")) {
+        sections.socialHistory.push(utterance.text);
+      }
+      
+      // Review of Systems
+      else if (lowerText.includes("system") || lowerText.includes("symptom") || 
+               lowerText.includes("check") || lowerText.includes("review")) {
+        sections.reviewOfSystems.push(utterance.text);
+      }
+      
+      // Physical Examination (typically from doctor)
+      else if (utterance.speaker === "Doctor" && 
+              (lowerText.includes("exam") || lowerText.includes("finding") || 
+               lowerText.includes("observe") || lowerText.includes("auscultation") ||
+               lowerText.includes("vital") || lowerText.includes("pressure") ||
+               lowerText.includes("temperature") || lowerText.includes("pulse"))) {
+        sections.physicalExam.push(utterance.text);
+      }
+      
+      // Assessment (doctor's diagnosis/impression)
+      else if (utterance.speaker === "Doctor" && 
+              (lowerText.includes("assess") || lowerText.includes("diagnos") || 
+               lowerText.includes("impression") || lowerText.includes("believe") ||
+               lowerText.includes("suspect"))) {
+        sections.assessment.push(utterance.text);
+      }
+      
+      // Plan (treatment, next steps)
+      else if (utterance.speaker === "Doctor" && 
+              (lowerText.includes("plan") || lowerText.includes("recommend") || 
+               lowerText.includes("prescribe") || lowerText.includes("refer") ||
+               lowerText.includes("order") || lowerText.includes("test") ||
+               lowerText.includes("follow up") || lowerText.includes("return"))) {
+        sections.plan.push(utterance.text);
+      }
+      
+      // For utterances that don't match specific patterns, try to categorize based on context
+      else {
+        // If from patient and discussing symptoms, likely HPI
+        if (utterance.speaker === "Patient" && isAboutSymptoms(lowerText)) {
+          sections.hpi.push(utterance.text);
+        }
+        // If from doctor and discussing findings, likely Physical Exam
+        else if (utterance.speaker === "Doctor" && isAboutFindings(lowerText)) {
+          sections.physicalExam.push(utterance.text);
+        }
+      }
+    });
+  } else {
+    // Fallback if no utterances - analyze the full text
+    analyzeFullText(text, sections);
+  }
+  
+  // If Chief Complaint is empty, try to extract from HPI or full text
+  if (sections.chiefComplaint.length === 0) {
+    if (sections.hpi.length > 0) {
+      sections.chiefComplaint.push(sections.hpi[0]);
+    } else {
+      const firstSentence = text.split('.')[0];
+      if (firstSentence) {
+        sections.chiefComplaint.push(firstSentence);
+      }
+    }
+  }
+  
+  // Format the output as a structured note
+  return formatStructuredNote(sections);
+}
+
+/**
+ * Analyzes full text when utterances are not available
+ */
+function analyzeFullText(text: string, sections: Record<string, string[]>): void {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  
+  sentences.forEach(sentence => {
+    const lowerSentence = sentence.toLowerCase().trim();
+    
+    // Try to categorize each sentence based on keywords
+    if (lowerSentence.includes("chief complaint") || lowerSentence.includes("reason for visit")) {
+      sections.chiefComplaint.push(sentence.trim());
+    } 
+    else if (lowerSentence.includes("history of present illness") || 
+             lowerSentence.includes("hpi") || lowerSentence.includes("began with")) {
+      sections.hpi.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("past medical history") || lowerSentence.includes("pmh") ||
+             lowerSentence.includes("previous diagnoses")) {
+      sections.pastMedicalHistory.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("medication") || lowerSentence.includes("taking") ||
+             lowerSentence.includes("prescribed")) {
+      sections.medications.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("allerg")) {
+      sections.allergies.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("family history") || lowerSentence.includes("relatives")) {
+      sections.familyHistory.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("social history") || lowerSentence.includes("lifestyle")) {
+      sections.socialHistory.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("review of systems") || lowerSentence.includes("ros")) {
+      sections.reviewOfSystems.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("physical exam") || lowerSentence.includes("examination")) {
+      sections.physicalExam.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("assessment") || lowerSentence.includes("impression") ||
+             lowerSentence.includes("diagnosis")) {
+      sections.assessment.push(sentence.trim());
+    }
+    else if (lowerSentence.includes("plan") || lowerSentence.includes("recommendation") ||
+             lowerSentence.includes("treatment")) {
+      sections.plan.push(sentence.trim());
+    }
+  });
+}
+
+/**
+ * Formats the collected sections into a structured clinical note
+ */
+function formatStructuredNote(sections: Record<string, string[]>): string {
+  const formattedSections: string[] = [];
+  
+  // Add each section with appropriate heading and content
+  formattedSections.push("## CHIEF COMPLAINT");
+  formattedSections.push(sections.chiefComplaint.length > 0 
+    ? sections.chiefComplaint.join("\n\n") 
+    : "No chief complaint documented.");
+  
+  formattedSections.push("\n## HISTORY OF PRESENT ILLNESS (HPI)");
+  formattedSections.push(sections.hpi.length > 0 
+    ? sections.hpi.join("\n\n") 
+    : "No HPI documented.");
+  
+  formattedSections.push("\n## PAST MEDICAL HISTORY");
+  formattedSections.push(sections.pastMedicalHistory.length > 0 
+    ? sections.pastMedicalHistory.join("\n\n") 
+    : "No past medical history documented.");
+  
+  formattedSections.push("\n## MEDICATIONS");
+  formattedSections.push(sections.medications.length > 0 
+    ? sections.medications.join("\n\n") 
+    : "No medications documented.");
+  
+  formattedSections.push("\n## ALLERGIES");
+  formattedSections.push(sections.allergies.length > 0 
+    ? sections.allergies.join("\n\n") 
+    : "No known allergies documented.");
+  
+  formattedSections.push("\n## FAMILY HISTORY");
+  formattedSections.push(sections.familyHistory.length > 0 
+    ? sections.familyHistory.join("\n\n") 
+    : "No family history documented.");
+  
+  formattedSections.push("\n## SOCIAL HISTORY");
+  formattedSections.push(sections.socialHistory.length > 0 
+    ? sections.socialHistory.join("\n\n") 
+    : "No social history documented.");
+  
+  formattedSections.push("\n## REVIEW OF SYSTEMS");
+  formattedSections.push(sections.reviewOfSystems.length > 0 
+    ? sections.reviewOfSystems.join("\n\n") 
+    : "No review of systems documented.");
+  
+  formattedSections.push("\n## PHYSICAL EXAMINATION");
+  formattedSections.push(sections.physicalExam.length > 0 
+    ? sections.physicalExam.join("\n\n") 
+    : "No physical examination documented.");
+  
+  formattedSections.push("\n## ASSESSMENT");
+  formattedSections.push(sections.assessment.length > 0 
+    ? sections.assessment.join("\n\n") 
+    : "No assessment documented.");
+  
+  formattedSections.push("\n## PLAN");
+  formattedSections.push(sections.plan.length > 0 
+    ? sections.plan.join("\n\n") 
+    : "No plan documented.");
+  
+  return formattedSections.join("\n");
+}
+
+/**
+ * Helper to determine if text is about symptoms
+ */
+function isAboutSymptoms(text: string): boolean {
+  const symptomKeywords = [
+    "pain", "ache", "discomfort", "symptom", "feel", "felt", "trouble",
+    "issue", "problem", "difficulty", "hurt", "sore", "tender", "burning",
+    "tired", "fatigue", "weak", "nausea", "vomit", "fever", "chill",
+    "sweat", "cough", "breath", "dizzy", "headache", "rash"
+  ];
+  
+  return symptomKeywords.some(keyword => text.includes(keyword));
+}
+
+/**
+ * Helper to determine if text is about clinical findings
+ */
+function isAboutFindings(text: string): boolean {
+  const findingKeywords = [
+    "observe", "noted", "seen", "found", "present", "absent", "normal",
+    "abnormal", "tender", "sign", "vital", "temperature", "pulse", "pressure",
+    "rate", "saturation", "reflex", "response", "breath sound", "heart sound",
+    "rhythm", "murmur", "appearance", "inspection", "palpation", "percussion",
+    "auscultation"
+  ];
+  
+  return findingKeywords.some(keyword => text.includes(keyword));
 }

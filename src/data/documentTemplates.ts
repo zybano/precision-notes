@@ -1,4 +1,5 @@
-import { FileText, Calendar, ClipboardList, Mic } from "lucide-react";
+
+import { FileText, Calendar, ClipboardList, Mic, ClipboardCheck } from "lucide-react";
 import { TemplateParameter } from "@/components/documentation/TemplateCard";
 
 export interface DocumentTemplate {
@@ -15,6 +16,24 @@ export const documentTemplates: DocumentTemplate[] = [
     icon: Mic,
     parameters: [
       { name: "content", label: "Content", description: "Dictated content without predefined structure", type: "textarea" }
+    ]
+  },
+  { 
+    title: "Comprehensive Clinical Note", 
+    description: "Complete clinical documentation with all standard sections", 
+    icon: ClipboardCheck,
+    parameters: [
+      { name: "chiefComplaint", label: "Chief Complaint", description: "Patient's main reason for visit", type: "textarea" },
+      { name: "hpi", label: "History of Present Illness (HPI)", description: "Detailed chronology of symptoms", type: "textarea" },
+      { name: "pastMedicalHistory", label: "Past Medical History", description: "Prior medical conditions and surgeries", type: "textarea" },
+      { name: "medications", label: "Medications", description: "Current medications", type: "textarea" },
+      { name: "allergies", label: "Allergies", description: "Known allergies and reactions", type: "textarea" },
+      { name: "familyHistory", label: "Family History", description: "Relevant family medical history", type: "textarea" },
+      { name: "socialHistory", label: "Social History", description: "Lifestyle factors (smoking, alcohol, etc)", type: "textarea" },
+      { name: "reviewOfSystems", label: "Review of Systems", description: "Systematic review of body systems", type: "textarea" },
+      { name: "physicalExam", label: "Physical Examination", description: "Findings from physical examination", type: "textarea" },
+      { name: "assessment", label: "Assessment", description: "Clinical assessment and diagnosis", type: "textarea" },
+      { name: "plan", label: "Plan", description: "Treatment plan and next steps", type: "textarea" }
     ]
   },
   { 
