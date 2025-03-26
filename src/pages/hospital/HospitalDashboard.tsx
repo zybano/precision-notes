@@ -1,4 +1,3 @@
-
 import { FadeIn } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,6 @@ const HospitalDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Determine active tab from location path
   useEffect(() => {
     const path = location.pathname;
     if (path === "/hospital") {
@@ -32,7 +30,6 @@ const HospitalDashboard = () => {
     }
   }, [location.pathname]);
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     if (value === "overview") {

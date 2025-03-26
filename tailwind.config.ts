@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -67,21 +66,21 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Medical purple palette
+				// Blue palette (replacing the purple "medical" palette)
 				'medical': {
-					50: '#f9f7ff',
-					100: '#f3f0ff', 
-					200: '#e9e3ff',
-					300: '#d4c7ff',
-					400: '#b69dff',
-					500: '#9a73ff',
-					600: '#8250ff',
-					700: '#6a30ef',
-					800: '#5a29d3',
-					900: '#4c2d80',
-					950: '#2b184a',
+					50: '#f0f7ff',
+					100: '#e0eefe', 
+					200: '#bae0fd',
+					300: '#90c8fc',
+					400: '#5ea8f7',
+					500: '#3b82f6',
+					600: '#2563eb',
+					700: '#1d4ed8',
+					800: '#1e40af',
+					900: '#1e3a8a',
+					950: '#172554',
 				},
-				// Sunshine yellow palette
+				// Sunshine yellow palette - keeping this as is
 				'sunshine': {
 					50: '#fefce8',
 					100: '#fef9c3',
