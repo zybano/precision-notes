@@ -81,19 +81,19 @@ export default {
 					900: '#1e3a8a',
 					950: '#172554',
 				},
-				// Light green palette (replacing the yellow "sunshine" palette)
+				// Neon green palette (replacing the light green "sunshine" palette)
 				'sunshine': {
-					50: '#f2fce4',
-					100: '#e3f8cf',
-					200: '#c9f0a9',
-					300: '#a6e679',
-					400: '#7ed443',
-					500: '#66c61c',
-					600: '#4da113',
-					700: '#3d7f14',
-					800: '#326414',
-					900: '#2b5315',
-					950: '#132e07',
+					50: '#eeffdf',
+					100: '#d9ffb8',
+					200: '#b8ff85',
+					300: '#8dff42',
+					400: '#6fff0a',
+					500: '#4cff00',
+					600: '#39e600',
+					700: '#25cc00',
+					800: '#1ca000',
+					900: '#158000',
+					950: '#044500',
 				}
 			},
 			borderRadius: {

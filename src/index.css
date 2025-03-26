@@ -25,8 +25,8 @@
     --muted: 210 20% 96%;
     --muted-foreground: 210 10% 40%;
 
-    --accent: 120 60% 50%;
-    --accent-foreground: 120 60% 10%;
+    --accent: 120 100% 50%;
+    --accent-foreground: 120 100% 10%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 50% 98%;
@@ -66,7 +66,7 @@
     --muted: 210 25% 16%;
     --muted-foreground: 210 10% 60%;
 
-    --accent: 120 50% 40%;
+    --accent: 120 100% 45%;
     --accent-foreground: 120 10% 98%;
 
     --destructive: 0 70% 50%;
@@ -110,7 +110,7 @@
   }
   
   .sunshine-gradient {
-    @apply bg-gradient-to-r from-green-400 to-green-600;
+    @apply bg-gradient-to-r from-sunshine-400 to-sunshine-600;
   }
   
   .tech-gradient-text {
@@ -141,7 +141,7 @@
   }
   
   .sunshine-glow {
-    @apply shadow-[0_0_15px_rgba(126,212,87,0.3)];
+    @apply shadow-[0_0_15px_rgba(76,255,0,0.5)];
   }
   
   /* Transition base classes */
