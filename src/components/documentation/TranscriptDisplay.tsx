@@ -145,8 +145,8 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                   </div>
                   
                   {isMockTranscript && (
-                    <div className="flex gap-2 items-center p-2 mb-3 bg-yellow-50 border border-yellow-200 rounded-md text-xs text-yellow-800">
-                      <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
+                    <div className="flex gap-2 items-center p-2 mb-3 bg-green-50 border border-green-200 rounded-md text-xs text-green-800">
+                      <AlertCircle className="h-3.5 w-3.5 text-green-500" />
                       <span>Using mock data. For production use, please configure your AssemblyAI API key.</span>
                     </div>
                   )}
@@ -160,8 +160,8 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                         <div 
                           className={`max-w-[85%] rounded-lg p-2.5 ${
                             utterance.speaker === "Doctor" 
-                              ? "bg-primary text-primary-foreground" 
-                              : "bg-muted"
+                              ? "bg-blue-500 text-white" 
+                              : "bg-[#39ff14] text-black"
                           }`}
                         >
                           <div className="flex items-center gap-1.5 mb-1">

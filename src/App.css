@@ -186,3 +186,12 @@
   color: #3b82f6;
   border-bottom-color: #374151;
 }
+
+/* Doctor-patient conversation styling */
+.doctor-text {
+  color: #1EAEDB;
+}
+
+.patient-text {
+  color: #39ff14; /* Neon green */
+}
