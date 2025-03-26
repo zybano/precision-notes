@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -80,19 +81,19 @@ export default {
 					900: '#1e3a8a',
 					950: '#172554',
 				},
-				// Sunshine yellow palette - keeping this as is
+				// Light green palette (replacing the yellow "sunshine" palette)
 				'sunshine': {
-					50: '#fefce8',
-					100: '#fef9c3',
-					200: '#fef08a',
-					300: '#fde047',
-					400: '#facc15',
-					500: '#eab308',
-					600: '#ca8a04',
-					700: '#a16207',
-					800: '#854d0e',
-					900: '#713f12',
-					950: '#422006',
+					50: '#f2fce4',
+					100: '#e3f8cf',
+					200: '#c9f0a9',
+					300: '#a6e679',
+					400: '#7ed443',
+					500: '#66c61c',
+					600: '#4da113',
+					700: '#3d7f14',
+					800: '#326414',
+					900: '#2b5315',
+					950: '#132e07',
 				}
 			},
 			borderRadius: {

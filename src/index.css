@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -24,8 +25,8 @@
     --muted: 210 20% 96%;
     --muted-foreground: 210 10% 40%;
 
-    --accent: 45 100% 60%;
-    --accent-foreground: 45 100% 10%;
+    --accent: 120 60% 50%;
+    --accent-foreground: 120 60% 10%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 50% 98%;
@@ -65,8 +66,8 @@
     --muted: 210 25% 16%;
     --muted-foreground: 210 10% 60%;
 
-    --accent: 45 90% 50%;
-    --accent-foreground: 45 10% 98%;
+    --accent: 120 50% 40%;
+    --accent-foreground: 120 10% 98%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 210 10% 98%;
@@ -105,15 +106,15 @@
   
   /* Medical-themed gradient effects */
   .medical-gradient {
-    @apply bg-gradient-to-r from-purple-600 to-purple-800;
+    @apply bg-gradient-to-r from-blue-600 to-blue-800;
   }
   
   .sunshine-gradient {
-    @apply bg-gradient-to-r from-yellow-400 to-yellow-600;
+    @apply bg-gradient-to-r from-green-400 to-green-600;
   }
   
   .tech-gradient-text {
-    @apply bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent;
   }
   
   /* Premium button styles */
@@ -132,15 +133,15 @@
   
   /* Medical UI elements */
   .medical-card {
-    @apply rounded-xl border border-purple-100 shadow-sm bg-white dark:bg-purple-900/10 dark:border-purple-700/30;
+    @apply rounded-xl border border-blue-100 shadow-sm bg-white dark:bg-blue-900/10 dark:border-blue-700/30;
   }
   
   .medical-glow {
-    @apply shadow-[0_0_15px_rgba(139,92,246,0.3)];
+    @apply shadow-[0_0_15px_rgba(59,130,246,0.3)];
   }
   
   .sunshine-glow {
-    @apply shadow-[0_0_15px_rgba(250,204,21,0.3)];
+    @apply shadow-[0_0_15px_rgba(126,212,87,0.3)];
   }
   
   /* Transition base classes */
