@@ -156,10 +156,18 @@ const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcriptData, doc
             <div className="bg-muted/50 p-4 rounded-md whitespace-pre-wrap max-h-[500px] overflow-y-auto">
               {parsedData.utterances.map((utterance, index) => (
                 <div key={index} className="mb-4">
-                  <div className="font-semibold text-sm text-muted-foreground mb-1">
+                  <div className={`font-semibold text-sm mb-1 ${utterance.speaker === "Doctor" ? "text-blue-600 dark:text-blue-400" : "text-green-500 dark:text-green-400"}`}>
                     {utterance.speaker}:
                   </div>
-                  <div>{utterance.text}</div>
+                  <div className={`${utterance.speaker === "Doctor" ? "text-blue-600 dark:text-blue-400" : "text-green-500 dark:text-green-400"}`}>
+                    {utterance.text.split('. ').map((sentence, sentIdx) => (
+                      sentence.trim() && (
+                        <div key={`${index}-${sentIdx}`} className="mb-1">
+                          {sentence.trim()}{sentence.endsWith('.') ? '' : '.'}
+                        </div>
+                      )
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
