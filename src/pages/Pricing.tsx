@@ -2,13 +2,55 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Pricing = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   useEffect(() => {
     document.title = "Pricing | PrecisionNote";
   }, []);
+  
+  // In a real app, this would come from a database or user metadata
+  const userSubscriptionLevel = user?.user_metadata?.subscription_level || 'free';
+
+  const handleSubscribe = (plan: string) => {
+    if (!user) {
+      toast.error("Please log in to subscribe");
+      navigate("/login");
+      return;
+    }
+    
+    // Mock subscription handling
+    if (plan === 'enterprise') {
+      // In a real app, this would redirect to a payment page and update the user's subscription in the database
+      toast.success("Enterprise access granted for demo purposes");
+      
+      // For demo, we'll just modify the user_metadata in localStorage to simulate subscription
+      const fakeUserUpdate = {
+        ...user,
+        user_metadata: {
+          ...user.user_metadata,
+          subscription_level: 'enterprise'
+        }
+      };
+      
+      // Store the updated user in localStorage
+      localStorage.setItem('sb-user', JSON.stringify(fakeUserUpdate));
+      
+      // Force a page refresh to update the auth context with new metadata
+      window.location.reload();
+    } else if (plan === 'basic' || plan === 'professional') {
+      toast.info("This plan doesn't include Hospital System access");
+    } else {
+      toast.info("Starting free trial");
+    }
+  };
 
   const plans = [
     {
@@ -63,10 +105,12 @@ const Pricing = () => {
         "Advanced Analytics",
         "API Access",
         "Dedicated Account Manager",
-        "HIPAA Compliance Assistance"
+        "HIPAA Compliance Assistance",
+        "Hospital Management System Access"
       ],
       highlighted: false,
-      buttonText: "Contact Sales"
+      buttonText: userSubscriptionLevel === 'enterprise' ? "Current Plan" : "Contact Sales",
+      isEnterprise: true
     }
   ];
 
@@ -87,9 +131,12 @@ const Pricing = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {plans.map((plan) => (
-          <Card key={plan.name} className={`flex flex-col h-full ${plan.highlighted ? 'border-primary shadow-lg' : ''}`}>
+          <Card key={plan.name} className={`flex flex-col h-full ${plan.highlighted ? 'border-primary shadow-lg' : ''} ${plan.isEnterprise ? 'border-purple-400 shadow-md' : ''}`}>
             <CardHeader>
-              <CardTitle className="text-xl">{plan.name}</CardTitle>
+              <CardTitle className="text-xl flex items-center gap-2">
+                {plan.name}
+                {plan.isEnterprise && <Lock className="h-4 w-4 text-purple-500" />}
+              </CardTitle>
               <div className="mt-2">
                 <span className="text-3xl font-bold">{plan.price}</span>
                 <span className="text-muted-foreground ml-1">/month</span>
@@ -100,12 +147,17 @@ const Pricing = () => {
                   {plan.timeLimit}
                 </span>
               )}
+              {plan.isEnterprise && userSubscriptionLevel === 'enterprise' && (
+                <span className="inline-block mt-2 text-sm font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                  Your current plan
+                </span>
+              )}
             </CardHeader>
             <CardContent className="flex-grow">
               <ul className="space-y-2">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start">
-                    <Check size={18} className="mr-2 text-primary shrink-0 mt-0.5" />
+                    <Check size={18} className={`mr-2 ${plan.isEnterprise ? 'text-purple-500' : 'text-primary'} shrink-0 mt-0.5`} />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -113,10 +165,12 @@ const Pricing = () => {
             </CardContent>
             <CardFooter>
               <Button 
-                className={`w-full ${plan.highlighted ? 'bg-primary' : ''}`} 
-                variant={plan.highlighted ? "default" : "outline"}
+                className={`w-full ${plan.highlighted ? 'bg-primary' : ''} ${plan.isEnterprise ? 'bg-purple-600 hover:bg-purple-700' : ''}`} 
+                variant={plan.highlighted ? "default" : plan.isEnterprise ? "default" : "outline"}
+                onClick={() => handleSubscribe(plan.isEnterprise ? 'enterprise' : plan.name.toLowerCase())}
+                disabled={plan.isEnterprise && userSubscriptionLevel === 'enterprise'}
               >
-                {plan.buttonText}
+                {userSubscriptionLevel === 'enterprise' && plan.isEnterprise ? "Current Plan" : plan.buttonText}
               </Button>
             </CardFooter>
           </Card>
@@ -137,6 +191,10 @@ const Pricing = () => {
           <div className="text-left">
             <h3 className="font-medium mb-2">How does billing work?</h3>
             <p className="text-muted-foreground">You'll be billed monthly or annually, depending on your preference. We accept all major credit cards and PayPal.</p>
+          </div>
+          <div className="text-left">
+            <h3 className="font-medium mb-2">Which plan includes the Hospital Management System?</h3>
+            <p className="text-muted-foreground">The Hospital Management System is exclusively available on our Enterprise plan. This comprehensive solution is designed for larger healthcare organizations.</p>
           </div>
         </div>
       </div>

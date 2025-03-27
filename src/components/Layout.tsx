@@ -1,5 +1,5 @@
 
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,9 +14,25 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 
 const Layout = () => {
   const { user, signOut } = useAuth();
+  const location = useLocation();
+  
+  // Check if the current path is part of the hospital system
+  const isHospitalRoute = location.pathname.startsWith('/hospital');
+  
+  // Check if user has enterprise subscription
+  // In a real app, this would come from a database or user metadata
+  const userSubscriptionLevel = user?.user_metadata?.subscription_level || 'free';
+  const hasEnterpriseAccess = userSubscriptionLevel === 'enterprise';
+  
+  // Redirect if trying to access hospital routes without enterprise subscription
+  if (isHospitalRoute && !hasEnterpriseAccess) {
+    toast.error("Hospital system requires Enterprise subscription");
+    return <Navigate to="/pricing" replace />;
+  }
 
   const handleSignOut = async () => {
     try {
