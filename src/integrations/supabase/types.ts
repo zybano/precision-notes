@@ -17,6 +17,7 @@ export type Database = {
           patient_name: string
           status: string
           title: string
+          transcript_data: string | null
           type: string
           updated_at: string
         }
@@ -27,6 +28,7 @@ export type Database = {
           patient_name: string
           status?: string
           title: string
+          transcript_data?: string | null
           type: string
           updated_at?: string
         }
@@ -37,6 +39,7 @@ export type Database = {
           patient_name?: string
           status?: string
           title?: string
+          transcript_data?: string | null
           type?: string
           updated_at?: string
         }
