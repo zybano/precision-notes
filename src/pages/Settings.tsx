@@ -24,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Database, User, PlugZap, Stethoscope, FileText } from "lucide-react";
+import { Database, Stethoscope, PlugZap, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -199,7 +199,7 @@ const Settings = () => {
               </div>
             </div>
             <Badge variant="outline" className="w-fit gap-1 px-2 py-1 text-xs">
-              <User size={14} /> Personal
+              <Stethoscope size={14} /> Personal
             </Badge>
           </CardHeader>
           <CardContent>
