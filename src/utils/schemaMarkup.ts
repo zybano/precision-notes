@@ -7,13 +7,13 @@ export const createOrganizationSchema = () => {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Documedly",
+    "name": "PrecisionNote",
     "url": window.location.origin,
     "logo": `${window.location.origin}/og-image.png`,
     "sameAs": [
-      "https://twitter.com/documedly",
-      "https://www.linkedin.com/company/documedly",
-      "https://github.com/documedly"
+      "https://twitter.com/precisionnote",
+      "https://www.linkedin.com/company/precisionnote",
+      "https://github.com/precisionnote"
     ],
     "contactPoint": {
       "@type": "ContactPoint",

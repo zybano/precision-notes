@@ -57,7 +57,7 @@ const Sidebar = () => {
     { path: "/hospital/inventory", name: "Inventory", icon: BoxesIcon },
     { path: "/hospital/billing", name: "Billing", icon: DollarSign }
   ];
-  
+
   const NavItems = () => (
     <ul className="space-y-1">
       {navigation.map((item) => (
@@ -96,9 +96,9 @@ const Sidebar = () => {
             <div className="p-4 flex items-center justify-between border-b border-border">
               <div className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">D</span>
+                  <span className="text-white font-bold text-xl">P</span>
                 </div>
-                <span className="ml-2 font-semibold">Documedly</span>
+                <span className="ml-2 font-semibold">PrecisionNote</span>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setSheetOpen(false)} className="hover:bg-accent rounded-full">
                 <X size={18} />
@@ -136,9 +136,9 @@ const Sidebar = () => {
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className={`flex items-center transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 overflow-hidden w-0'}`}>
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">D</span>
+            <span className="text-white font-bold text-xl">P</span>
           </div>
-          <span className="ml-2 font-semibold">Documedly</span>
+          <span className="ml-2 font-semibold">PrecisionNote</span>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hover:bg-accent rounded-full">
           <Menu size={20} />

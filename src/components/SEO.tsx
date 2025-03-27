@@ -11,14 +11,14 @@ interface SEOProps {
 }
 
 export const SEO = ({
-  title = 'Documedly',
+  title = 'PrecisionNote',
   description = 'AI-powered clinical documentation assistant for healthcare professionals',
   canonical = window.location.href,
   image = '/og-image.png',
   type = 'website',
   keywords = 'medical documentation, AI transcription, healthcare, clinical notes, medical records',
 }: SEOProps) => {
-  const siteTitle = title === 'Documedly' ? title : `${title} | Documedly`;
+  const siteTitle = title === 'PrecisionNote' ? title : `${title} | PrecisionNote`;
   
   return (
     <Helmet>
