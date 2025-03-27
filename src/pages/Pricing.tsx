@@ -7,22 +7,23 @@ import { SEO } from "@/components/SEO";
 
 const Pricing = () => {
   useEffect(() => {
-    document.title = "Pricing | Documedly";
+    document.title = "Pricing | PrecisionNote";
   }, []);
 
   const plans = [
     {
-      name: "Free",
+      name: "Free Trial",
       price: "$0",
-      description: "Get started with essential features",
+      description: "7-day trial of essential features",
       features: [
         "3 Patient Records",
         "1 Template",
         "Basic Transcription",
         "Community Support"
       ],
+      timeLimit: "Valid for 7 days",
       highlighted: false,
-      buttonText: "Get Started"
+      buttonText: "Start Free Trial"
     },
     {
       name: "Basic",
@@ -94,6 +95,11 @@ const Pricing = () => {
                 <span className="text-muted-foreground ml-1">/month</span>
               </div>
               <CardDescription className="mt-2">{plan.description}</CardDescription>
+              {plan.timeLimit && (
+                <span className="inline-block mt-2 text-sm font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                  {plan.timeLimit}
+                </span>
+              )}
             </CardHeader>
             <CardContent className="flex-grow">
               <ul className="space-y-2">
@@ -125,8 +131,8 @@ const Pricing = () => {
             <p className="text-muted-foreground">Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected on your next billing cycle.</p>
           </div>
           <div className="text-left">
-            <h3 className="font-medium mb-2">Is there a free trial available?</h3>
-            <p className="text-muted-foreground">We offer a 14-day free trial for our Professional plan, no credit card required.</p>
+            <h3 className="font-medium mb-2">What happens after my free trial ends?</h3>
+            <p className="text-muted-foreground">After your 7-day free trial expires, you'll need to subscribe to one of our paid plans to continue using PrecisionNote.</p>
           </div>
           <div className="text-left">
             <h3 className="font-medium mb-2">How does billing work?</h3>
