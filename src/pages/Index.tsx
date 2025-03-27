@@ -326,7 +326,7 @@ const Index = () => {
           <FadeIn delay={0.3} className="hidden lg:block">
             <div className="glass rounded-2xl shadow-xl overflow-hidden hero-image-container">
               <img 
-                src="/lovable-uploads/a74bcebb-a488-408e-a1b8-cd1d503dbb63.png" 
+                src="/lovable-uploads/320e33a3-6e35-4900-9126-8923192ea591.png" 
                 alt="Doctor using PrecisionNote for documentation" 
                 className="w-full h-full object-cover"
               />
