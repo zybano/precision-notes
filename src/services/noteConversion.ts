@@ -10,7 +10,7 @@ let openai: OpenAI | null = null;
 
 // Initialize OpenAI with API key if available
 const initializeOpenAI = () => {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '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';
   if (apiKey) {
     openai = new OpenAI({
       apiKey,
