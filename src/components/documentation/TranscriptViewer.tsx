@@ -8,6 +8,7 @@ import { Mic, FileText, MessageSquare, FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { convertTranscriptToSOAP, convertTranscriptToProgressNote, convertTranscriptToConsultNote } from "@/services/noteConversion";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TranscriptViewerProps {
   transcriptData: string | null;
@@ -18,6 +19,7 @@ const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcriptData, doc
   const [activeTab, setActiveTab] = useState<string>("raw");
   const [isConverting, setIsConverting] = useState<boolean>(false);
   const [convertedNote, setConvertedNote] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(documentType.toLowerCase() || "soap note");
   
   const parsedData = parseTranscriptData(transcriptData);
   const speakers = parsedData ? extractSpeakers(parsedData) : [];
@@ -29,7 +31,7 @@ const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcriptData, doc
     try {
       let result: string;
       
-      switch(documentType.toLowerCase()) {
+      switch(selectedTemplate.toLowerCase()) {
         case "soap note":
           result = await convertTranscriptToSOAP(parsedData.text);
           break;
@@ -45,7 +47,7 @@ const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcriptData, doc
       
       setConvertedNote(result);
       setActiveTab("converted");
-      toast.success("Transcript converted successfully");
+      toast.success("Transcript converted successfully using OpenAI");
     } catch (error) {
       console.error("Error converting transcript:", error);
       toast.error("Failed to convert transcript");
@@ -59,7 +61,7 @@ const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcriptData, doc
     
     const content = activeTab === "converted" ? convertedNote : parsedData.text;
     const filename = activeTab === "converted" 
-      ? `${documentType.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.txt`
+      ? `${selectedTemplate.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.txt`
       : `transcript_${new Date().toISOString().slice(0, 10)}.txt`;
     
     const element = document.createElement('a');
@@ -118,18 +120,35 @@ const TranscriptViewer: React.FC<TranscriptViewerProps> = ({ transcriptData, doc
               </TabsTrigger>
               <TabsTrigger value="converted" className="flex items-center gap-1" disabled={!convertedNote}>
                 <FileText className="h-4 w-4" />
-                Converted Note
+                Clinical Note
               </TabsTrigger>
             </TabsList>
             
             {activeTab === "raw" && (
-              <Button 
-                size="sm" 
-                onClick={handleConvertTranscript}
-                disabled={isConverting}
-              >
-                {isConverting ? "Converting..." : "Convert to Clinical Note"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Select 
+                  value={selectedTemplate} 
+                  onValueChange={setSelectedTemplate}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select note type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="soap note">SOAP Note</SelectItem>
+                    <SelectItem value="progress note">Progress Note</SelectItem>
+                    <SelectItem value="consultation note">Consultation Note</SelectItem>
+                    <SelectItem value="history & physical">History & Physical</SelectItem>
+                    <SelectItem value="procedure note">Procedure Note</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  size="sm" 
+                  onClick={handleConvertTranscript}
+                  disabled={isConverting}
+                >
+                  {isConverting ? "Converting via OpenAI..." : "Convert to Clinical Note"}
+                </Button>
+              </div>
             )}
           </div>
           

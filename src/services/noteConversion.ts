@@ -41,7 +41,7 @@ export const convertTranscriptToSOAP = async (transcript: string): Promise<strin
       messages: [
         {
           role: "system",
-          content: "You are a medical documentation assistant that creates well-structured SOAP notes from doctor-patient conversation transcripts. Format the content professionally with clear sections following medical documentation standards."
+          content: "You are a medical documentation assistant that creates well-structured SOAP notes from doctor-patient conversation transcripts. Format the content professionally with clear sections following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
         },
         {
           role: "user",
@@ -78,7 +78,7 @@ export const convertTranscriptToProgressNote = async (transcript: string): Promi
       messages: [
         {
           role: "system",
-          content: "You are a medical documentation assistant that creates well-structured Progress Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+          content: "You are a medical documentation assistant that creates well-structured Progress Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
         },
         {
           role: "user",
@@ -115,7 +115,7 @@ export const convertTranscriptToConsultNote = async (transcript: string): Promis
       messages: [
         {
           role: "system",
-          content: "You are a medical documentation assistant that creates well-structured Consultation Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+          content: "You are a medical documentation assistant that creates well-structured Consultation Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
         },
         {
           role: "user",
@@ -152,7 +152,7 @@ export const convertTranscriptToHistoryAndPhysical = async (transcript: string):
       messages: [
         {
           role: "system",
-          content: "You are a medical documentation assistant that creates well-structured History & Physical reports from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+          content: "You are a medical documentation assistant that creates well-structured History & Physical reports from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
         },
         {
           role: "user",
@@ -189,7 +189,7 @@ export const convertTranscriptToProcedureNote = async (transcript: string): Prom
       messages: [
         {
           role: "system",
-          content: "You are a medical documentation assistant that creates well-structured Procedure Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+          content: "You are a medical documentation assistant that creates well-structured Procedure Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under relevant findings. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
         },
         {
           role: "user",
