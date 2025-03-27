@@ -3,17 +3,213 @@
  * This file contains utility functions for converting transcripts to structured clinical notes
  */
 
+import OpenAI from 'openai';
+
+// Initialize OpenAI client
+let openai: OpenAI | null = null;
+
+// Initialize OpenAI with API key if available
+const initializeOpenAI = () => {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  if (apiKey) {
+    openai = new OpenAI({
+      apiKey,
+      dangerouslyAllowBrowser: true // Allowing usage in browser for demo purposes
+    });
+    return true;
+  }
+  return false;
+};
+
 /**
- * Converts a transcript to a SOAP note format
+ * Converts a transcript to a SOAP note format using OpenAI if available, otherwise falls back to template-based conversion
  * @param transcript The raw transcript to convert
  * @returns Formatted SOAP note
  */
 export const convertTranscriptToSOAP = async (transcript: string): Promise<string> => {
-  // In a real implementation, this would call an AI service or API
-  // For now, we'll simulate the conversion with a structured template
+  // Try using OpenAI first if API key is available
+  if (!openai) {
+    const openaiInitialized = initializeOpenAI();
+    if (!openaiInitialized) {
+      console.log("OpenAI API key not available, using fallback method");
+      return fallbackConvertToSOAP(transcript);
+    }
+  }
   
-  // Create some basic structure based on the transcript
-  const soapNote = `SOAP NOTE
+  try {
+    const result = await openai!.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a medical documentation assistant that creates well-structured SOAP notes from doctor-patient conversation transcripts. Format the content professionally with clear sections following medical documentation standards."
+        },
+        {
+          role: "user",
+          content: `Create a complete SOAP note from this doctor-patient conversation transcript. Structure it with clear SUBJECTIVE, OBJECTIVE, ASSESSMENT, and PLAN sections:\n\n${transcript}`
+        }
+      ],
+    });
+    
+    return result.choices[0].message.content || fallbackConvertToSOAP(transcript);
+  } catch (error) {
+    console.error("Error using OpenAI for SOAP note conversion:", error);
+    return fallbackConvertToSOAP(transcript);
+  }
+};
+
+/**
+ * Converts a transcript to a Progress Note format using OpenAI if available
+ * @param transcript The raw transcript to convert
+ * @returns Formatted Progress Note
+ */
+export const convertTranscriptToProgressNote = async (transcript: string): Promise<string> => {
+  // Try using OpenAI first if API key is available
+  if (!openai) {
+    const openaiInitialized = initializeOpenAI();
+    if (!openaiInitialized) {
+      console.log("OpenAI API key not available, using fallback method");
+      return fallbackConvertToProgressNote(transcript);
+    }
+  }
+  
+  try {
+    const result = await openai!.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a medical documentation assistant that creates well-structured Progress Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+        },
+        {
+          role: "user",
+          content: `Create a complete Progress Note from this doctor-patient conversation transcript. Structure it with CHIEF COMPLAINT, INTERVAL HISTORY, CURRENT STATUS, and ASSESSMENT & PLAN sections:\n\n${transcript}`
+        }
+      ],
+    });
+    
+    return result.choices[0].message.content || fallbackConvertToProgressNote(transcript);
+  } catch (error) {
+    console.error("Error using OpenAI for Progress Note conversion:", error);
+    return fallbackConvertToProgressNote(transcript);
+  }
+};
+
+/**
+ * Converts a transcript to a Consultation Note format using OpenAI if available
+ * @param transcript The raw transcript to convert
+ * @returns Formatted Consultation Note
+ */
+export const convertTranscriptToConsultNote = async (transcript: string): Promise<string> => {
+  // Try using OpenAI first if API key is available
+  if (!openai) {
+    const openaiInitialized = initializeOpenAI();
+    if (!openaiInitialized) {
+      console.log("OpenAI API key not available, using fallback method");
+      return fallbackConvertToConsultNote(transcript);
+    }
+  }
+  
+  try {
+    const result = await openai!.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a medical documentation assistant that creates well-structured Consultation Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+        },
+        {
+          role: "user",
+          content: `Create a complete Consultation Note from this doctor-patient conversation transcript. Structure it with REASON FOR CONSULTATION, HISTORY OF PRESENT ILLNESS, RELEVANT FINDINGS, and IMPRESSION & RECOMMENDATIONS sections:\n\n${transcript}`
+        }
+      ],
+    });
+    
+    return result.choices[0].message.content || fallbackConvertToConsultNote(transcript);
+  } catch (error) {
+    console.error("Error using OpenAI for Consultation Note conversion:", error);
+    return fallbackConvertToConsultNote(transcript);
+  }
+};
+
+/**
+ * Converts a transcript to a History & Physical format using OpenAI if available
+ * @param transcript The raw transcript to convert
+ * @returns Formatted H&P
+ */
+export const convertTranscriptToHistoryAndPhysical = async (transcript: string): Promise<string> => {
+  // Try using OpenAI first if API key is available
+  if (!openai) {
+    const openaiInitialized = initializeOpenAI();
+    if (!openaiInitialized) {
+      console.log("OpenAI API key not available, using fallback method");
+      return fallbackConvertToHistoryAndPhysical(transcript);
+    }
+  }
+  
+  try {
+    const result = await openai!.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a medical documentation assistant that creates well-structured History & Physical reports from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+        },
+        {
+          role: "user",
+          content: `Create a complete History & Physical report from this doctor-patient conversation transcript. Structure it with CHIEF COMPLAINT, HISTORY OF PRESENT ILLNESS, PAST MEDICAL HISTORY, REVIEW OF SYSTEMS, PHYSICAL EXAMINATION, and ASSESSMENT & PLAN sections:\n\n${transcript}`
+        }
+      ],
+    });
+    
+    return result.choices[0].message.content || fallbackConvertToHistoryAndPhysical(transcript);
+  } catch (error) {
+    console.error("Error using OpenAI for H&P conversion:", error);
+    return fallbackConvertToHistoryAndPhysical(transcript);
+  }
+};
+
+/**
+ * Converts a transcript to a Procedure Note format using OpenAI if available
+ * @param transcript The raw transcript to convert
+ * @returns Formatted Procedure Note
+ */
+export const convertTranscriptToProcedureNote = async (transcript: string): Promise<string> => {
+  // Try using OpenAI first if API key is available
+  if (!openai) {
+    const openaiInitialized = initializeOpenAI();
+    if (!openaiInitialized) {
+      console.log("OpenAI API key not available, using fallback method");
+      return fallbackConvertToProcedureNote(transcript);
+    }
+  }
+  
+  try {
+    const result = await openai!.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a medical documentation assistant that creates well-structured Procedure Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards."
+        },
+        {
+          role: "user",
+          content: `Create a complete Procedure Note from this doctor-patient conversation transcript. Structure it with PROCEDURE PERFORMED, INDICATION, TECHNIQUE, FINDINGS, and POST-PROCEDURE sections:\n\n${transcript}`
+        }
+      ],
+    });
+    
+    return result.choices[0].message.content || fallbackConvertToProcedureNote(transcript);
+  } catch (error) {
+    console.error("Error using OpenAI for Procedure Note conversion:", error);
+    return fallbackConvertToProcedureNote(transcript);
+  }
+};
+
+// Fallback methods that use template-based conversion without OpenAI
+
+function fallbackConvertToSOAP(transcript: string): string {
+  return `SOAP NOTE
   
 SUBJECTIVE:
 ${extractSubjective(transcript)}
@@ -26,17 +222,10 @@ ${extractAssessment(transcript)}
 
 PLAN:
 ${extractPlan(transcript)}`;
+}
 
-  return soapNote;
-};
-
-/**
- * Converts a transcript to a Progress Note format
- * @param transcript The raw transcript to convert
- * @returns Formatted Progress Note
- */
-export const convertTranscriptToProgressNote = async (transcript: string): Promise<string> => {
-  const progressNote = `PROGRESS NOTE
+function fallbackConvertToProgressNote(transcript: string): string {
+  return `PROGRESS NOTE
   
 CHIEF COMPLAINT:
 ${extractChiefComplaint(transcript)}
@@ -49,17 +238,10 @@ ${extractCurrentStatus(transcript)}
 
 ASSESSMENT & PLAN:
 ${extractAssessmentAndPlan(transcript)}`;
+}
 
-  return progressNote;
-};
-
-/**
- * Converts a transcript to a Consultation Note format
- * @param transcript The raw transcript to convert
- * @returns Formatted Consultation Note
- */
-export const convertTranscriptToConsultNote = async (transcript: string): Promise<string> => {
-  const consultNote = `CONSULTATION NOTE
+function fallbackConvertToConsultNote(transcript: string): string {
+  return `CONSULTATION NOTE
   
 REASON FOR CONSULTATION:
 ${extractConsultReason(transcript)}
@@ -72,17 +254,10 @@ ${extractFindings(transcript)}
 
 IMPRESSION & RECOMMENDATIONS:
 ${extractImpression(transcript)}`;
+}
 
-  return consultNote;
-};
-
-/**
- * Converts a transcript to a History & Physical format
- * @param transcript The raw transcript to convert
- * @returns Formatted H&P
- */
-export const convertTranscriptToHistoryAndPhysical = async (transcript: string): Promise<string> => {
-  const hpNote = `HISTORY & PHYSICAL
+function fallbackConvertToHistoryAndPhysical(transcript: string): string {
+  return `HISTORY & PHYSICAL
   
 CHIEF COMPLAINT:
 ${extractChiefComplaint(transcript)}
@@ -101,17 +276,10 @@ ${extractPhysicalExam(transcript)}
 
 ASSESSMENT & PLAN:
 ${extractAssessmentAndPlan(transcript)}`;
+}
 
-  return hpNote;
-};
-
-/**
- * Converts a transcript to a Procedure Note format
- * @param transcript The raw transcript to convert
- * @returns Formatted Procedure Note
- */
-export const convertTranscriptToProcedureNote = async (transcript: string): Promise<string> => {
-  const procedureNote = `PROCEDURE NOTE
+function fallbackConvertToProcedureNote(transcript: string): string {
+  return `PROCEDURE NOTE
   
 PROCEDURE PERFORMED:
 ${extractProcedure(transcript)}
@@ -127,9 +295,7 @@ ${extractFindings(transcript)}
 
 POST-PROCEDURE:
 ${extractPostProcedure(transcript)}`;
-
-  return procedureNote;
-};
+}
 
 // Helper functions to extract sections from the transcript
 // In a real implementation, these would use AI or NLP to extract relevant information

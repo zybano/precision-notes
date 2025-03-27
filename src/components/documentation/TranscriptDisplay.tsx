@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, FileText, Copy, MagicWand } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Copy, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "@/services/transcription";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -42,13 +41,11 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       return [];
     }
     
-    // Group utterances by speaker
     let groupedUtterances: any[] = [];
     let currentSpeaker = null;
     let currentText = "";
     
     utterances.forEach((utterance, index) => {
-      // If this is a mock dataset, just return the raw utterances
       if (transcriptResult.isMock) {
         groupedUtterances.push({
           speaker: utterance.speaker || "Unknown",
@@ -74,7 +71,6 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         currentText += " " + (utterance.text || "");
       }
       
-      // Add the last utterance
       if (index === utterances.length - 1) {
         groupedUtterances.push({
           speaker: currentSpeaker,
@@ -106,7 +102,6 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       "text-rose-600 dark:text-rose-400"
     ];
     
-    // Simple hash function to consistently assign colors to speakers
     const hash = speaker.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
   };
@@ -118,7 +113,6 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     try {
       let result = "";
       
-      // Use the appropriate conversion function based on selected format
       switch (selectedFormat) {
         case "SOAP Note":
           result = await convertTranscriptToSOAP(transcript);
@@ -142,14 +136,13 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       setStructuredNote(result);
       setConvertedNoteType(selectedFormat);
       
-      // Update the form if it exists
       if (form) {
         form.setValue("notes", result);
       }
       
       toast({
         title: "Note Generated",
-        description: `Your transcript has been converted to a structured ${selectedFormat}.`,
+        description: `Your transcript has been converted to a structured ${selectedFormat} using enhanced AI.`,
         duration: 3000,
       });
     } catch (error) {
@@ -215,7 +208,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             disabled={isGeneratingNote || !transcript}
             className="whitespace-nowrap"
           >
-            <MagicWand className="h-4 w-4 mr-1" />
+            <Wand2 className="h-4 w-4 mr-1" />
             {isGeneratingNote ? "Converting..." : "Convert to Structured Note"}
           </Button>
         </div>
