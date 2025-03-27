@@ -24,10 +24,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Database, User, PlugZap, Stethoscope } from "lucide-react";
+import { Database, User, PlugZap, Stethoscope, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Switch } from "@/components/ui/switch";
 
 const profileSchema = z.object({
   fullName: z.string().min(2, {
@@ -54,11 +55,19 @@ const emrConnectionSchema = z.object({
   }),
 });
 
+const transcriptSettingsSchema = z.object({
+  enableOpenAI: z.boolean().default(true),
+  openAIApiKey: z.string().optional(),
+  preferAccuracy: z.boolean().default(true),
+});
+
 const Settings = () => {
   const { user } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUpdatingTranscriptSettings, setIsUpdatingTranscriptSettings] = useState(false);
+  const [apiKeyVisible, setApiKeyVisible] = useState(false);
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -78,6 +87,15 @@ const Settings = () => {
       endpointUrl: "",
     },
   });
+  
+  const transcriptForm = useForm<z.infer<typeof transcriptSettingsSchema>>({
+    resolver: zodResolver(transcriptSettingsSchema),
+    defaultValues: {
+      enableOpenAI: true,
+      openAIApiKey: "",
+      preferAccuracy: true,
+    },
+  });
 
   useEffect(() => {
     if (user) {
@@ -90,6 +108,12 @@ const Settings = () => {
       profileForm.setValue('fullName', fullName);
       profileForm.setValue('title', title);
       profileForm.setValue('bio', bio);
+    }
+    
+    const storedApiKey = localStorage.getItem('openai_api_key');
+    if (storedApiKey) {
+      transcriptForm.setValue('openAIApiKey', storedApiKey);
+      transcriptForm.setValue('enableOpenAI', true);
     }
   }, [user]);
 
@@ -127,6 +151,30 @@ const Settings = () => {
       toast.success("EMR system connected successfully");
       console.log("EMR connection data:", data);
     }, 2000);
+  };
+  
+  const onTranscriptSettingsSubmit = (data: z.infer<typeof transcriptSettingsSchema>) => {
+    setIsUpdatingTranscriptSettings(true);
+    
+    try {
+      if (data.enableOpenAI && data.openAIApiKey) {
+        localStorage.setItem('openai_api_key', data.openAIApiKey);
+      } else if (!data.enableOpenAI) {
+        localStorage.removeItem('openai_api_key');
+      }
+      
+      localStorage.setItem('transcript_settings', JSON.stringify({
+        enableOpenAI: data.enableOpenAI,
+        preferAccuracy: data.preferAccuracy
+      }));
+      
+      toast.success("Transcript settings updated successfully");
+    } catch (error) {
+      console.error("Error saving transcript settings:", error);
+      toast.error("Failed to update transcript settings");
+    } finally {
+      setIsUpdatingTranscriptSettings(false);
+    }
   };
 
   return (
@@ -298,6 +346,117 @@ const Settings = () => {
                     disabled={isConnecting || isConnected}
                   >
                     {isConnecting ? "Connecting..." : isConnected ? "Connected" : "Connect"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        <Card className="medical-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent/20 text-accent-foreground">
+                <FileText size={32} />
+              </div>
+              <div>
+                <CardTitle>Transcript Settings</CardTitle>
+                <CardDescription>Configure AI-enhanced transcript processing</CardDescription>
+              </div>
+            </div>
+            <Badge 
+              variant={transcriptForm.watch('enableOpenAI') ? "default" : "outline"} 
+              className="w-fit gap-1 px-2 py-1 text-xs"
+            >
+              <FileText size={14} /> 
+              {transcriptForm.watch('enableOpenAI') ? "AI Enhancement Enabled" : "Basic Processing"}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <Form {...transcriptForm}>
+              <form onSubmit={transcriptForm.handleSubmit(onTranscriptSettingsSubmit)} className="space-y-4">
+                <FormField
+                  control={transcriptForm.control}
+                  name="enableOpenAI"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>Enable OpenAI Enhancement</FormLabel>
+                        <FormDescription>
+                          Use OpenAI to improve transcript-to-note conversion
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                {transcriptForm.watch('enableOpenAI') && (
+                  <FormField
+                    control={transcriptForm.control}
+                    name="openAIApiKey"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>OpenAI API Key</FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input 
+                              type={apiKeyVisible ? "text" : "password"} 
+                              placeholder="Enter your OpenAI API key" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setApiKeyVisible(!apiKeyVisible)}
+                          >
+                            {apiKeyVisible ? "Hide" : "Show"}
+                          </Button>
+                        </div>
+                        <FormDescription>
+                          Your API key is stored locally in your browser and never sent to our servers
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
+                <FormField
+                  control={transcriptForm.control}
+                  name="preferAccuracy"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>Prefer Accuracy Over Speed</FormLabel>
+                        <FormDescription>
+                          Use more accurate but slower AI models when processing transcripts
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <CardFooter className="px-0 pt-2">
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isUpdatingTranscriptSettings}
+                  >
+                    {isUpdatingTranscriptSettings ? "Updating..." : "Save Settings"}
                   </Button>
                 </CardFooter>
               </form>
