@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { transcribeAudio, TranscriptionResult } from "@/services/transcription";
@@ -104,7 +105,7 @@ const DocumentationPage = () => {
   };
 
   const handleCreateNewDocument = (data: any) => {
-    setActiveTab("recent");
+    setActiveTab("saved");
     form.reset();
     stopRecording();
     
@@ -314,7 +315,7 @@ const DocumentationPage = () => {
           <TabsList className="grid grid-cols-4 w-full max-w-md">
             <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="specialties">Specialties</TabsTrigger>
-            <TabsTrigger value="recent">Recent</TabsTrigger>
+            <TabsTrigger value="saved">Saved</TabsTrigger>
             <TabsTrigger value="shared">Shared</TabsTrigger>
           </TabsList>
           
@@ -369,7 +370,7 @@ const DocumentationPage = () => {
             <SpecialtyTemplates onUseTemplate={handleUseSpecialtyTemplate} />
           </TabsContent>
           
-          <TabsContent value="recent" className="space-y-6">
+          <TabsContent value="saved" className="space-y-6">
             <RecentDocuments 
               setNewDocumentOpen={setNewDocumentOpen} 
               form={form} 

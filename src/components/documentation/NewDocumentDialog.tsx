@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -262,6 +262,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                   showSummary={showSummary}
                   setShowSummary={setShowSummary}
                   form={form}
+                  showSummarySection={false}
                 />
               )}
               
@@ -309,6 +310,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isTranscribing || isSaving}>
+                    <Save className="h-4 w-4 mr-2" />
                     {isSaving ? "Saving..." : "Save Document"}
                   </Button>
                 </div>

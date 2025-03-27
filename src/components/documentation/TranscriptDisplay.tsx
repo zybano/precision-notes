@@ -18,6 +18,7 @@ interface TranscriptDisplayProps {
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
   form?: any; // Optional form from parent to update
+  showSummarySection?: boolean; // New prop to control summary section visibility
 }
 
 const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
@@ -26,7 +27,8 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   transcriptSummary,
   showSummary,
   setShowSummary,
-  form
+  form,
+  showSummarySection = true // Default to true for backward compatibility
 }) => {
   const { toast } = useToast();
   const [selectedFormat, setSelectedFormat] = useState("SOAP Note");
@@ -420,7 +422,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             </ResizablePanel>
           </ResizablePanelGroup>
           
-          {transcript && (
+          {showSummarySection && transcript && (
             <div className="border-t mt-3 pt-3">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium">Transcript Summary</h4>
