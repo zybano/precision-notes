@@ -30,6 +30,16 @@ const Pricing = () => {
           <p className="font-semibold mb-2">We are currently in Beta!</p>
           <p className="text-base">Documedly is launching in Africa. Join us to be among the first to experience our revolutionary clinical documentation platform.</p>
         </div>
+        
+        <div className="mt-8">
+          <Button 
+            variant="outline" 
+            className="shadow-sm hover:shadow-md transition-all"
+            onClick={() => window.location.href = "mailto:hello@documedly.com?subject=Documedly Sales Inquiry"}
+          >
+            Contact Sales
+          </Button>
+        </div>
       </div>
 
       <div className="mt-16 text-center">

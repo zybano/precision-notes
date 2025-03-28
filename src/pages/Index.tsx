@@ -523,14 +523,18 @@ const Index = () => {
                 Choose the perfect plan for your practice. All plans include core features with flexible options as you grow.
               </p>
               <div className="mt-4 inline-block px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
-                Currently in Beta as we launch in Africa. Join to use Documedly!
+                Currently in Beta as we launch in Africa. Join us to use Documedly!
               </div>
             </div>
           </FadeIn>
           
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">Have questions about our plans?</p>
-            <Button variant="outline" className="shadow-sm hover:shadow-md transition-all">
+            <Button 
+              variant="outline" 
+              className="shadow-sm hover:shadow-md transition-all"
+              onClick={() => window.location.href = "mailto:hello@documedly.com?subject=Documedly Sales Inquiry"}
+            >
               Contact Sales
             </Button>
           </div>
