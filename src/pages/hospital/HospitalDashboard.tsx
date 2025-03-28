@@ -11,14 +11,21 @@ import { LaboratoryModule } from "@/components/hospital/LaboratoryModule";
 import { InventoryModule } from "@/components/hospital/InventoryModule";
 import { BillingModule } from "@/components/hospital/BillingModule";
 import { EmergencyModule } from "@/components/hospital/EmergencyModule";
+import EnterpriseAccessDialog from "@/components/hospital/EnterpriseAccessDialog";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const HospitalDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [isEnterpriseDialogOpen, setIsEnterpriseDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const userSubscriptionLevel = user?.user_metadata?.subscription_level || 'free';
+  const hasEnterpriseAccess = userSubscriptionLevel === 'enterprise';
   
   useEffect(() => {
     const path = location.pathname;
@@ -31,12 +38,26 @@ const HospitalDashboard = () => {
   }, [location.pathname]);
 
   const handleTabChange = (value: string) => {
+    if (!hasEnterpriseAccess && value !== "overview") {
+      setIsEnterpriseDialogOpen(true);
+      return;
+    }
+    
     setActiveTab(value);
     if (value === "overview") {
       navigate("/hospital");
     } else {
       navigate(`/hospital/${value}`);
     }
+  };
+
+  const handleModuleAction = () => {
+    if (!hasEnterpriseAccess) {
+      setIsEnterpriseDialogOpen(true);
+      return;
+    }
+    
+    toast.success("New patient record created");
   };
   
   return (
@@ -51,7 +72,7 @@ const HospitalDashboard = () => {
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
             <Button variant="outline" size="sm">Help</Button>
-            <Button size="sm">New Patient</Button>
+            <Button size="sm" onClick={handleModuleAction}>New Patient</Button>
           </div>
         </div>
       </FadeIn>
@@ -200,6 +221,11 @@ const HospitalDashboard = () => {
           <BillingModule />
         </TabsContent>
       </Tabs>
+
+      <EnterpriseAccessDialog 
+        open={isEnterpriseDialogOpen} 
+        onOpenChange={setIsEnterpriseDialogOpen} 
+      />
     </div>
   );
 };
