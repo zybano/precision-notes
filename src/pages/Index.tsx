@@ -145,6 +145,36 @@ const Index = () => {
       author: "Dr. James Wilson",
       role: "Internal Medicine",
       organization: "University Medical Center"
+    },
+    {
+      quote: "The accuracy of transcriptions is outstanding. It captures nuanced medical terminology without missing a beat.",
+      author: "Dr. Olivia Thompson",
+      role: "Neurologist",
+      organization: "Brain & Spine Institute"
+    },
+    {
+      quote: "As a busy pediatrician, Documedly has given me back precious time with my patients. The AI understands child-specific terminology perfectly.",
+      author: "Dr. David Lee",
+      role: "Pediatrician",
+      organization: "Children's Wellness Center"
+    },
+    {
+      quote: "Our rural clinic has limited resources, and Documedly has been a game-changer for our efficiency and patient throughput.",
+      author: "Dr. Maria Sanchez",
+      role: "Family Physician",
+      organization: "Community Health Access"
+    },
+    {
+      quote: "The security features give me confidence that patient data is protected, which is critical for maintaining trust in our practice.",
+      author: "Thomas Wright",
+      role: "Security Officer",
+      organization: "Metropolitan Healthcare Systems"
+    },
+    {
+      quote: "Documedly integrates seamlessly with our existing EHR system, which was a major concern before adoption.",
+      author: "Patricia Okafor",
+      role: "Clinical Systems Manager",
+      organization: "Unity Medical Network"
     }
   ];
 
