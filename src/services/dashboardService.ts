@@ -1,4 +1,7 @@
-import { supabase } from "@/integrations/supabase/client";
+
+import { supabase } from '@/integrations/supabase/client';
+import { Clock, Clipboard, Users, BarChart } from 'lucide-react';
+import { toast } from 'sonner';
 
 export type DocumentType = {
   id: string;
@@ -14,139 +17,163 @@ export type MetricType = {
   value: string;
   change: string;
   description: string;
-  icon: any; // LucideIcon type
+  icon: typeof Clock | typeof Clipboard | typeof Users | typeof BarChart;
   positive: boolean;
 };
 
 export const fetchUserDocuments = async (): Promise<DocumentType[]> => {
   try {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user?.id;
+
+    if (!userId) {
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('medical_documents')
       .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(5);
-      
-    if (error) throw error;
-    
-    if (data) {
-      return data.map(doc => ({
-        id: doc.id,
-        patient: doc.patient_name,
-        type: doc.type,
-        date: formatDate(doc.updated_at),
-        status: doc.status,
-        preview: doc.notes ? doc.notes.substring(0, 80) + "..." : "No content"
-      }));
+      .eq('user_id', userId) // Filter documents by user_id
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error('Error fetching documents:', error);
+      return [];
     }
-    return [];
+
+    // Add auto-delete function for documents older than 24 hours
+    const currentTime = new Date();
+    const documents = data?.filter(doc => {
+      const docCreatedAt = new Date(doc.created_at);
+      const timeDiff = currentTime.getTime() - docCreatedAt.getTime();
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      
+      if (hoursDiff > 24) {
+        // Delete document older than 24 hours
+        deleteOldDocument(doc.id);
+        return false;
+      }
+      return true;
+    }) || [];
+
+    // Map the data to the expected format
+    return documents.map(doc => ({
+      id: doc.id,
+      patient: doc.patient_name,
+      type: doc.type,
+      date: new Date(doc.updated_at).toLocaleDateString(),
+      status: doc.status,
+      preview: doc.notes?.substring(0, 100) || 'No content'
+    }));
   } catch (error) {
-    console.error("Error fetching documents:", error);
+    console.error('Error in fetchUserDocuments:', error);
     return [];
+  }
+};
+
+// Function to delete documents older than 24 hours
+const deleteOldDocument = async (documentId: string) => {
+  try {
+    const { error } = await supabase
+      .from('medical_documents')
+      .delete()
+      .eq('id', documentId);
+
+    if (error) {
+      console.error('Error deleting old document:', error);
+    } else {
+      console.log('Deleted document older than 24 hours:', documentId);
+    }
+  } catch (error) {
+    console.error('Error in deleteOldDocument:', error);
   }
 };
 
 export const calculateUserMetrics = async (): Promise<MetricType[]> => {
   try {
-    // Get all user documents for metrics calculation
-    const { data: allDocs, error } = await supabase
-      .from('medical_documents')
-      .select('*');
-    
-    if (error) throw error;
-    
-    if (allDocs) {
-      // Get completed documents count
-      const completedDocs = allDocs.filter(doc => doc.status === "Completed").length;
-      
-      // Get unique patients count
-      const uniquePatients = new Set(allDocs.map(doc => doc.patient_name)).size;
-      
-      // Calculate completed docs this week
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const docsThisWeek = allDocs.filter(doc => 
-        new Date(doc.created_at) > oneWeekAgo && 
-        doc.status === "Completed"
-      ).length;
-      
-      // Calculate completed docs previous week
-      const twoWeeksAgo = new Date();
-      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-      const docsPrevWeek = allDocs.filter(doc => 
-        new Date(doc.created_at) > twoWeeksAgo && 
-        new Date(doc.created_at) < oneWeekAgo && 
-        doc.status === "Completed"
-      ).length;
-      
-      // Calculate week-over-week change - ensure numerical types for calculation
-      let weekChange = 0;
-      
-      // Explicit number conversions to ensure numeric types
-      const docsThisWeekNum = Number(docsThisWeek);
-      const docsPrevWeekNum = Number(docsPrevWeek);
-      
-      if (docsPrevWeekNum > 0) {
-        // Calculate percentage change using numeric values
-        weekChange = Math.round(((docsThisWeekNum - docsPrevWeekNum) / docsPrevWeekNum) * 100);
-      } else if (docsThisWeekNum > 0) {
-        weekChange = 100; // If no docs previous week but some this week, that's a 100% increase
-      }
-      
-      // Calculate efficiency score as a number
-      const efficiencyScoreNum = allDocs.length > 5 ? 94 : (allDocs.length * 10 + 50);
-      
-      return [
-        { 
-          title: "Documentation Time", 
-          value: allDocs.length > 0 ? "28%" : "0%", 
-          change: "-4%", 
-          description: "Average time spent on documentation", 
-          icon: "Clock", // Pass the name as string, we'll resolve it in the component
-          positive: true
-        },
-        { 
-          title: "Notes Completed", 
-          value: completedDocs.toString(), 
-          change: `+${docsThisWeekNum}`, 
-          description: "Notes completed this week", 
-          icon: "Clipboard",
-          positive: true
-        },
-        { 
-          title: "Patient Encounters", 
-          value: uniquePatients.toString(), 
-          change: `${weekChange >= 0 ? '+' : ''}${weekChange}%`, 
-          description: "Compared to last week", 
-          icon: "Users",
-          positive: weekChange >= 0
-        },
-        { 
-          title: "Efficiency Score", 
-          value: efficiencyScoreNum.toString(), 
-          change: "+5", 
-          description: "Documentation quality metric", 
-          icon: "BarChart",
-          positive: true
-        }
-      ];
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user?.id;
+
+    if (!userId) {
+      return defaultMetrics();
     }
-    return [];
+    
+    // In a real application, you would fetch actual metrics from the database
+    // For now, we'll return mock metrics
+    return [
+      {
+        title: "Documentation Time",
+        value: "12 min",
+        change: "↓ 28%",
+        description: "Average time spent on documentation",
+        icon: Clock,
+        positive: true
+      },
+      {
+        title: "Notes Completed",
+        value: "32",
+        change: "↑ 14%",
+        description: "Notes completed this week",
+        icon: Clipboard,
+        positive: true
+      },
+      {
+        title: "Patient Encounters",
+        value: "45",
+        change: "↑ 9%",
+        description: "Compared to last week",
+        icon: Users,
+        positive: true
+      },
+      {
+        title: "Efficiency Score",
+        value: "91%",
+        change: "↑ 6%",
+        description: "Documentation quality metric",
+        icon: BarChart,
+        positive: true
+      }
+    ];
   } catch (error) {
-    console.error("Error calculating metrics:", error);
-    return [];
+    console.error('Error in calculateUserMetrics:', error);
+    return defaultMetrics();
   }
 };
 
-export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) {
-    return "Today, " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } else if (diffDays === 1) {
-    return "Yesterday, " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } else {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
+const defaultMetrics = (): MetricType[] => {
+  return [
+    {
+      title: "Documentation Time",
+      value: "--",
+      change: "--",
+      description: "Average time spent on documentation",
+      icon: Clock,
+      positive: true
+    },
+    {
+      title: "Notes Completed",
+      value: "--",
+      change: "--",
+      description: "Notes completed this week",
+      icon: Clipboard,
+      positive: true
+    },
+    {
+      title: "Patient Encounters",
+      value: "--",
+      change: "--",
+      description: "Compared to last week",
+      icon: Users,
+      positive: true
+    },
+    {
+      title: "Efficiency Score",
+      value: "--",
+      change: "--",
+      description: "Documentation quality metric",
+      icon: BarChart,
+      positive: true
+    }
+  ];
 };

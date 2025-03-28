@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -32,9 +31,21 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
   const fetchRecentDocuments = async () => {
     setIsLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId) {
+        setRecentDocuments([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      const currentTime = new Date();
+      
       const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
+        .eq('user_id', userId)
         .order('updated_at', { ascending: false })
         .limit(10);
         
@@ -42,9 +53,31 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         throw error;
       }
       
-      // Convert the data to Document[] type
       if (data) {
-        const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
+        const filteredDocuments = data.filter(doc => {
+          const createdAt = new Date(doc.created_at);
+          const timeDiff = currentTime.getTime() - createdAt.getTime();
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+          
+          return hoursDiff <= 24;
+        });
+        
+        for (const doc of data) {
+          const createdAt = new Date(doc.created_at);
+          const timeDiff = currentTime.getTime() - createdAt.getTime();
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+          
+          if (hoursDiff > 24) {
+            await supabase
+              .from('medical_documents')
+              .delete()
+              .eq('id', doc.id);
+              
+            console.log(`Deleted document older than 24 hours: ${doc.id}`);
+          }
+        }
+        
+        const mappedDocuments: Document[] = filteredDocuments.map((doc: RawDocumentData) => ({
           id: doc.id,
           title: doc.title,
           type: doc.type,
@@ -53,8 +86,10 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           created_at: doc.created_at,
           updated_at: doc.updated_at,
           notes: doc.notes,
-          transcript_data: doc.transcript_data || null
+          transcript_data: doc.transcript_data || null,
+          user_id: doc.user_id
         }));
+        
         setRecentDocuments(mappedDocuments);
       }
     } catch (error) {
@@ -76,7 +111,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       duration: 3000,
     });
     
-    // If there's transcript data, parse it and set it in the form
     if (doc.transcript_data) {
       try {
         const parsedData = JSON.parse(doc.transcript_data);
@@ -86,7 +120,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           isMock: parsedData.isMock || false
         };
         
-        // Make transcript data available to the form
         form.setValue("transcriptResult", transcriptResult);
         form.setValue("transcript", parsedData.text || "");
         form.setValue("transcriptSummary", parsedData.summary || "");
@@ -152,7 +185,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         duration: 3000,
       });
       
-      // Refresh the list
       fetchRecentDocuments();
     } catch (error) {
       console.error("Error deleting document:", error);
@@ -166,9 +198,17 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
 
   const loadMoreDocuments = async () => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId) {
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
+        .eq('user_id', userId)
         .order('updated_at', { ascending: false })
         .range(recentDocuments.length, recentDocuments.length + 10);
         
@@ -176,9 +216,18 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         throw error;
       }
       
+      const currentTime = new Date();
+      
       if (data && data.length > 0) {
-        // Convert the data to Document[] type
-        const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
+        const filteredDocuments = data.filter(doc => {
+          const createdAt = new Date(doc.created_at);
+          const timeDiff = currentTime.getTime() - createdAt.getTime();
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+          
+          return hoursDiff <= 24;
+        });
+        
+        const mappedDocuments: Document[] = filteredDocuments.map((doc: RawDocumentData) => ({
           id: doc.id,
           title: doc.title,
           type: doc.type,
@@ -187,14 +236,15 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           created_at: doc.created_at,
           updated_at: doc.updated_at,
           notes: doc.notes,
-          transcript_data: doc.transcript_data || null
+          transcript_data: doc.transcript_data || null,
+          user_id: doc.user_id
         }));
         
         setRecentDocuments(prev => [...prev, ...mappedDocuments]);
         
         toast({
           title: "Documents Loaded",
-          description: `Loaded ${data.length} more documents`,
+          description: `Loaded ${mappedDocuments.length} more documents`,
           duration: 3000,
         });
       } else {
