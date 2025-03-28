@@ -396,6 +396,7 @@ const Index = () => {
         </div>
       </section>
       
+      
       <section className="py-16 md:py-24 bg-accent/40">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -422,6 +423,15 @@ const Index = () => {
                     <div>
                       <h3 className="font-medium text-lg">Patient Data Security</h3>
                       <p className="text-muted-foreground">All patient information is securely stored and HIPAA-compliant.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="mt-1 w-10 h-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Shield className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg">Regulatory Compliance</h3>
+                      <p className="text-muted-foreground">Fully compliant with GDPR, NHS standards, and ICO guidelines for healthcare data protection.</p>
                     </div>
                   </div>
                 </div>
