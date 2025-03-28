@@ -1,7 +1,18 @@
-import { FadeIn } from "@/components/ui/motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { Tabs } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+// Components
+import { DashboardHeader } from "@/components/hospital/dashboard/DashboardHeader";
+import { DashboardCard } from "@/components/hospital/dashboard/DashboardCards";
+import { DashboardTabsList, DashboardTab } from "@/components/hospital/dashboard/DashboardTabs";
+import { OverviewTab } from "@/components/hospital/dashboard/OverviewTab";
+import EnterpriseAccessDialog from "@/components/hospital/EnterpriseAccessDialog";
+
+// Modules
 import { DoctorsModule } from "@/components/hospital/DoctorsModule";
 import { NursesModule } from "@/components/hospital/NursesModule";
 import { PatientsModule } from "@/components/hospital/PatientsModule";
@@ -11,11 +22,6 @@ import { LaboratoryModule } from "@/components/hospital/LaboratoryModule";
 import { InventoryModule } from "@/components/hospital/InventoryModule";
 import { BillingModule } from "@/components/hospital/BillingModule";
 import { EmergencyModule } from "@/components/hospital/EmergencyModule";
-import EnterpriseAccessDialog from "@/components/hospital/EnterpriseAccessDialog";
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 
 const HospitalDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -26,6 +32,44 @@ const HospitalDashboard = () => {
   
   const userSubscriptionLevel = user?.user_metadata?.subscription_level || 'free';
   const hasEnterpriseAccess = userSubscriptionLevel === 'enterprise';
+  
+  // Dashboard summary cards data
+  const dashboardCards = [
+    {
+      title: "Total Patients",
+      value: "367",
+      description: "+4% from last month",
+      bgClass: "bg-medical-300/50 dark:bg-medical-700/50",
+      borderClass: "border-medical-400"
+    },
+    {
+      title: "Available Beds",
+      value: "28",
+      description: "75% occupancy rate",
+      bgClass: "bg-sunshine-100 dark:bg-sunshine-700/30",
+      borderClass: "border-sunshine-400"
+    },
+    {
+      title: "Staff on Duty",
+      value: "53",
+      description: "15 doctors, 38 nurses",
+      bgClass: "bg-medical-300/50 dark:bg-medical-700/50",
+      borderClass: "border-medical-400"
+    }
+  ];
+
+  // Tabs configuration
+  const tabs = [
+    { value: "overview", label: "Overview" },
+    { value: "emergency", label: "Emergency" },
+    { value: "doctors", label: "Doctors" },
+    { value: "nurses", label: "Nurses" },
+    { value: "patients", label: "Patients" },
+    { value: "inpatient", label: "Inpatient" },
+    { value: "pharmacy", label: "Pharmacy" },
+    { value: "laboratory", label: "Laboratory" },
+    { value: "inventory", label: "Inventory" }
+  ];
   
   useEffect(() => {
     const path = location.pathname;
@@ -62,164 +106,60 @@ const HospitalDashboard = () => {
   
   return (
     <div className="space-y-6">
-      <FadeIn>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Hospital Management System</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage doctors, nurses, patients, and hospital resources
-            </p>
-          </div>
-          <div className="mt-4 md:mt-0 flex gap-3">
-            <Button variant="outline" size="sm">Help</Button>
-            <Button size="sm" onClick={handleModuleAction}>New Patient</Button>
-          </div>
-        </div>
-      </FadeIn>
+      <DashboardHeader 
+        title="Hospital Management System"
+        description="Manage doctors, nurses, patients, and hospital resources"
+        onNewPatient={handleModuleAction}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-medical-300/50 dark:bg-medical-700/50 border-medical-400">
-          <CardHeader className="pb-2">
-            <CardTitle>Total Patients</CardTitle>
-            <CardDescription>Current patient count</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">367</div>
-            <p className="text-sm text-muted-foreground mt-1">+4% from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-sunshine-100 dark:bg-sunshine-700/30 border-sunshine-400">
-          <CardHeader className="pb-2">
-            <CardTitle>Available Beds</CardTitle>
-            <CardDescription>Current bed availability</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">28</div>
-            <p className="text-sm text-muted-foreground mt-1">75% occupancy rate</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-medical-300/50 dark:bg-medical-700/50 border-medical-400">
-          <CardHeader className="pb-2">
-            <CardTitle>Staff on Duty</CardTitle>
-            <CardDescription>Doctors and nurses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">53</div>
-            <p className="text-sm text-muted-foreground mt-1">15 doctors, 38 nurses</p>
-          </CardContent>
-        </Card>
+        {dashboardCards.map((card, index) => (
+          <DashboardCard key={index} {...card} />
+        ))}
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid grid-cols-3 md:grid-cols-9 w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="emergency">Emergency</TabsTrigger>
-          <TabsTrigger value="doctors">Doctors</TabsTrigger>
-          <TabsTrigger value="nurses">Nurses</TabsTrigger>
-          <TabsTrigger value="patients">Patients</TabsTrigger>
-          <TabsTrigger value="inpatient">Inpatient</TabsTrigger>
-          <TabsTrigger value="pharmacy">Pharmacy</TabsTrigger>
-          <TabsTrigger value="laboratory">Laboratory</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-        </TabsList>
+        <DashboardTabsList tabs={tabs} />
         
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-medical-200/50 dark:bg-medical-800/30 border-medical-300">
-              <CardHeader>
-                <CardTitle>Recent Admissions</CardTitle>
-                <CardDescription>Last 5 patient admissions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { name: "Sarah Johnson", time: "Today, 10:30 AM", doctor: "Dr. Roberts", reason: "Pneumonia" },
-                    { name: "Michael Chen", time: "Today, 8:15 AM", doctor: "Dr. Patel", reason: "Fracture" },
-                    { name: "Emily Williams", time: "Yesterday, 3:45 PM", doctor: "Dr. Garcia", reason: "Appendicitis" },
-                    { name: "Robert Taylor", time: "Yesterday, 11:20 AM", doctor: "Dr. Wong", reason: "Chest Pain" },
-                    { name: "Lisa Brown", time: "2 days ago", doctor: "Dr. Johnson", reason: "Diabetes" }
-                  ].map((patient, i) => (
-                    <div key={i} className="flex justify-between items-center border-b pb-2 last:border-0">
-                      <div>
-                        <div className="font-medium">{patient.name}</div>
-                        <div className="text-sm text-muted-foreground">{patient.reason}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium">{patient.doctor}</div>
-                        <div className="text-xs text-muted-foreground">{patient.time}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-sunshine-50 dark:bg-sunshine-900/20 border-sunshine-300">
-              <CardHeader>
-                <CardTitle>Upcoming Surgeries</CardTitle>
-                <CardDescription>Scheduled for the next 24 hours</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { patient: "John Wilson", time: "Today, 2:00 PM", procedure: "Appendectomy", surgeon: "Dr. Miller" },
-                    { patient: "Amanda Lee", time: "Today, 3:30 PM", procedure: "Knee Replacement", surgeon: "Dr. Garcia" },
-                    { patient: "David Clark", time: "Tomorrow, 8:00 AM", procedure: "Gallbladder Removal", surgeon: "Dr. Thompson" }
-                  ].map((surgery, i) => (
-                    <div key={i} className="flex justify-between items-center border-b pb-2 last:border-0">
-                      <div>
-                        <div className="font-medium">{surgery.patient}</div>
-                        <div className="text-sm text-muted-foreground">{surgery.procedure}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium">{surgery.surgeon}</div>
-                        <div className="text-xs text-muted-foreground">{surgery.time}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+        <DashboardTab value="overview">
+          <OverviewTab />
+        </DashboardTab>
         
-        <TabsContent value="emergency">
+        <DashboardTab value="emergency">
           <EmergencyModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="doctors">
+        <DashboardTab value="doctors">
           <DoctorsModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="nurses">
+        <DashboardTab value="nurses">
           <NursesModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="patients">
+        <DashboardTab value="patients">
           <PatientsModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="inpatient">
+        <DashboardTab value="inpatient">
           <InpatientModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="pharmacy">
+        <DashboardTab value="pharmacy">
           <PharmacyModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="laboratory">
+        <DashboardTab value="laboratory">
           <LaboratoryModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="inventory">
+        <DashboardTab value="inventory">
           <InventoryModule />
-        </TabsContent>
+        </DashboardTab>
         
-        <TabsContent value="billing">
+        <DashboardTab value="billing">
           <BillingModule />
-        </TabsContent>
+        </DashboardTab>
       </Tabs>
 
       <EnterpriseAccessDialog 
