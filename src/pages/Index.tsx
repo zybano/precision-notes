@@ -426,7 +426,6 @@ const Index = () => {
         </div>
       </section>
       
-      
       <section className="py-16 md:py-24 bg-accent/40">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -529,43 +528,6 @@ const Index = () => {
             </div>
           </FadeIn>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {plans.map((plan, index) => (
-              <FadeIn key={index} delay={0.1 + index * 0.1}>
-                <Card className={`flex flex-col h-full ${plan.highlighted ? 'border-primary shadow-lg' : ''}`}>
-                  <CardHeader>
-                    <CardTitle className="text-xl">{plan.name}</CardTitle>
-                    <div className="mt-2">
-                      <span className="text-3xl font-bold">{plan.price}</span>
-                      <span className="text-muted-foreground ml-1">/month</span>
-                    </div>
-                    <CardDescription className="mt-2">{plan.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start">
-                          <Check size={18} className="mr-2 text-primary shrink-0 mt-0.5" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <Link to="/dashboard">
-                      <Button 
-                        className={`w-full ${plan.highlighted ? 'bg-primary' : ''}`} 
-                        variant={plan.highlighted ? "default" : "outline"}
-                      >
-                        {plan.buttonText}
-                      </Button>
-                    </Link>
-                  </CardFooter>
-                </Card>
-              </FadeIn>
-            ))}
-          </div>
-
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">Have questions about our plans?</p>
             <Button variant="outline" className="shadow-sm hover:shadow-md transition-all">
