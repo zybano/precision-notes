@@ -13,7 +13,7 @@ const Pricing = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    document.title = "Pricing | PrecisionNote";
+    document.title = "Pricing | Documedly";
   }, []);
   
   // In a real app, this would come from a database or user metadata

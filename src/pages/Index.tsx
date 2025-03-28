@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -230,7 +231,7 @@ const Index = () => {
   return (
     <div className={`min-h-screen bg-background ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
       <SEO 
-        title="PrecisionNote - AI-powered Clinical Documentation Assistant"
+        title="Documedly - AI-powered Clinical Documentation Assistant"
         description="Transform your medical documentation workflow with real-time transcription and AI-powered assistance. Save time and focus more on patient care."
         keywords="clinical documentation, AI transcription, medical notes, healthcare technology, patient care"
       />
@@ -241,9 +242,9 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <div className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">P</span>
+              <span className="text-white font-bold text-lg">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
+            <span className="ml-3 text-xl font-medium">Documedly</span>
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -304,16 +305,16 @@ const Index = () => {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
                     <DialogHeader>
-                      <DialogTitle>PrecisionNote Product Demo</DialogTitle>
+                      <DialogTitle>Documedly Product Demo</DialogTitle>
                       <DialogDescription>
-                        See how PrecisionNote can transform your clinical documentation workflow
+                        See how Documedly can transform your clinical documentation workflow
                       </DialogDescription>
                     </DialogHeader>
                     <div className="aspect-video w-full overflow-hidden rounded-md">
                       <iframe 
                         className="w-full h-full"
                         src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" 
-                        title="PrecisionNote Demo"
+                        title="Documedly Demo"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                         allowFullScreen
@@ -329,7 +330,7 @@ const Index = () => {
             <div className="glass rounded-2xl shadow-xl overflow-hidden hero-image-container">
               <img 
                 src="/lovable-uploads/320e33a3-6e35-4900-9126-8923192ea591.png" 
-                alt="Doctor using PrecisionNote for documentation" 
+                alt="Doctor using Documedly for documentation" 
                 className="w-full h-full object-cover"
               />
             </div>
@@ -341,7 +342,7 @@ const Index = () => {
         <div className="container mx-auto px-6 max-w-7xl">
           <FadeIn>
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold mb-4">Why Choose PrecisionNote</h2>
+              <h2 className="text-3xl font-semibold mb-4">Why Choose Documedly</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Our platform delivers measurable benefits for healthcare professionals and organizations.
               </p>
@@ -604,9 +605,9 @@ const Index = () => {
             <div className="mb-6 md:mb-0">
               <div className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">P</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">PrecisionNote</span>
+                <span className="ml-2 text-lg font-medium">Documedly</span>
               </div>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -643,7 +644,7 @@ const Index = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2025 PrecisionNote, Inc. All rights reserved.</p>
+            <p>© 2025 Documedly, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <Link to="#" className="hover:text-foreground">Twitter</Link>
               <Link to="#" className="hover:text-foreground">LinkedIn</Link>
