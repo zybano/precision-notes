@@ -1,4 +1,5 @@
 
+
 export interface Document {
   id: string;
   title: string;
@@ -66,3 +67,4 @@ export const getFormattedTranscript = (transcriptData: TranscriptData | null): s
     .map(u => `${u.speaker}: ${u.text}`)
     .join('\n\n');
 };
+

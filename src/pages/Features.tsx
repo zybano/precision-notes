@@ -1,8 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FadeIn } from "@/components/ui/motion";
-import { Check, Zap, Shield, Clock, FileText, UserCheck } from "lucide-react";
+import { Check, Zap, Shield, Clock, FileText, UserCheck, Code, Smartphone, Globe, HeartPulse, Stethoscope, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 
 const Features = () => {
   const features = [
@@ -37,6 +39,42 @@ const Features = () => {
       icon: <Check className="h-8 w-8 text-primary" />
     }
   ];
+  
+  const specialtyFeatures = [
+    {
+      title: "Primary Care",
+      description: "Optimized templates for general practice with quick input fields for common conditions.",
+      icon: <HeartPulse className="h-8 w-8 text-primary" />
+    },
+    {
+      title: "Cardiology",
+      description: "Specialized terminology recognition and cardiac-specific documentation patterns.",
+      icon: <Stethoscope className="h-8 w-8 text-primary" />
+    },
+    {
+      title: "Neurology",
+      description: "Detailed neurological examination templates with integrated assessment scales.",
+      icon: <Brain className="h-8 w-8 text-primary" />
+    }
+  ];
+
+  const technicalFeatures = [
+    {
+      title: "REST API Access",
+      description: "Integrate with our comprehensive API to build custom solutions on top of our platform.",
+      icon: <Code className="h-8 w-8 text-primary" />
+    },
+    {
+      title: "Mobile Application",
+      description: "Access all features on-the-go with our dedicated iOS and Android applications.",
+      icon: <Smartphone className="h-8 w-8 text-primary" />
+    },
+    {
+      title: "Offline Capabilities",
+      description: "Continue working without internet connection with seamless syncing when back online.",
+      icon: <Globe className="h-8 w-8 text-primary" />
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,9 +88,9 @@ const Features = () => {
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
+            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
             <Link to="/features" className="text-primary font-medium">Features</Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -99,14 +137,103 @@ const Features = () => {
           ))}
         </div>
         
+        <FadeIn delay={0.3}>
+          <div className="mt-24 mb-16 text-center">
+            <h2 className="text-3xl font-semibold mb-6">Medical Specialty Support</h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-12">
+              Documedly adapts to your specialty needs with custom templates and tools
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {specialtyFeatures.map((feature, i) => (
+                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="mb-4 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center">
+                      {feature.icon}
+                    </div>
+                    <CardTitle>{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+        
+        <FadeIn delay={0.4}>
+          <div className="mt-24 mb-16">
+            <h2 className="text-3xl font-semibold mb-6 text-center">Advanced AI Capabilities</h2>
+            <div className="bg-primary/5 rounded-2xl p-8 md:p-12 mt-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div>
+                  <h3 className="text-2xl font-medium mb-4">Natural Language Processing</h3>
+                  <p className="text-lg mb-6">Our advanced AI understands medical context and terminology, allowing for natural conversation-style documentation.</p>
+                  <ul className="space-y-2">
+                    {[
+                      "Context-aware medical term interpretation",
+                      "Medical specialty-specific vocabulary",
+                      "Automatic coding and classification",
+                      "Sentiment analysis for patient concerns"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start">
+                        <Check className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <div className="h-64 w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                    <span className="text-muted-foreground">AI Processing Demo</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+        
         <FadeIn delay={0.5}>
-          <div className="mt-20 text-center">
+          <div className="mt-24 mb-16 text-center">
+            <h2 className="text-3xl font-semibold mb-6">Technical Features</h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-12">
+              Powerful tools for developers and technical integration
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {technicalFeatures.map((feature, i) => (
+                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="mb-4 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center">
+                      {feature.icon}
+                    </div>
+                    <CardTitle>{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+        
+        <FadeIn delay={0.6}>
+          <div className="mt-24 text-center">
             <h2 className="text-3xl font-semibold mb-6">Ready to Transform Your Practice?</h2>
-            <Link to="/dashboard">
-              <Button size="lg" className="shadow hover:shadow-md transition-all">
-                Start Free Trial
-              </Button>
-            </Link>
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
+              <Link to="/dashboard">
+                <Button size="lg" className="shadow hover:shadow-md transition-all">
+                  Start Free Trial
+                </Button>
+              </Link>
+              <Link to="/pricing">
+                <Button size="lg" variant="outline" className="shadow-sm hover:shadow transition-all">
+                  View Pricing
+                </Button>
+              </Link>
+            </div>
           </div>
         </FadeIn>
       </section>
