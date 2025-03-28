@@ -1,9 +1,10 @@
+
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { Link } from "react-router-dom";
-import MetricsDisplay from "@/components/dashboard/MetricsDisplay";
-import ActivityChart from "@/components/dashboard/ActivityChart";
+import { MetricsDisplay } from "@/components/dashboard/MetricsDisplay";
+import { ActivityChart } from "@/components/dashboard/ActivityChart";
 
 const Dashboard = () => {
   return (
@@ -30,8 +31,6 @@ const Dashboard = () => {
 
       <MetricsDisplay />
       <ActivityChart />
-
-      {/* Recent Documents section has been removed */}
     </div>
   );
 };
