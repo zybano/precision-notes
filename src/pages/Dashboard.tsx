@@ -1,4 +1,3 @@
-
 import { FadeIn } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 import { BarChart, Clipboard, Clock, Users } from "lucide-react";
@@ -80,22 +79,8 @@ const Dashboard = () => {
       
       // Calculate metrics
       const calculatedMetrics = await calculateUserMetrics();
+      setMetrics(calculatedMetrics);
       
-      // Map icon strings to actual components
-      const iconMap = {
-        "Clock": Clock,
-        "Clipboard": Clipboard,
-        "Users": Users,
-        "BarChart": BarChart
-      };
-      
-      // Replace icon strings with actual components
-      const metricsWithIcons = calculatedMetrics.map(metric => ({
-        ...metric,
-        icon: iconMap[metric.icon as keyof typeof iconMap]
-      }));
-      
-      setMetrics(metricsWithIcons);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     } finally {

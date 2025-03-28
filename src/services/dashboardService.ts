@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Clock, Clipboard, Users, BarChart } from 'lucide-react';
 import { toast } from 'sonner';
+import type { LucideIcon } from 'lucide-react';
 
 export type DocumentType = {
   id: string;
@@ -17,7 +18,7 @@ export type MetricType = {
   value: string;
   change: string;
   description: string;
-  icon: typeof Clock | typeof Clipboard | typeof Users | typeof BarChart;
+  icon: LucideIcon;
   positive: boolean;
 };
 
