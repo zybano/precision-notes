@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,6 +24,7 @@ import Careers from "./pages/Careers";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import About from "./pages/About";
+import HospitalDashboard from "./pages/hospital/HospitalDashboard";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +60,18 @@ const App = () => (
                     <Route path="/documentation" element={<Documentation />} />
                     <Route path="/documentation/new" element={<Documentation />} />
                     <Route path="/settings" element={<Settings />} />
+                    
+                    {/* Hospital Management System routes */}
+                    <Route path="/hospital" element={<HospitalDashboard />} />
+                    <Route path="/hospital/emergency" element={<HospitalDashboard />} />
+                    <Route path="/hospital/doctors" element={<HospitalDashboard />} />
+                    <Route path="/hospital/nurses" element={<HospitalDashboard />} />
+                    <Route path="/hospital/patients" element={<HospitalDashboard />} />
+                    <Route path="/hospital/inpatient" element={<HospitalDashboard />} />
+                    <Route path="/hospital/pharmacy" element={<HospitalDashboard />} />
+                    <Route path="/hospital/laboratory" element={<HospitalDashboard />} />
+                    <Route path="/hospital/inventory" element={<HospitalDashboard />} />
+                    <Route path="/hospital/billing" element={<HospitalDashboard />} />
                   </Route>
                 </Route>
                 

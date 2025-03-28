@@ -6,6 +6,15 @@ import {
   Settings, 
   Menu,
   X,
+  UserRound,
+  ClipboardList,
+  TestTube,
+  Heart,
+  PlusSquare,
+  BoxesIcon,
+  DollarSign,
+  Ambulance,
+  AlertTriangle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +47,16 @@ const Sidebar = () => {
   const navigation = [
     { path: "/dashboard", name: "Dashboard", icon: File },
     { path: "/documentation", name: "Documentation", icon: FileText },
+    { path: "/hospital", name: "Hospital System", icon: Heart },
+    { path: "/hospital/emergency", name: "Emergency", icon: Ambulance },
+    { path: "/hospital/doctors", name: "Doctors", icon: UserRound },
+    { path: "/hospital/nurses", name: "Nurses", icon: UserRound },
+    { path: "/hospital/patients", name: "Patients", icon: PlusSquare },
+    { path: "/hospital/inpatient", name: "Inpatient", icon: ClipboardList },
+    { path: "/hospital/pharmacy", name: "Pharmacy", icon: PlusSquare },
+    { path: "/hospital/laboratory", name: "Laboratory", icon: TestTube },
+    { path: "/hospital/inventory", name: "Inventory", icon: BoxesIcon },
+    { path: "/hospital/billing", name: "Billing", icon: DollarSign }
   ];
 
   const NavItems = () => (
