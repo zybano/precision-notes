@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, X, Send, ChevronDown } from "lucide-react";
+import { MessageCircle, X, Send, ChevronDown, MicIcon, StethoscopeIcon, FileText } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,18 @@ const commonQAs = [
   {
     question: "What subscription plans do you offer?",
     answer: "We offer Free, Basic, Professional, and Enterprise plans to suit various needs and organization sizes. Visit our Pricing section for details."
+  },
+  {
+    question: "How does the interactive transcript mode work?",
+    answer: "Interactive transcript mode lets you drag and drop specific parts of the conversation directly into the structured clinical note, making it easy to build accurate documentation."
+  },
+  {
+    question: "Can PrecisionNote extract clinical results automatically?",
+    answer: "Yes! PrecisionNote automatically identifies and extracts key clinical measurements like vital signs, lab values, and diagnoses from your conversations into a dedicated results panel."
+  },
+  {
+    question: "How do I use the clinical results feature?",
+    answer: "After transcribing your conversation, click 'Convert to Structured Note' and the system will automatically extract clinical values into the 'Clinical Results' tab."
   }
 ];
 
@@ -63,6 +75,11 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([
+    "How does the interactive transcript mode work?",
+    "Can PrecisionNote extract clinical results?",
+    "What EHR systems do you integrate with?"
+  ]);
 
   // Scroll to bottom of messages when new messages are added
   useEffect(() => {
@@ -99,12 +116,56 @@ export function ChatWidget() {
         timestamp: new Date()
       };
       setMessages((prev) => [...prev, botMessage]);
+      
+      // Update suggested questions based on the conversation
+      updateSuggestedQuestions(input, botResponse);
     }, 500);
   };
 
+  const updateSuggestedQuestions = (userQuery: string, botResponse: string) => {
+    // Update suggested questions based on the recent conversation context
+    const lowerQuery = userQuery.toLowerCase();
+    
+    if (lowerQuery.includes("transcript") || lowerQuery.includes("conversation")) {
+      setSuggestedQuestions([
+        "How does the interactive transcript mode work?",
+        "Can PrecisionNote extract clinical results?",
+        "How do I use the clinical results feature?"
+      ]);
+    } else if (lowerQuery.includes("template") || lowerQuery.includes("note")) {
+      setSuggestedQuestions([
+        "What note templates are available?",
+        "Can I customize templates for my specialty?",
+        "How do I convert a transcript to a SOAP note?"
+      ]);
+    } else if (lowerQuery.includes("price") || lowerQuery.includes("cost") || lowerQuery.includes("subscription")) {
+      setSuggestedQuestions([
+        "What subscription plans do you offer?",
+        "Do you offer a free trial?",
+        "What features are in the Professional plan?"
+      ]);
+    } else {
+      // Default questions
+      setSuggestedQuestions([
+        "How accurate is the AI transcription?",
+        "Is PrecisionNote HIPAA compliant?",
+        "What EHR systems do you integrate with?"
+      ]);
+    }
+  };
+
   const findBestMatch = (question: string): string => {
-    // Simple matching algorithm - could be improved with NLP in a real app
+    // Enhanced matching algorithm with medical documentation focus
     const lowerQuestion = question.toLowerCase();
+    
+    // Check for transcript-related queries specifically
+    if (lowerQuestion.includes("extract") && (lowerQuestion.includes("result") || lowerQuestion.includes("value") || lowerQuestion.includes("clinical"))) {
+      return "PrecisionNote automatically extracts clinical values like vital signs (BP, HR, temp), lab results, diagnoses, and other key measurements from transcribed conversations. Once you convert a transcript to a note, check the 'Clinical Results' tab to view all extracted measurements in an organized format.";
+    }
+    
+    if (lowerQuestion.includes("interactive") && (lowerQuestion.includes("transcript") || lowerQuestion.includes("mode"))) {
+      return "Interactive mode allows you to highlight parts of the transcript and drag them directly into specific sections of your structured note. After converting a transcript, toggle on 'Interactive Mode' and you can then select text from the conversation and drop it into the appropriate section of your SOAP note or other documentation.";
+    }
     
     // Check for exact question matches
     for (const qa of commonQAs) {
@@ -129,8 +190,12 @@ export function ChatWidget() {
              "PrecisionNote is fully HIPAA compliant and employs enterprise-grade security to protect all patient data.";
     }
     
+    if (lowerQuestion.includes("transcript") || lowerQuestion.includes("conversation")) {
+      return "Our transcription system captures doctor-patient conversations with speaker diarization, automatically identifying who is speaking. You can then convert these transcripts to structured clinical notes, and our system will extract key clinical values automatically.";
+    }
+    
     // Default response
-    return "I don't have specific information about that yet. For more details, please contact our support team or check our documentation.";
+    return "I don't have specific information about that yet. For more details about our documentation features, please try asking about transcription, clinical results extraction, or interactive note editing.";
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -148,6 +213,29 @@ export function ChatWidget() {
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  const handleSuggestedQuestion = (question: string) => {
+    setInput(question);
+    // Optionally auto-send the question
+    // setInput("");
+    // const userMessage: Message = {
+    //   sender: "user",
+    //   text: question,
+    //   timestamp: new Date()
+    // };
+    // setMessages((prev) => [...prev, userMessage]);
+    
+    // setTimeout(() => {
+    //   const botResponse = findBestMatch(question);
+    //   const botMessage: Message = {
+    //     sender: "bot",
+    //     text: botResponse,
+    //     timestamp: new Date()
+    //   };
+    //   setMessages((prev) => [...prev, botMessage]);
+    //   updateSuggestedQuestions(question, botResponse);
+    // }, 500);
   };
 
   return (
@@ -211,6 +299,27 @@ export function ChatWidget() {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Suggested questions */}
+                  {messages.length > 0 && messages[messages.length - 1].sender === "bot" && (
+                    <div className="pt-2">
+                      <div className="text-xs text-muted-foreground mb-2">Suggested questions:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestedQuestions.map((question, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs py-1 h-auto"
+                            onClick={() => handleSuggestedQuestion(question)}
+                          >
+                            {question}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div ref={messagesEndRef} />
                 </div>
               </CardContent>

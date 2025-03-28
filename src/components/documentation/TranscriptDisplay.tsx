@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, FileText, Copy, Wand2 } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TranscriptionResult } from "@/services/transcription";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -35,6 +36,11 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   const [structuredNote, setStructuredNote] = useState("");
   const [convertedNoteType, setConvertedNoteType] = useState("");
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
+  const [extractedResults, setExtractedResults] = useState<Record<string, string>>({});
+  const [showExtractedResults, setShowExtractedResults] = useState(false);
+  const [interactiveMode, setInteractiveMode] = useState(false);
+  const [highlightedText, setHighlightedText] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
   
   const formatUtterances = (utterances: any[]) => {
     if (!utterances || utterances.length === 0) {
@@ -140,6 +146,9 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         form.setValue("notes", result);
       }
       
+      // Auto-extract clinical results from the note
+      extractClinicalResults(result);
+      
       toast({
         title: "Note Generated",
         description: `Your transcript has been converted to a structured ${selectedFormat} using enhanced AI.`,
@@ -158,6 +167,38 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     }
   };
 
+  const extractClinicalResults = (note: string) => {
+    // Simple pattern-based extraction for common clinical metrics
+    const patterns = [
+      { name: "Blood Pressure", regex: /(?:BP|blood pressure)[:\s]+(\d{2,3}\/\d{2,3})(?:\s*mmHg)?/i },
+      { name: "Heart Rate", regex: /(?:HR|heart rate|pulse)[:\s]+(\d{2,3})(?:\s*bpm)?/i },
+      { name: "Temperature", regex: /(?:temp|temperature)[:\s]+(\d{2,3}(?:\.\d)?)(?:\s*(?:°C|°F|C|F))?/i },
+      { name: "Oxygen Saturation", regex: /(?:O2 sat|oxygen saturation|SpO2)[:\s]+(\d{1,3}%)/ },
+      { name: "Weight", regex: /(?:weight)[:\s]+(\d{1,3}(?:\.\d)?)(?:\s*(?:kg|lbs?))?/i },
+      { name: "Height", regex: /(?:height)[:\s]+(\d{1,3}(?:\.\d)?)(?:\s*(?:cm|in|inches|feet|ft|foot|m))?/i },
+      { name: "BMI", regex: /(?:BMI|body mass index)[:\s]+(\d{1,2}(?:\.\d)?)(?:\s*kg\/m2)?/i }
+    ];
+    
+    const results: Record<string, string> = {};
+    
+    patterns.forEach(pattern => {
+      const match = note.match(pattern.regex);
+      if (match && match[1]) {
+        results[pattern.name] = match[1];
+      }
+    });
+    
+    // Extract diagnoses with a more complex pattern
+    const diagnosisPattern = /(?:assessment|impression|diagnosis)[:\s]+(.*?)(?:\s*(?:plan|treatment|recommendations|follow-up|followup)|\n\n)/is;
+    const diagnosisMatch = note.match(diagnosisPattern);
+    if (diagnosisMatch && diagnosisMatch[1]) {
+      results["Diagnosis"] = diagnosisMatch[1].trim().replace(/\n+/g, " ");
+    }
+    
+    setExtractedResults(results);
+    setShowExtractedResults(Object.keys(results).length > 0);
+  };
+
   const handleCopyStructuredNote = () => {
     navigator.clipboard.writeText(structuredNote);
     toast({
@@ -165,6 +206,89 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       description: "The structured note has been copied to your clipboard.",
       duration: 3000,
     });
+  };
+
+  const handleTextSelection = () => {
+    if (!interactiveMode) return;
+    
+    const selection = window.getSelection();
+    if (selection && selection.toString()) {
+      setHighlightedText(selection.toString());
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, text: string) => {
+    if (!interactiveMode) return;
+    
+    e.dataTransfer.setData("text/plain", text);
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!interactiveMode) return;
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, sectionId: string) => {
+    if (!interactiveMode) return;
+    
+    e.preventDefault();
+    const text = e.dataTransfer.getData("text/plain");
+    
+    // Update the structured note by adding the dragged text to the appropriate section
+    if (text && sectionId) {
+      const sectionPattern = new RegExp(`(${sectionId}[:\\s]+)(.*?)(?=\\n\\n|$)`, 'is');
+      const updatedNote = structuredNote.replace(sectionPattern, (match, p1, p2) => {
+        return `${p1}${p2}\n• ${text}`;
+      });
+      
+      setStructuredNote(updatedNote);
+      
+      toast({
+        title: "Content Added",
+        description: `Added selected text to ${sectionId} section.`,
+        duration: 2000,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (interactiveMode && structuredNote) {
+      // Ensure the structured note is in a format suitable for interactive editing
+      const updatedNote = ensureStructuredFormat(structuredNote);
+      if (updatedNote !== structuredNote) {
+        setStructuredNote(updatedNote);
+      }
+    }
+  }, [interactiveMode, structuredNote]);
+
+  const ensureStructuredFormat = (note: string): string => {
+    // Helper function to add bullet points to sections and ensure proper formatting
+    const sections = ["SUBJECTIVE", "OBJECTIVE", "ASSESSMENT", "PLAN", 
+                     "CHIEF COMPLAINT", "INTERVAL HISTORY", "CURRENT STATUS", 
+                     "REASON FOR CONSULTATION", "HISTORY OF PRESENT ILLNESS", 
+                     "RELEVANT FINDINGS", "IMPRESSION & RECOMMENDATIONS"];
+    
+    let updatedNote = note;
+    
+    sections.forEach(section => {
+      const sectionPattern = new RegExp(`(${section}[:\\s]+)(.*?)(?=\\n\\n|$)`, 'is');
+      updatedNote = updatedNote.replace(sectionPattern, (match, p1, p2) => {
+        // If content doesn't already have bullet points, add them
+        if (!p2.includes('•') && p2.includes('\n')) {
+          const lines = p2.split('\n').filter(l => l.trim().length > 0);
+          const bulletedLines = lines.map(l => l.startsWith('•') ? l : `• ${l}`).join('\n');
+          return `${p1}${bulletedLines}`;
+        }
+        return match;
+      });
+    });
+    
+    return updatedNote;
   };
 
   return (
@@ -211,26 +335,72 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
             <Wand2 className="h-4 w-4 mr-1" />
             {isGeneratingNote ? "Converting..." : "Convert to Structured Note"}
           </Button>
+          
+          {structuredNote && (
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="interactive-mode" 
+                checked={interactiveMode} 
+                onCheckedChange={setInteractiveMode} 
+              />
+              <Label htmlFor="interactive-mode" className="text-xs cursor-pointer">
+                Interactive Mode
+              </Label>
+            </div>
+          )}
         </div>
       </div>
 
       <Tabs defaultValue="transcript" className="w-full">
         <TabsList>
-          <TabsTrigger value="transcript">Raw Transcript</TabsTrigger>
-          {structuredNote && <TabsTrigger value="structured">{convertedNoteType}</TabsTrigger>}
+          <TabsTrigger value="transcript" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            Raw Transcript
+          </TabsTrigger>
+          {structuredNote && <TabsTrigger value="structured" className="flex items-center gap-1">
+            <List className="h-4 w-4" />
+            {convertedNoteType}
+          </TabsTrigger>}
+          {showExtractedResults && <TabsTrigger value="results" className="flex items-center gap-1">
+            <Zap className="h-4 w-4" />
+            Clinical Results
+          </TabsTrigger>}
         </TabsList>
         
         <TabsContent value="transcript">
           <ResizablePanelGroup direction="vertical" className="min-h-[300px] max-h-[600px] border rounded-md">
             <ResizablePanel defaultSize={70}>
-              <div className="p-4 h-full overflow-y-auto space-y-4">
+              <div 
+                className="p-4 h-full overflow-y-auto space-y-4" 
+                onMouseUp={handleTextSelection}
+              >
                 {formattedUtterances.length > 0 ? (
                   formattedUtterances.map((utterance, index) => (
-                    <div key={index} className="space-y-1">
+                    <div 
+                      key={index} 
+                      className="space-y-1"
+                      draggable={interactiveMode}
+                      onDragStart={(e) => handleDragStart(e, utterance.text)}
+                      onDragEnd={handleDragEnd}
+                    >
                       <div className={`font-medium ${getSpeakerColor(utterance.speaker)}`}>
                         {utterance.speaker}
                       </div>
-                      <div className="text-sm">{utterance.text}</div>
+                      <div className="text-sm">
+                        {utterance.text.split('. ').map((sentence: string, sentIdx: number) => (
+                          sentence.trim() && (
+                            <div 
+                              key={`${index}-${sentIdx}`} 
+                              className={`mb-1 ${interactiveMode ? 'cursor-pointer hover:bg-muted/50 rounded' : ''}`}
+                              draggable={interactiveMode}
+                              onDragStart={(e) => handleDragStart(e, sentence)}
+                              onDragEnd={handleDragEnd}
+                            >
+                              {sentence.trim()}{sentence.endsWith('.') ? '' : '.'}
+                            </div>
+                          )
+                        ))}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -270,19 +440,83 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         {structuredNote && (
           <TabsContent value="structured">
             <div className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto relative">
-              <div className="absolute top-2 right-2">
+              <div className="absolute top-2 right-2 flex space-x-2">
+                {interactiveMode && (
+                  <Badge className="bg-primary/20 text-primary">Interactive Mode: Drag content between panels</Badge>
+                )}
                 <Button variant="outline" size="sm" onClick={handleCopyStructuredNote}>
                   <Copy className="h-4 w-4 mr-1" />
                   Copy
                 </Button>
               </div>
-              <div className="mt-8 whitespace-pre-wrap font-mono text-sm">
-                {structuredNote}
+              <div 
+                className={`mt-8 whitespace-pre-wrap font-mono text-sm ${interactiveMode ? 'cursor-pointer' : ''}`}
+                onDragOver={interactiveMode ? handleDragOver : undefined}
+              >
+                {interactiveMode ? (
+                  // Render with interactive sections when in interactive mode
+                  structuredNote.split('\n\n').map((section, idx) => {
+                    const sectionMatch = section.match(/^([A-Z\s&]+):/);
+                    const sectionName = sectionMatch ? sectionMatch[1] : "";
+                    
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`mb-4 p-2 ${isDragging ? 'border-2 border-dashed border-primary/50 rounded' : ''}`}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, sectionName)}
+                      >
+                        {section}
+                      </div>
+                    );
+                  })
+                ) : (
+                  // Regular render when not in interactive mode
+                  structuredNote
+                )}
               </div>
             </div>
           </TabsContent>
         )}
+        
+        {showExtractedResults && (
+          <TabsContent value="results">
+            <div className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto">
+              <h3 className="text-lg font-medium mb-4">Extracted Clinical Results</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(extractedResults).map(([key, value]) => (
+                  <div key={key} className="p-3 bg-muted rounded-md">
+                    <div className="font-medium text-sm text-muted-foreground mb-1">{key}</div>
+                    <div className="text-base font-semibold">{value}</div>
+                  </div>
+                ))}
+              </div>
+              {Object.keys(extractedResults).length === 0 && (
+                <div className="text-center p-6 text-muted-foreground">
+                  No clinical results were extracted from the conversation.
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
+      
+      {interactiveMode && highlightedText && (
+        <div className="p-3 bg-muted/80 rounded-md text-sm flex items-center justify-between">
+          <div className="flex-1">
+            <span className="font-medium">Selected text: </span>
+            <span className="italic">"{highlightedText}"</span>
+          </div>
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            onClick={() => setHighlightedText("")}
+            className="h-7 w-7 p-1"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
       
       {showSummarySection && transcript && (
         <div className="border-t mt-3 pt-3">
