@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FadeIn } from "@/components/ui/motion";
-import { Check, Zap, Shield, Clock, FileText, UserCheck, Code, Smartphone, Globe, HeartPulse, Stethoscope, Brain } from "lucide-react";
+import { Check, Zap, Shield, Clock, FileText, UserCheck, Code, Smartphone, Globe, HeartPulse, Stethoscope, Brain, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 
@@ -251,6 +250,14 @@ const Features = () => {
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
               </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                A product of PrecisionNote LTD
+              </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                <a href="mailto:hello@documedly.com" className="hover:text-foreground">
+                  hello@documedly.com
+                </a>
+              </p>
             </div>
             
             <div className="flex space-x-8">
@@ -288,7 +295,12 @@ const Features = () => {
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-              <a href="https://github.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <a href="https://instagram.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">
+                <span className="flex items-center">
+                  <Instagram className="h-4 w-4 mr-1" />
+                  Instagram
+                </span>
+              </a>
             </div>
           </div>
         </div>
