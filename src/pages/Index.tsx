@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,8 @@ import {
   Check, 
   Star,
   Stethoscope,
-  Play
+  Play,
+  Instagram
 } from "lucide-react";
 import { 
   Card, 
@@ -483,6 +483,9 @@ const Index = () => {
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Choose the perfect plan for your practice. All plans include core features with flexible options as you grow.
               </p>
+              <div className="mt-4 inline-block px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
+                Currently in Beta as we launch in Africa. Join to use Documedly!
+              </div>
             </div>
           </FadeIn>
           
@@ -612,6 +615,12 @@ const Index = () => {
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
               </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                A product of PrecisionNote LTD
+              </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
+              </p>
             </div>
             
             <div className="flex space-x-8">
@@ -648,7 +657,9 @@ const Index = () => {
             <div className="mt-4 md:mt-0 flex space-x-4">
               <Link to="#" className="hover:text-foreground">Twitter</Link>
               <Link to="#" className="hover:text-foreground">LinkedIn</Link>
-              <Link to="#" className="hover:text-foreground">GitHub</Link>
+              <Link to="#" className="hover:text-foreground flex items-center gap-1">
+                <Instagram className="h-4 w-4" /> Instagram
+              </Link>
             </div>
           </div>
         </div>

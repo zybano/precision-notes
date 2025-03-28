@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -127,6 +126,9 @@ const Pricing = () => {
         <p className="text-muted-foreground max-w-2xl mx-auto">
           Choose the perfect plan for your practice. All plans include core features with flexible options as you grow.
         </p>
+        <div className="mt-4 inline-block px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
+          Currently in Beta as we launch in Africa. Join to use Documedly!
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
