@@ -1,22 +1,22 @@
 
-import { Clock, Clipboard, Users, BarChart } from 'lucide-react';
+import { Clock, Clipboard, Users, BarChart, LucideIcon } from 'lucide-react';
 
 // Interface for metrics
 export interface Metric {
   title: string;
-  value: string | number;
+  value: string;
   description: string;
   change: string;
   icon: "Clock" | "Clipboard" | "Users" | "BarChart";
 }
 
-// Define MetricType interface used in Dashboard.tsx
+// Define MetricType interface used in Dashboard.tsx to match MetricProps in MetricsDisplay
 export interface MetricType {
   title: string;
-  value: string | number;
+  value: string; // Changed from string | number to string to match MetricProps
   change: string;
   description: string;
-  icon: typeof Clock | typeof Clipboard | typeof Users | typeof BarChart;
+  icon: LucideIcon; // Using LucideIcon type to match what MetricsDisplay expects
   positive: boolean;
 }
 
@@ -136,7 +136,7 @@ export const calculateUserMetrics = async (): Promise<MetricType[]> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Return mock data
+  // Return mock data with string values instead of numbers
   return [
     {
       title: "Documentation Time",
@@ -148,7 +148,7 @@ export const calculateUserMetrics = async (): Promise<MetricType[]> => {
     },
     {
       title: "Notes Completed",
-      value: "32",
+      value: "32", // Changed from number to string
       change: "+8%",
       description: "Notes completed this week",
       icon: Clipboard,
@@ -156,7 +156,7 @@ export const calculateUserMetrics = async (): Promise<MetricType[]> => {
     },
     {
       title: "Patient Encounters",
-      value: "48",
+      value: "48", // Changed from number to string
       change: "+5%",
       description: "Compared to last week",
       icon: Users,
@@ -173,6 +173,7 @@ export const calculateUserMetrics = async (): Promise<MetricType[]> => {
   ];
 };
 
+// Make sure to export everything correctly
 export default {
   getActivityData,
   getMetrics,

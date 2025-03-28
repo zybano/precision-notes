@@ -3,7 +3,7 @@ import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 
-type MetricProps = {
+export type MetricProps = {
   title: string;
   value: string;
   change: string;

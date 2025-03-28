@@ -1,7 +1,7 @@
 
 import { FadeIn } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
-import { BarChart, Clipboard, Clock, Users } from "lucide-react";
+import { BarChart, Clipboard, Clock, Users, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
@@ -16,11 +16,21 @@ import {
   type MetricType 
 } from "@/services/dashboardService";
 
+// Define interface that matches exactly what MetricsDisplay expects
+interface MetricProps {
+  title: string;
+  value: string;
+  change: string;
+  description: string;
+  icon: LucideIcon;
+  positive: boolean;
+}
+
 const Dashboard = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [firstName, setFirstName] = useState("");
-  const [metrics, setMetrics] = useState<MetricType[]>([
+  const [metrics, setMetrics] = useState<MetricProps[]>([
     { 
       title: "Documentation Time", 
       value: "--", 
@@ -80,22 +90,8 @@ const Dashboard = () => {
       
       // Calculate metrics
       const calculatedMetrics = await calculateUserMetrics();
+      setMetrics(calculatedMetrics as MetricProps[]);
       
-      // Map icon strings to actual components
-      const iconMap = {
-        "Clock": Clock,
-        "Clipboard": Clipboard,
-        "Users": Users,
-        "BarChart": BarChart
-      };
-      
-      // Replace icon strings with actual components
-      const metricsWithIcons = calculatedMetrics.map(metric => ({
-        ...metric,
-        icon: iconMap[metric.icon as keyof typeof iconMap]
-      }));
-      
-      setMetrics(metricsWithIcons);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     } finally {
