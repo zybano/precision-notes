@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
-import { Check, LayoutDashboard, BadgeInfo, Pill, BookOpen, ChevronRight, FileText, FileSpreadsheet, Eye, FileCog } from "lucide-react";
+import { Check, LayoutDashboard, BadgeInfo, Pill, BookOpen, ChevronRight, FileText, FileSpreadsheet, Eye, FileCog, Copy, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { TranscriptionResult } from "@/services/transcription";
 import RecordingInterface from "@/components/documentation/RecordingInterface";
@@ -64,28 +64,28 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
   const [activeTab, setActiveTab] = useState("record");
   const { register, handleSubmit, formState: { errors } } = form;
   
-  // Mock data for demo purposes
+  // Mock data for demo purposes with correct type annotations
   const mockMedicationAlerts = [
     {
       id: "1",
-      type: "interaction",
-      severity: "high",
+      type: "interaction" as const,
+      severity: "high" as const,
       title: "Critical Drug Interaction: Lisinopril + Potassium",
       description: "Combining Lisinopril with potassium supplements increases risk of hyperkalemia.",
       medications: ["Lisinopril 20mg", "Potassium 10mEq"]
     },
     {
       id: "2",
-      type: "contraindication",
-      severity: "medium",
+      type: "contraindication" as const,
+      severity: "medium" as const,
       title: "Contraindication: Metformin and Renal Impairment",
       description: "Patient's eGFR indicates reduced renal function, which may contraindicate standard Metformin dosing.",
       medications: ["Metformin 1000mg"]
     },
     {
       id: "3",
-      type: "dosage",
-      severity: "low",
+      type: "dosage" as const,
+      severity: "low" as const,
       title: "Dosage Warning: Statin Therapy",
       description: "Current dosage may need adjustment based on recent lipid panel results.",
       medications: ["Atorvastatin 40mg"]
