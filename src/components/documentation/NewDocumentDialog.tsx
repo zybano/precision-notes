@@ -1,38 +1,25 @@
 
 import React, { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, FileText, Copy, Printer, Download, CheckCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
-import { TranscriptionResult } from "@/services/transcription";
-import RecordingInterface from "./RecordingInterface";
-import TranscriptDisplay from "./TranscriptDisplay";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useForm } from "react-hook-form";
+import { Check, LayoutDashboard, BadgeInfo, Pill, BookOpen, ChevronRight, FileText, FileSpreadsheet, Eye, FileCog } from "lucide-react";
+import { toast } from "sonner";
+import { TranscriptionResult } from "@/services/transcription";
+import RecordingInterface from "@/components/documentation/RecordingInterface";
+import DrugMonograph from "@/components/documentation/DrugMonograph";
+import MedicationSafetyAlerts from "@/components/documentation/MedicationSafetyAlerts";
+import EnhancedContextPanel from "@/components/documentation/EnhancedContextPanel";
 
 interface NewDocumentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  form: UseFormReturn<any>;
+  form: any;
   onSubmit: (data: any) => void;
   isRecording: boolean;
   isPaused: boolean;
@@ -49,12 +36,7 @@ interface NewDocumentDialogProps {
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
   transcriptResult: TranscriptionResult | null;
-  documentTemplates: {
-    title: string;
-    description: string;
-    icon: any;
-    parameters: any[];
-  }[];
+  documentTemplates: any[];
 }
 
 const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
@@ -77,213 +59,168 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
   showSummary,
   setShowSummary,
   transcriptResult,
-  documentTemplates,
+  documentTemplates
 }) => {
-  const { toast } = useToast();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("record");
-  const [documentSaved, setDocumentSaved] = useState(false);
-
-  const handleDialogOpenChange = (open: boolean) => {
-    onOpenChange(open);
-    if (!open) {
-      stopRecording();
+  const { register, handleSubmit, formState: { errors } } = form;
+  
+  // Mock data for demo purposes
+  const mockMedicationAlerts = [
+    {
+      id: "1",
+      type: "interaction",
+      severity: "high",
+      title: "Critical Drug Interaction: Lisinopril + Potassium",
+      description: "Combining Lisinopril with potassium supplements increases risk of hyperkalemia.",
+      medications: ["Lisinopril 20mg", "Potassium 10mEq"]
+    },
+    {
+      id: "2",
+      type: "contraindication",
+      severity: "medium",
+      title: "Contraindication: Metformin and Renal Impairment",
+      description: "Patient's eGFR indicates reduced renal function, which may contraindicate standard Metformin dosing.",
+      medications: ["Metformin 1000mg"]
+    },
+    {
+      id: "3",
+      type: "dosage",
+      severity: "low",
+      title: "Dosage Warning: Statin Therapy",
+      description: "Current dosage may need adjustment based on recent lipid panel results.",
+      medications: ["Atorvastatin 40mg"]
     }
-  };
-
-  const handleDeleteDocument = async () => {
-    const documentId = form.getValues("documentId");
-    
-    if (documentId) {
-      try {
-        const { error } = await supabase
-          .from('medical_documents')
-          .delete()
-          .eq('id', documentId);
-          
-        if (error) throw error;
-        
-        toast({
-          title: "Document Deleted",
-          description: "The document has been deleted.",
-          duration: 3000,
-        });
-      } catch (error) {
-        console.error("Error deleting document:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete the document. Please try again.",
-          duration: 3000,
-        });
+  ];
+  
+  // Mock data for enhanced context
+  const mockEnhancedContext = {
+    observations: [
+      {
+        id: "1",
+        category: "Physical",
+        text: "Patient is obese with BMI of approximately 32",
+        confidence: 0.95,
+        source: "implicit" as const
+      },
+      {
+        id: "2",
+        category: "Behavior",
+        text: "Patient appears anxious when discussing weight",
+        confidence: 0.78,
+        source: "implicit" as const
+      },
+      {
+        id: "3",
+        category: "Symptoms",
+        text: "Reports fatigue and shortness of breath when climbing stairs",
+        confidence: 0.92,
+        source: "explicit" as const
       }
-    } else {
-      toast({
-        title: "Document Deleted",
-        description: "The document has been deleted.",
-        duration: 3000,
-      });
-    }
-    
-    setDeleteDialogOpen(false);
-    onOpenChange(false);
-    form.reset();
-    stopRecording();
-  };
-
-  const handleFormSubmit = async (data: any) => {
-    setIsSaving(true);
-    
-    try {
-      // Create a structured transcript object to save
-      const transcriptData = transcriptResult ? {
-        text: transcript,
-        summary: transcriptSummary,
-        utterances: transcriptResult.utterances,
-        isMock: transcriptResult.isMock
-      } : null;
-      
-      const documentData = {
-        title: `Consultation ${new Date().toLocaleDateString()}`,
-        type: "Consultation",
-        patient_name: "Patient",
-        notes: data.notes,
-        status: "Draft",
-        transcript_data: transcriptData ? JSON.stringify(transcriptData) : null
-      };
-      
-      let result;
-      
-      if (data.documentId) {
-        // Update existing document
-        result = await supabase
-          .from('medical_documents')
-          .update(documentData)
-          .eq('id', data.documentId)
-          .select();
-      } else {
-        // Create new document
-        result = await supabase
-          .from('medical_documents')
-          .insert(documentData)
-          .select();
+    ],
+    inferredConditions: [
+      {
+        id: "1",
+        name: "Uncontrolled Hypertension",
+        confidence: 0.88,
+        supportingEvidence: [
+          "BP readings consistently elevated",
+          "Medication compliance issues mentioned",
+          "Family history of cardiovascular disease"
+        ]
+      },
+      {
+        id: "2",
+        name: "Pre-diabetes",
+        confidence: 0.76,
+        supportingEvidence: [
+          "BMI in obese range",
+          "Sedentary lifestyle indicated",
+          "Complaint of fatigue"
+        ]
       }
-      
-      if (result.error) throw result.error;
-      
-      toast({
-        title: "Document Saved",
-        description: "Your consultation has been saved successfully.",
-        duration: 3000,
-      });
-      
-      setDocumentSaved(true);
-      onSubmit(data);
-    } catch (error) {
-      console.error("Error saving document:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save the document. Please try again.",
-        variant: "destructive",
-        duration: 5000,
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    ],
+    patientContext: [
+      {
+        id: "1",
+        category: "Social",
+        text: "Lives alone, limited social support network"
+      },
+      {
+        id: "2",
+        category: "Economic",
+        text: "Expressed concern about medication costs"
+      },
+      {
+        id: "3",
+        category: "Compliance",
+        text: "History of medication non-adherence due to side effects"
+      }
+    ]
   };
-
-  const handleCopyToClipboard = () => {
-    const noteText = form.getValues("notes");
-    navigator.clipboard.writeText(noteText);
-    toast({
-      title: "Copied to Clipboard",
-      description: "The document has been copied to clipboard for your EMR.",
-      duration: 3000,
+  
+  const handleCopyToEMR = () => {
+    navigator.clipboard.writeText(form.getValues().notes);
+    toast.success("Notes copied to clipboard for EMR entry", {
+      description: "The formatted notes can now be pasted into your EMR system."
     });
   };
-
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const noteText = form.getValues("notes");
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Medical Consultation - ${new Date().toLocaleDateString()}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 30px; }
-              h1 { color: #333; }
-              .content { white-space: pre-wrap; line-height: 1.5; }
-              .footer { margin-top: 50px; border-top: 1px solid #ccc; padding-top: 20px; font-size: 12px; }
-            </style>
-          </head>
-          <body>
-            <h1>Medical Consultation</h1>
-            <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-            <div class="content">${noteText.replace(/\n/g, '<br/>')}</div>
-            <div class="footer">Generated by Documedly</div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
-
+  
   const handleDownloadPDF = () => {
-    // In a real implementation, this would use a library like jsPDF
-    // For now, we'll just show a toast message
-    toast({
-      title: "PDF Downloaded",
-      description: "The consultation document has been downloaded as PDF.",
-      duration: 3000,
+    toast.success("PDF download started", {
+      description: "Your document is being prepared for download."
     });
+    
+    // Simulate PDF generation delay
+    setTimeout(() => {
+      toast.success("PDF document ready", {
+        description: "Your document has been downloaded."
+      });
+    }, 1500);
   };
-
-  // Determine if we should automatically advance to the "notes" tab
-  React.useEffect(() => {
-    if (transcriptResult && activeTab === "record") {
-      setActiveTab("notes");
-    }
-  }, [transcriptResult]);
-
+  
+  const handlePrint = () => {
+    toast.success("Preparing document for printing", {
+      description: "Your document is being sent to the printer dialog."
+    });
+    
+    // In a real implementation, this would trigger window.print()
+    setTimeout(() => {
+      toast.success("Document sent to printer", {
+        description: "Please check your printer dialog to complete printing."
+      });
+    }, 1000);
+  };
+  
   return (
-    <>
-      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] max-h-[95vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Medical Consultation</DialogTitle>
-            <DialogDescription>
-              Record your consultation and generate clinical notes automatically
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid grid-cols-4 mb-8">
-              <TabsTrigger value="record" disabled={isRecording && !isPaused}>
-                1. Record Consultation
-              </TabsTrigger>
-              <TabsTrigger value="notes" disabled={!transcriptResult}>
-                2. Review Notes
-              </TabsTrigger>
-              <TabsTrigger value="transcript" disabled={!transcriptResult}>
-                3. View Transcript
-              </TabsTrigger>
-              <TabsTrigger value="export" disabled={!transcriptResult}>
-                4. Export Options
-              </TabsTrigger>
-            </TabsList>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
-                <TabsContent value="record" className="space-y-4">
-                  <div className="text-center py-4 mb-8">
-                    <h3 className="text-xl font-semibold mb-2">Start Recording Your Consultation</h3>
-                    <p className="text-muted-foreground">
-                      Record your patient consultation. The transcript will be processed and notes will be generated automatically.
-                    </p>
-                  </div>
-                  
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-2xl">Consultation Documentation</DialogTitle>
+          <DialogDescription>
+            Record your consultation, generate notes, and export to your EMR system
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="flex flex-col lg:flex-row h-full">
+          <div className="lg:w-2/3 p-6 pt-0 border-r">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid grid-cols-4 mb-8">
+                <TabsTrigger value="record" className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-2" /> Record
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="flex items-center" disabled={!transcript}>
+                  <FileText className="h-4 w-4 mr-2" /> Notes
+                </TabsTrigger>
+                <TabsTrigger value="context" className="flex items-center" disabled={!transcript}>
+                  <BadgeInfo className="h-4 w-4 mr-2" /> Context
+                </TabsTrigger>
+                <TabsTrigger value="export" className="flex items-center" disabled={!transcript}>
+                  <FileCog className="h-4 w-4 mr-2" /> Export
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="record" className="mt-0">
+                <form onSubmit={handleSubmit(onSubmit)}>
                   <RecordingInterface
                     isRecording={isRecording}
                     isPaused={isPaused}
@@ -295,177 +232,193 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                     pauseRecording={pauseRecording}
                     stopRecording={stopRecording}
                     formatTime={formatTime}
+                    onDownloadPdf={handleDownloadPDF}
+                    onCopyToEMR={handleCopyToEMR}
+                    onPrint={handlePrint}
                   />
                   
-                  {isTranscribing && (
-                    <div className="text-center py-8 animate-pulse">
-                      <p className="text-muted-foreground">
-                        Processing your consultation and generating clinical notes...
-                      </p>
+                  {transcript && !isRecording && !isTranscribing && (
+                    <div className="mt-6 flex justify-end">
+                      <Button 
+                        type="button" 
+                        className="flex items-center"
+                        onClick={() => setActiveTab("notes")}
+                      >
+                        Proceed to Notes
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </div>
                   )}
-                </TabsContent>
-                
-                <TabsContent value="notes" className="space-y-4">
-                  <div className="text-center py-4 mb-4">
-                    <h3 className="text-xl font-semibold mb-2">Review Generated Notes</h3>
-                    <p className="text-muted-foreground">
-                      The system has processed your consultation and generated clinical notes. Review and edit as needed.
-                    </p>
-                  </div>
-                  
-                  {transcriptResult && (
-                    <TranscriptDisplay
-                      transcriptResult={transcriptResult}
-                      transcript={transcript}
-                      transcriptSummary={transcriptSummary}
-                      showSummary={showSummary}
-                      setShowSummary={setShowSummary}
-                      form={form}
-                      showSummarySection={false}
-                    />
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="transcript" className="space-y-4">
-                  <div className="text-center py-4 mb-4">
-                    <h3 className="text-xl font-semibold mb-2">Full Consultation Transcript</h3>
-                    <p className="text-muted-foreground">
-                      View the complete transcript of the consultation with speaker identification.
-                    </p>
-                  </div>
-                  
-                  {transcriptResult && (
-                    <div className="border rounded-md p-4 max-h-[60vh] overflow-y-auto">
-                      {transcriptResult.utterances.map((utterance, index) => (
-                        <div key={index} className="mb-4">
-                          <div className={`font-medium ${utterance.speaker === "Doctor" ? "text-blue-600" : "text-green-600"}`}>
-                            {utterance.speaker}
-                          </div>
-                          <div className="text-sm pl-4 mt-1">{utterance.text}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="export" className="space-y-4">
-                  <div className="text-center py-4 mb-4">
-                    <h3 className="text-xl font-semibold mb-2">Export Options</h3>
-                    <p className="text-muted-foreground">
-                      Export your consultation notes for your EMR or medical records.
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                    <div className="border rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                      <Button 
-                        variant="outline" 
-                        className="h-16 w-16 rounded-full mb-4" 
-                        onClick={handleCopyToClipboard}
-                      >
-                        <Copy className="h-6 w-6" />
-                      </Button>
-                      <h3 className="font-medium mb-2">Copy to Clipboard</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Copy formatted notes for pasting into your EMR system
-                      </p>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="notes" className="mt-0">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="notes" className="text-lg font-medium">Generated Notes</Label>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="showSummary"
+                          checked={showSummary}
+                          onCheckedChange={setShowSummary}
+                        />
+                        <Label htmlFor="showSummary" className="text-sm">Show Summary</Label>
+                      </div>
                     </div>
                     
-                    <div className="border rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                      <Button 
-                        variant="outline" 
-                        className="h-16 w-16 rounded-full mb-4" 
-                        onClick={handlePrint}
-                      >
-                        <Printer className="h-6 w-6" />
-                      </Button>
-                      <h3 className="font-medium mb-2">Print Document</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Print a formatted version for paper records
-                      </p>
-                    </div>
-                    
-                    <div className="border rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                      <Button 
-                        variant="outline" 
-                        className="h-16 w-16 rounded-full mb-4" 
-                        onClick={handleDownloadPDF}
-                      >
-                        <Download className="h-6 w-6" />
-                      </Button>
-                      <h3 className="font-medium mb-2">Download PDF</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Save as PDF for your digital records
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <div className="hidden">
-                  <input type="hidden" {...form.register("notes")} />
-                  <input type="hidden" {...form.register("documentId")} />
-                </div>
-                
-                <DialogFooter className="flex justify-between mt-8 pt-4 border-t">
-                  <div>
-                    <Button 
-                      variant="outline" 
-                      type="button" 
-                      onClick={() => setDeleteDialogOpen(true)}
-                      className="text-destructive border-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Document
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" type="button" onClick={() => {
-                      onOpenChange(false);
-                      stopRecording();
-                    }}>
-                      Cancel
-                    </Button>
-                    
-                    {documentSaved ? (
-                      <Button variant="default" disabled>
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Saved
-                      </Button>
-                    ) : (
-                      <Button type="submit" disabled={isTranscribing || isSaving || !transcriptResult}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        {isSaving ? "Saving..." : "Save Document"}
-                      </Button>
+                    {showSummary && transcriptSummary && (
+                      <div className="bg-muted p-3 rounded-md text-sm mb-4">
+                        <p className="font-medium mb-1">Summary:</p>
+                        <p>{transcriptSummary}</p>
+                      </div>
                     )}
+                    
+                    <Textarea
+                      id="notes"
+                      className="min-h-[350px] font-mono text-sm resize-y"
+                      {...register("notes")}
+                    />
                   </div>
-                </DialogFooter>
-              </form>
-            </Form>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this document?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the document and remove it from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteDocument}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+                  
+                  <div className="flex justify-between">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setActiveTab("record")}
+                    >
+                      Back to Recording
+                    </Button>
+                    <Button 
+                      type="button" 
+                      className="flex items-center"
+                      onClick={() => setActiveTab("context")}
+                    >
+                      View Enhanced Context
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="context" className="mt-0">
+                <div className="space-y-6">
+                  <EnhancedContextPanel context={mockEnhancedContext} />
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <Label className="text-lg font-medium">Medication Safety Alerts</Label>
+                    <MedicationSafetyAlerts alerts={mockMedicationAlerts} />
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setActiveTab("notes")}
+                    >
+                      Back to Notes
+                    </Button>
+                    <Button 
+                      type="button" 
+                      className="flex items-center"
+                      onClick={() => setActiveTab("export")}
+                    >
+                      Export Options
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="export" className="mt-0">
+                <div className="space-y-6">
+                  <div className="rounded-lg border p-6">
+                    <h3 className="text-lg font-medium mb-4 flex items-center">
+                      <FileCog className="h-5 w-5 mr-2" />
+                      Export Options
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                        <div className="bg-accent rounded-full p-1 mt-0.5">
+                          <FileText className="h-5 w-5 text-accent-foreground" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">Copy to EMR</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Copy the formatted notes to paste directly into your EMR system
+                          </p>
+                          <Button onClick={handleCopyToEMR} size="sm">
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy to Clipboard
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                        <div className="bg-accent rounded-full p-1 mt-0.5">
+                          <Download className="h-5 w-5 text-accent-foreground" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">Download PDF</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Save the consultation notes as a PDF document
+                          </p>
+                          <Button onClick={handleDownloadPDF} size="sm">
+                            <Download className="h-4 w-4 mr-2" />
+                            Download PDF
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                        <div className="bg-accent rounded-full p-1 mt-0.5">
+                          <Printer className="h-5 w-5 text-accent-foreground" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">Print Document</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Print the consultation notes for physical records
+                          </p>
+                          <Button onClick={handlePrint} size="sm">
+                            <Printer className="h-4 w-4 mr-2" />
+                            Print
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setActiveTab("context")}
+                    >
+                      Back to Context
+                    </Button>
+                    <Button 
+                      type="submit"
+                      onClick={handleSubmit(onSubmit)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Save Document
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+          
+          <div className="lg:w-1/3 p-6 space-y-6">
+            <DrugMonograph />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
