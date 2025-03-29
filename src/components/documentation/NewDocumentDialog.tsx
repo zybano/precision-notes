@@ -8,13 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
-import { Check, LayoutDashboard, BadgeInfo, Pill, BookOpen, ChevronRight, FileText, FileSpreadsheet, Eye, FileCog, Copy, Download, Printer } from "lucide-react";
+import { Check, LayoutDashboard, FileText, Eye, FileCog, Copy, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { TranscriptionResult } from "@/services/transcription";
 import RecordingInterface from "@/components/documentation/RecordingInterface";
 import DrugMonograph from "@/components/documentation/DrugMonograph";
-import MedicationSafetyAlerts from "@/components/documentation/MedicationSafetyAlerts";
-import EnhancedContextPanel from "@/components/documentation/EnhancedContextPanel";
 
 interface NewDocumentDialogProps {
   open: boolean;
@@ -64,100 +62,6 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
   const [activeTab, setActiveTab] = useState("record");
   const { register, handleSubmit, formState: { errors } } = form;
   
-  // Mock data for demo purposes with correct type annotations
-  const mockMedicationAlerts = [
-    {
-      id: "1",
-      type: "interaction" as const,
-      severity: "high" as const,
-      title: "Critical Drug Interaction: Lisinopril + Potassium",
-      description: "Combining Lisinopril with potassium supplements increases risk of hyperkalemia.",
-      medications: ["Lisinopril 20mg", "Potassium 10mEq"]
-    },
-    {
-      id: "2",
-      type: "contraindication" as const,
-      severity: "medium" as const,
-      title: "Contraindication: Metformin and Renal Impairment",
-      description: "Patient's eGFR indicates reduced renal function, which may contraindicate standard Metformin dosing.",
-      medications: ["Metformin 1000mg"]
-    },
-    {
-      id: "3",
-      type: "dosage" as const,
-      severity: "low" as const,
-      title: "Dosage Warning: Statin Therapy",
-      description: "Current dosage may need adjustment based on recent lipid panel results.",
-      medications: ["Atorvastatin 40mg"]
-    }
-  ];
-  
-  // Mock data for enhanced context
-  const mockEnhancedContext = {
-    observations: [
-      {
-        id: "1",
-        category: "Physical",
-        text: "Patient is obese with BMI of approximately 32",
-        confidence: 0.95,
-        source: "implicit" as const
-      },
-      {
-        id: "2",
-        category: "Behavior",
-        text: "Patient appears anxious when discussing weight",
-        confidence: 0.78,
-        source: "implicit" as const
-      },
-      {
-        id: "3",
-        category: "Symptoms",
-        text: "Reports fatigue and shortness of breath when climbing stairs",
-        confidence: 0.92,
-        source: "explicit" as const
-      }
-    ],
-    inferredConditions: [
-      {
-        id: "1",
-        name: "Uncontrolled Hypertension",
-        confidence: 0.88,
-        supportingEvidence: [
-          "BP readings consistently elevated",
-          "Medication compliance issues mentioned",
-          "Family history of cardiovascular disease"
-        ]
-      },
-      {
-        id: "2",
-        name: "Pre-diabetes",
-        confidence: 0.76,
-        supportingEvidence: [
-          "BMI in obese range",
-          "Sedentary lifestyle indicated",
-          "Complaint of fatigue"
-        ]
-      }
-    ],
-    patientContext: [
-      {
-        id: "1",
-        category: "Social",
-        text: "Lives alone, limited social support network"
-      },
-      {
-        id: "2",
-        category: "Economic",
-        text: "Expressed concern about medication costs"
-      },
-      {
-        id: "3",
-        category: "Compliance",
-        text: "History of medication non-adherence due to side effects"
-      }
-    ]
-  };
-  
   const handleCopyToEMR = () => {
     navigator.clipboard.writeText(form.getValues().notes);
     toast.success("Notes copied to clipboard for EMR entry", {
@@ -204,15 +108,12 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
         <div className="flex flex-col lg:flex-row h-full">
           <div className="lg:w-2/3 p-6 pt-0 border-r">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-4 mb-8">
+              <TabsList className="grid grid-cols-3 mb-8">
                 <TabsTrigger value="record" className="flex items-center">
-                  <BookOpen className="h-4 w-4 mr-2" /> Record
+                  <FileText className="h-4 w-4 mr-2" /> Record
                 </TabsTrigger>
                 <TabsTrigger value="notes" className="flex items-center" disabled={!transcript}>
                   <FileText className="h-4 w-4 mr-2" /> Notes
-                </TabsTrigger>
-                <TabsTrigger value="context" className="flex items-center" disabled={!transcript}>
-                  <BadgeInfo className="h-4 w-4 mr-2" /> Context
                 </TabsTrigger>
                 <TabsTrigger value="export" className="flex items-center" disabled={!transcript}>
                   <FileCog className="h-4 w-4 mr-2" /> Export
@@ -245,7 +146,7 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                         onClick={() => setActiveTab("notes")}
                       >
                         Proceed to Notes
-                        <ChevronRight className="ml-2 h-4 w-4" />
+                        <FileText className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
                   )}
@@ -292,41 +193,10 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                     <Button 
                       type="button" 
                       className="flex items-center"
-                      onClick={() => setActiveTab("context")}
-                    >
-                      View Enhanced Context
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="context" className="mt-0">
-                <div className="space-y-6">
-                  <EnhancedContextPanel context={mockEnhancedContext} />
-                  
-                  <Separator />
-                  
-                  <div className="space-y-2">
-                    <Label className="text-lg font-medium">Medication Safety Alerts</Label>
-                    <MedicationSafetyAlerts alerts={mockMedicationAlerts} />
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setActiveTab("notes")}
-                    >
-                      Back to Notes
-                    </Button>
-                    <Button 
-                      type="button" 
-                      className="flex items-center"
                       onClick={() => setActiveTab("export")}
                     >
                       Export Options
-                      <ChevronRight className="ml-2 h-4 w-4" />
+                      <FileCog className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -395,9 +265,9 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                     <Button 
                       type="button" 
                       variant="outline"
-                      onClick={() => setActiveTab("context")}
+                      onClick={() => setActiveTab("notes")}
                     >
-                      Back to Context
+                      Back to Notes
                     </Button>
                     <Button 
                       type="submit"

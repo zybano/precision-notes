@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -90,7 +89,7 @@ const EnhancedContextPanel: React.FC<EnhancedContextPanelProps> = ({ context }) 
             ))}
           </TabsContent>
           
-          <TabsContent value="context" className="space-y-4">
+          <TabsContent value="context" className="space-y-6">
             <div className="text-sm text-muted-foreground italic mb-2">
               Additional patient context that may be relevant to the consultation.
             </div>
