@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Save } from "lucide-react";
+import { Mic, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { transcribeAudio, TranscriptionResult } from "@/services/transcription";
@@ -38,8 +37,7 @@ const DocumentationPage = () => {
 
   const form = useForm({
     defaultValues: {
-      type: "SOAP Note",
-      patientName: "",
+      type: "Consultation",
       notes: "",
       documentId: "",
       transcript: "",
@@ -57,7 +55,6 @@ const DocumentationPage = () => {
     
     form.reset({
       type: template.title,
-      patientName: "",
       notes: "",
       documentId: "",
     });
@@ -90,7 +87,6 @@ const DocumentationPage = () => {
     
     form.reset({
       type: template.title,
-      patientName: "",
       notes: "",
       documentId: "",
     });
@@ -111,7 +107,7 @@ const DocumentationPage = () => {
     
     toast({
       title: "Document Saved",
-      description: `Your ${data.type} for ${data.patientName} has been saved.`,
+      description: "Your consultation has been saved successfully.",
       duration: 3000,
     });
   };
@@ -273,25 +269,24 @@ const DocumentationPage = () => {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
             <p className="text-muted-foreground mt-1">
-              Create, edit and manage your medical documents
+              Record consultations and generate medical documentation
             </p>
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
             <Button 
               size="sm" 
-              className="shadow-sm hover:shadow-md transition-all btn-premium"
+              className="shadow-sm hover:shadow-md transition-all"
               onClick={() => {
                 form.reset({
-                  type: "SOAP Note",
-                  patientName: "",
+                  type: "Consultation",
                   notes: "",
                   documentId: "",
                 });
                 setNewDocumentOpen(true);
               }}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              New Document
+              <Mic className="h-4 w-4 mr-1" />
+              Record Consultation
             </Button>
           </div>
         </div>
@@ -312,63 +307,10 @@ const DocumentationPage = () => {
 
       <FadeIn delay={0.2}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-md">
-            <TabsTrigger value="templates">Templates</TabsTrigger>
-            <TabsTrigger value="specialties">Specialties</TabsTrigger>
-            <TabsTrigger value="saved">Saved</TabsTrigger>
-            <TabsTrigger value="shared">Shared</TabsTrigger>
+          <TabsList className="grid grid-cols-2 w-full max-w-md">
+            <TabsTrigger value="saved">My Documents</TabsTrigger>
+            <TabsTrigger value="shared">Shared Documents</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="templates" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {documentTemplates
-                .filter(template => template.title === "Dictation (Blank)")
-                .map((template, index) => (
-                <TemplateCard
-                  key={`dictation-${index}`}
-                  title={template.title}
-                  description={template.description}
-                  icon={template.icon}
-                  parameters={template.parameters}
-                  onViewDetails={() => handleViewTemplateDetails(template)}
-                  onUseTemplate={() => handleUseTemplate(template)}
-                  isFeatured={true}
-                />
-              ))}
-              
-              {documentTemplates
-                .filter(template => template.title === "History & Physical")
-                .map((template, index) => (
-                <TemplateCard
-                  key={`history-physical-${index}`}
-                  title={template.title}
-                  description={template.description}
-                  icon={template.icon}
-                  parameters={template.parameters}
-                  onViewDetails={() => handleViewTemplateDetails(template)}
-                  onUseTemplate={() => handleUseTemplate(template)}
-                />
-              ))}
-              
-              {documentTemplates
-                .filter(template => template.title !== "Dictation (Blank)" && template.title !== "History & Physical")
-                .map((template, index) => (
-                <TemplateCard
-                  key={index}
-                  title={template.title}
-                  description={template.description}
-                  icon={template.icon}
-                  parameters={template.parameters}
-                  onViewDetails={() => handleViewTemplateDetails(template)}
-                  onUseTemplate={() => handleUseTemplate(template)}
-                />
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="specialties" className="space-y-6">
-            <SpecialtyTemplates onUseTemplate={handleUseSpecialtyTemplate} />
-          </TabsContent>
           
           <TabsContent value="saved" className="space-y-6">
             <RecentDocuments 

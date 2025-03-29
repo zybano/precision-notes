@@ -30,68 +30,85 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
   formatTime,
 }) => {
   return (
-    <div className="border rounded-md p-3">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-medium">Voice Recording</h4>
-        <div className="flex items-center gap-2">
-          {(isRecording || isPaused) && <span className="text-xs text-muted-foreground">{formatTime(recordingTime)}</span>}
-          <div className="flex items-center gap-1">
-            {!isRecording && !isPaused && (
+    <div className="border rounded-lg p-6">
+      <div className="flex flex-col items-center justify-center mb-6">
+        <div className={`relative w-32 h-32 rounded-full flex items-center justify-center ${isRecording ? (isPaused ? 'bg-amber-50' : 'bg-red-50') : 'bg-slate-50'} mb-4`}>
+          <div className={`absolute inset-0 rounded-full ${isRecording && !isPaused ? 'animate-ping opacity-20 bg-red-400' : ''}`}></div>
+          <div className="relative">
+            {!isRecording ? (
               <Button 
-                type="button" 
-                size="sm" 
-                variant="secondary"
+                className="h-20 w-20 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
                 onClick={startRecording}
-                className="h-8 px-3"
                 disabled={isTranscribing}
               >
-                <Mic className="h-4 w-4 mr-1" />
-                Record
+                <Mic className="h-8 w-8" />
               </Button>
-            )}
-            
-            {(isRecording || isPaused) && (
-              <>
-                <Button 
-                  type="button" 
-                  size="sm" 
-                  variant={isPaused ? "outline" : "secondary"}
-                  onClick={pauseRecording}
-                  className="h-8 px-2"
-                  disabled={isTranscribing}
-                >
-                  {isPaused ? (
-                    <>
-                      <Play className="h-4 w-4 mr-1" />
-                      Resume
-                    </>
-                  ) : (
-                    <>
-                      <Pause className="h-4 w-4 mr-1" />
-                      Pause
-                    </>
-                  )}
-                </Button>
-                
-                <Button 
-                  type="button" 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={stopRecording}
-                  className="h-8 px-2"
-                  disabled={isTranscribing}
-                >
-                  <StopCircle className="h-4 w-4 mr-1" />
-                  Stop
-                </Button>
-              </>
+            ) : isPaused ? (
+              <Button 
+                className="h-20 w-20 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                onClick={pauseRecording}
+                disabled={isTranscribing}
+              >
+                <Play className="h-8 w-8" />
+              </Button>
+            ) : (
+              <Button 
+                className="h-20 w-20 rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg"
+                onClick={pauseRecording}
+                disabled={isTranscribing}
+              >
+                <Pause className="h-8 w-8" />
+              </Button>
             )}
           </div>
         </div>
+        
+        {isRecording && (
+          <div className="text-center">
+            <div className="text-2xl font-bold mb-2">{formatTime(recordingTime)}</div>
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                className="rounded-full"
+                onClick={pauseRecording}
+                disabled={isTranscribing}
+              >
+                {isPaused ? (
+                  <>
+                    <Play className="h-4 w-4 mr-1" />
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <Pause className="h-4 w-4 mr-1" />
+                    Pause
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="destructive"
+                className="rounded-full"
+                onClick={stopRecording}
+                disabled={isTranscribing}
+              >
+                <StopCircle className="h-4 w-4 mr-1" />
+                Finish
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {!isRecording && !isTranscribing && (
+          <div className="text-center">
+            <p className="text-muted-foreground mt-2">
+              Click to start recording your consultation
+            </p>
+          </div>
+        )}
       </div>
       
-      <div className="mb-2">
-        <div className="flex items-center gap-2">
+      <div className="mb-4">
+        <div className="flex items-center gap-2 justify-center">
           <input
             type="checkbox"
             id="nanoModelToggle"
@@ -100,15 +117,15 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
             className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
           />
           <label htmlFor="nanoModelToggle" className="text-xs text-muted-foreground">
-            Use Nano Speech Model (faster but less accurate)
+            Use faster transcription (less accurate)
           </label>
         </div>
       </div>
       
       {isRecording && !isPaused && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-red-500">●</span>
+          <div className="flex items-center gap-2 justify-center">
+            <span className="text-xs font-medium text-red-500 animate-pulse">●</span>
             <span className="text-xs">Recording in progress...</span>
           </div>
           <Progress value={recordingTime % 60} max={60} className="h-1" />
@@ -117,7 +134,7 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
       
       {isPaused && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-center">
             <span className="text-xs font-medium text-amber-500">●</span>
             <span className="text-xs">Recording paused</span>
           </div>
@@ -125,12 +142,15 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
       )}
 
       {isTranscribing && (
-        <div className="space-y-2 mt-2">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span className="text-xs">Transcribing with AssemblyAI...</span>
+        <div className="space-y-2 mt-4">
+          <div className="flex items-center gap-2 justify-center">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Generating notes from your consultation...</span>
           </div>
           <Progress value={50} max={100} className="h-1" />
+          <p className="text-xs text-center text-muted-foreground mt-2">
+            This usually takes about 20-30 seconds
+          </p>
         </div>
       )}
     </div>
