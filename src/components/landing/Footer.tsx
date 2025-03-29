@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Instagram } from "lucide-react";
 
@@ -18,7 +17,7 @@ export function Footer() {
               Transforming clinical documentation
             </p>
             <p className="text-muted-foreground mt-1 text-sm">
-              A product of PrecisionNote LTD
+              A product of PrecisionNote Inc.
             </p>
             <p className="text-muted-foreground mt-1 text-sm">
               Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
@@ -55,7 +54,7 @@ export function Footer() {
         </div>
         
         <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-          <p>© 2025 Documedly, Inc. All rights reserved.</p>
+          <p>© 2025 PrecisionNote Inc. All rights reserved.</p>
           <div className="mt-4 md:mt-0 flex space-x-4">
             <Link to="#" className="hover:text-foreground">Twitter</Link>
             <Link to="#" className="hover:text-foreground">LinkedIn</Link>
