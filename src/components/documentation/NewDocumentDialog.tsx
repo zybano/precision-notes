@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
-import { Check, LayoutDashboard, FileText, Eye, FileCog, Copy, Download, Printer } from "lucide-react";
+import { Check, LayoutDashboard, FileText, Eye, FileCog, Copy, Download, Printer, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { TranscriptionResult } from "@/services/transcription";
 import RecordingInterface from "@/components/documentation/RecordingInterface";
 import DrugMonograph from "@/components/documentation/DrugMonograph";
+import EnhancedContextPanel from "@/components/documentation/EnhancedContextPanel";
 
 interface NewDocumentDialogProps {
   open: boolean;
@@ -94,6 +95,71 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
       });
     }, 1000);
   };
+
+  // Sample enhanced context data for demonstration
+  const enhancedContextData = {
+    observations: [
+      {
+        id: "obs1",
+        category: "Symptoms",
+        text: "Patient reports chronic headaches for the past 3 weeks",
+        confidence: 0.95,
+        source: "explicit" as const,
+      },
+      {
+        id: "obs2",
+        category: "Medications",
+        text: "Currently taking ibuprofen as needed",
+        confidence: 0.92,
+        source: "explicit" as const,
+      },
+      {
+        id: "obs3",
+        category: "Lifestyle",
+        text: "Works long hours at computer",
+        confidence: 0.85,
+        source: "implicit" as const,
+      },
+    ],
+    inferredConditions: [
+      {
+        id: "cond1",
+        name: "Tension Headache",
+        confidence: 0.82,
+        supportingEvidence: [
+          "Reports stress at work",
+          "Pain described as 'band-like' around head",
+          "No visual disturbances reported"
+        ],
+      },
+      {
+        id: "cond2",
+        name: "Eye Strain",
+        confidence: 0.75,
+        supportingEvidence: [
+          "Works long hours at computer",
+          "Reports worsening headache throughout workday"
+        ],
+      },
+    ],
+    patientContext: [
+      {
+        id: "ctx1",
+        category: "Medical History",
+        text: "Previous diagnosis of migraine (2018)",
+      },
+      {
+        id: "ctx2",
+        category: "Family History",
+        text: "Mother with history of chronic migraines",
+      },
+      {
+        id: "ctx3",
+        category: "Allergies",
+        text: "Penicillin (rash)",
+      },
+    ],
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,12 +174,15 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
         <div className="flex flex-col lg:flex-row h-full">
           <div className="lg:w-2/3 p-6 pt-0 border-r">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-3 mb-8">
+              <TabsList className="grid grid-cols-4 mb-8">
                 <TabsTrigger value="record" className="flex items-center">
                   <FileText className="h-4 w-4 mr-2" /> Record
                 </TabsTrigger>
                 <TabsTrigger value="notes" className="flex items-center" disabled={!transcript}>
                   <FileText className="h-4 w-4 mr-2" /> Notes
+                </TabsTrigger>
+                <TabsTrigger value="context" className="flex items-center" disabled={!transcript}>
+                  <Brain className="h-4 w-4 mr-2" /> Context
                 </TabsTrigger>
                 <TabsTrigger value="export" className="flex items-center" disabled={!transcript}>
                   <FileCog className="h-4 w-4 mr-2" /> Export
@@ -193,6 +262,30 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                     <Button 
                       type="button" 
                       className="flex items-center"
+                      onClick={() => setActiveTab("context")}
+                    >
+                      View Context
+                      <Brain className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="context" className="mt-0">
+                <div className="space-y-6">
+                  <EnhancedContextPanel context={enhancedContextData} />
+                  
+                  <div className="flex justify-between">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setActiveTab("notes")}
+                    >
+                      Back to Notes
+                    </Button>
+                    <Button 
+                      type="button" 
+                      className="flex items-center"
                       onClick={() => setActiveTab("export")}
                     >
                       Export Options
@@ -265,9 +358,9 @@ const NewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
                     <Button 
                       type="button" 
                       variant="outline"
-                      onClick={() => setActiveTab("notes")}
+                      onClick={() => setActiveTab("context")}
                     >
-                      Back to Notes
+                      Back to Context
                     </Button>
                     <Button 
                       type="submit"
