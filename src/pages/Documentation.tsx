@@ -272,29 +272,12 @@ const DocumentationPage = () => {
               Record consultations and generate medical documentation
             </p>
           </div>
-          <div className="mt-4 md:mt-0 flex gap-3">
-            <Button 
-              size="sm" 
-              className="shadow-sm hover:shadow-md transition-all"
-              onClick={() => {
-                form.reset({
-                  type: "Consultation",
-                  notes: "",
-                  documentId: "",
-                });
-                setNewDocumentOpen(true);
-              }}
-            >
-              <Mic className="h-4 w-4 mr-1" />
-              Record Consultation
-            </Button>
-          </div>
         </div>
       </FadeIn>
 
       <FadeIn delay={0.1}>
-        <div className="relative">
-          <div className="flex items-center border border-input rounded-lg px-3 mb-6 w-full max-w-md focus-within:ring-1 focus-within:ring-ring">
+        <div className="relative flex items-center justify-between mb-6">
+          <div className="flex items-center border border-input rounded-lg px-3 w-full max-w-md focus-within:ring-1 focus-within:ring-ring">
             <Search className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
             <Input 
               type="text" 
@@ -302,6 +285,21 @@ const DocumentationPage = () => {
               className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-10"
             />
           </div>
+          <Button 
+            size="sm" 
+            className="ml-4 shadow-sm hover:shadow-md transition-all"
+            onClick={() => {
+              form.reset({
+                type: "Consultation",
+                notes: "",
+                documentId: "",
+              });
+              setNewDocumentOpen(true);
+            }}
+          >
+            <Mic className="h-4 w-4 mr-1" />
+            Record Consultation
+          </Button>
         </div>
       </FadeIn>
 
