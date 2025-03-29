@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { FadeIn } from "@/components/ui/motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEO } from "@/components/SEO";
 import { ChatWidget } from "@/components/ChatWidget";
+import { ContactDialog } from "@/components/ContactDialog";
 import { 
   ThumbsUp, 
   Shield, 
@@ -281,6 +283,9 @@ const Index = () => {
             <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+            <ContactDialog>
+              <button className="text-muted-foreground hover:text-foreground transition-colors">Contact Us</button>
+            </ContactDialog>
           </div>
           
           <div className="flex items-center space-x-3">
