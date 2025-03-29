@@ -6,25 +6,21 @@ import {
   Settings, 
   Menu,
   X,
-  UserRound,
-  ClipboardList,
-  TestTube,
   Heart,
-  PlusSquare,
-  BoxesIcon,
-  DollarSign,
-  Ambulance,
-  AlertTriangle
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Sidebar = () => {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(!isMobile);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [hospitalExpanded, setHospitalExpanded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,41 +40,93 @@ const Sidebar = () => {
     navigate(path);
   };
 
-  const navigation = [
+  // Main navigation for Dashboard, Documentation, and Hospital
+  const mainNavigation = [
     { path: "/dashboard", name: "Dashboard", icon: File },
     { path: "/documentation", name: "Documentation", icon: FileText },
     { path: "/hospital", name: "Hospital System", icon: Heart },
-    { path: "/hospital/emergency", name: "Emergency", icon: Ambulance },
-    { path: "/hospital/doctors", name: "Doctors", icon: UserRound },
-    { path: "/hospital/nurses", name: "Nurses", icon: UserRound },
-    { path: "/hospital/patients", name: "Patients", icon: PlusSquare },
-    { path: "/hospital/inpatient", name: "Inpatient", icon: ClipboardList },
-    { path: "/hospital/pharmacy", name: "Pharmacy", icon: PlusSquare },
-    { path: "/hospital/laboratory", name: "Laboratory", icon: TestTube },
-    { path: "/hospital/inventory", name: "Inventory", icon: BoxesIcon },
-    { path: "/hospital/billing", name: "Billing", icon: DollarSign }
   ];
 
-  const NavItems = () => (
+  // Hospital subsections
+  const hospitalNavigation = [
+    { path: "/hospital/emergency", name: "Emergency" },
+    { path: "/hospital/doctors", name: "Doctors" },
+    { path: "/hospital/nurses", name: "Nurses" },
+    { path: "/hospital/patients", name: "Patients" },
+    { path: "/hospital/inpatient", name: "Inpatient" },
+    { path: "/hospital/pharmacy", name: "Pharmacy" },
+    { path: "/hospital/laboratory", name: "Laboratory" },
+    { path: "/hospital/inventory", name: "Inventory" },
+    { path: "/hospital/billing", name: "Billing" }
+  ];
+
+  const MainNavItems = () => (
     <ul className="space-y-1">
-      {navigation.map((item) => (
+      {mainNavigation.map((item) => (
         <li key={item.path}>
-          <NavLink
-            to={item.path}
-            onClick={() => isMobile && setSheetOpen(false)}
-            className={({ isActive }) => 
-              `flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-accent text-primary font-medium' 
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`
-            }
-          >
-            <item.icon size={18} className="flex-shrink-0" />
-            <span className={`ml-2.5 transition-opacity duration-300 ${expanded || isMobile ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
-              {item.name}
-            </span>
-          </NavLink>
+          {item.name === "Hospital System" ? (
+            <Collapsible
+              open={hospitalExpanded}
+              onOpenChange={setHospitalExpanded}
+              className="w-full"
+            >
+              <CollapsibleTrigger asChild>
+                <div 
+                  className={`flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer`}
+                >
+                  <item.icon size={18} className="flex-shrink-0" />
+                  <span className={`ml-2.5 transition-opacity duration-300 flex-grow ${expanded || isMobile ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
+                    {item.name}
+                  </span>
+                  {(expanded || isMobile) && (
+                    hospitalExpanded ? 
+                    <ChevronDown size={16} className="ml-auto" /> : 
+                    <ChevronRight size={16} className="ml-auto" />
+                  )}
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className={`${expanded || isMobile ? '' : 'hidden'}`}>
+                <ul className="space-y-1 mt-1 ml-6">
+                  {hospitalNavigation.map((subItem) => (
+                    <li key={subItem.path}>
+                      <NavLink
+                        to={subItem.path}
+                        onClick={() => isMobile && setSheetOpen(false)}
+                        className={({ isActive }) => 
+                          `flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-accent text-primary font-medium' 
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          }`
+                        }
+                      >
+                        <span className={`transition-opacity duration-300 ${expanded || isMobile ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
+                          {subItem.name}
+                        </span>
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            <NavLink
+              to={item.path}
+              onClick={() => isMobile && setSheetOpen(false)}
+              className={({ isActive }) => 
+                `flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-accent text-primary font-medium' 
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`
+              }
+            >
+              <item.icon size={18} className="flex-shrink-0" />
+              <span className={`ml-2.5 transition-opacity duration-300 ${expanded || isMobile ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
+                {item.name}
+              </span>
+            </NavLink>
+          )}
         </li>
       ))}
     </ul>
@@ -107,7 +155,7 @@ const Sidebar = () => {
             </div>
             
             <nav className="mt-4 px-3 flex-grow">
-              <NavItems />
+              <MainNavItems />
             </nav>
             
             <div className="px-3 pb-6 pt-2">
@@ -147,7 +195,7 @@ const Sidebar = () => {
       </div>
       
       <nav className="mt-4 px-3">
-        <NavItems />
+        <MainNavItems />
       </nav>
       
       <div className="absolute bottom-4 w-full px-3">
