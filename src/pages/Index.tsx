@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { ChatWidget } from "@/components/ChatWidget";
 import { Hero } from "@/components/landing/Hero";
 import { Navigation } from "@/components/landing/Navigation";
+import { BrandBanner } from "@/components/landing/BrandBanner";
 import { Advantages } from "@/components/landing/Advantages";
 import { Features } from "@/components/landing/Features";
 import { PatientCare } from "@/components/landing/PatientCare";
@@ -31,6 +32,7 @@ const Index = () => {
       <ChatWidget />
       
       <Navigation />
+      <BrandBanner />
       <Hero />
       <Advantages />
       <Features />
