@@ -251,12 +251,10 @@ const Features = () => {
                 Transforming clinical documentation
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                A product of PrecisionNote LTD
+                A product of PrecisionNote Inc.
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                <a href="mailto:hello@documedly.com" className="hover:text-foreground">
-                  hello@documedly.com
-                </a>
+                Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
               </p>
             </div>
             
@@ -265,7 +263,7 @@ const Features = () => {
                 <h4 className="font-medium mb-3">Product</h4>
                 <ul className="space-y-2">
                   <li><Link to="/features" className="text-muted-foreground hover:text-foreground text-sm">Features</Link></li>
-                  <li><Link to="/pricing" className="text-muted-foreground hover:text-foreground text-sm">Pricing</Link></li>
+                  <li><a href="#pricing" className="text-muted-foreground hover:text-foreground text-sm">Pricing</a></li>
                   <li><Link to="/integrations" className="text-muted-foreground hover:text-foreground text-sm">Integrations</Link></li>
                 </ul>
               </div>
@@ -291,16 +289,13 @@ const Features = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2025 Documedly, Inc. All rights reserved.</p>
+            <p>© 2025 PrecisionNote Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
-              <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
-              <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-              <a href="https://instagram.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">
-                <span className="flex items-center">
-                  <Instagram className="h-4 w-4 mr-1" />
-                  Instagram
-                </span>
-              </a>
+              <Link to="#" className="hover:text-foreground">Twitter</Link>
+              <Link to="#" className="hover:text-foreground">LinkedIn</Link>
+              <Link to="#" className="hover:text-foreground flex items-center gap-1">
+                <Instagram className="h-4 w-4" /> Instagram
+              </Link>
             </div>
           </div>
         </div>

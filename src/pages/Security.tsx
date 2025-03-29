@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Lock, CheckCircle, Server, Database, AlertTriangle } from "lucide-react";
+import { Shield, Lock, CheckCircle, Server, Database, AlertTriangle, Instagram } from "lucide-react";
 
 const Security = () => {
   const securityFeatures = [
@@ -131,6 +130,12 @@ const Security = () => {
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
               </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                A product of PrecisionNote Inc.
+              </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
+              </p>
             </div>
             
             <div className="flex space-x-8">
@@ -138,7 +143,7 @@ const Security = () => {
                 <h4 className="font-medium mb-3">Product</h4>
                 <ul className="space-y-2">
                   <li><Link to="/features" className="text-muted-foreground hover:text-foreground text-sm">Features</Link></li>
-                  <li><Link to="/pricing" className="text-muted-foreground hover:text-foreground text-sm">Pricing</Link></li>
+                  <li><a href="#pricing" className="text-muted-foreground hover:text-foreground text-sm">Pricing</a></li>
                   <li><Link to="/integrations" className="text-muted-foreground hover:text-foreground text-sm">Integrations</Link></li>
                 </ul>
               </div>
@@ -146,7 +151,6 @@ const Security = () => {
               <div>
                 <h4 className="font-medium mb-3">Company</h4>
                 <ul className="space-y-2">
-                  <li><Link to="/about" className="text-muted-foreground hover:text-foreground text-sm">About</Link></li>
                   <li><Link to="/careers" className="text-muted-foreground hover:text-foreground text-sm">Careers</Link></li>
                   <li><Link to="/blog" className="text-muted-foreground hover:text-foreground text-sm">Blog</Link></li>
                 </ul>
@@ -164,11 +168,13 @@ const Security = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2023 Documedly, Inc. All rights reserved.</p>
+            <p>© 2025 PrecisionNote Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
-              <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
-              <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-              <a href="https://github.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <Link to="#" className="hover:text-foreground">Twitter</Link>
+              <Link to="#" className="hover:text-foreground">LinkedIn</Link>
+              <Link to="#" className="hover:text-foreground flex items-center gap-1">
+                <Instagram className="h-4 w-4" /> Instagram
+              </Link>
             </div>
           </div>
         </div>
