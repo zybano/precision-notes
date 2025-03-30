@@ -11,7 +11,7 @@ export function Navigation() {
   const isMobile = useIsMobile();
   
   return (
-    <nav className="px-4 sm:px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
+    <nav className="px-4 sm:px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border w-full">
       <div className="container mx-auto max-w-7xl flex justify-between items-center">
         <div className="flex items-center">
           <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">

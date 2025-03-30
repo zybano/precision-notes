@@ -23,7 +23,7 @@ export function Features() {
   ];
 
   return (
-    <section className="bg-white py-12 sm:py-16 md:py-24 border-y border-border">
+    <section className="bg-white py-12 sm:py-16 md:py-24 border-y border-border overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
         <FadeIn>
           <div className="text-center mb-8 sm:mb-16">

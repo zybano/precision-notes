@@ -1,14 +1,23 @@
+
 /* Base layout styling */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
 #root {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0;
   text-align: center;
+  overflow-x: hidden;
 }
 
 @media (min-width: 768px) {
   #root {
-    padding: 2rem;
+    padding: 0;
   }
 }
 
@@ -196,4 +205,15 @@
 
 .patient-text {
   color: #facc15; /* Yellow */
+}
+
+/* Fix for horizontal scrolling */
+.container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+section {
+  max-width: 100vw;
 }

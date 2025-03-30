@@ -6,7 +6,7 @@ import { UserCheck, Shield } from "lucide-react";
 
 export function PatientCare() {
   return (
-    <section className="py-12 sm:py-16 md:py-24 bg-accent/40">
+    <section className="py-12 sm:py-16 md:py-24 bg-accent/40 w-full overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
           <FadeIn delay={0.1}>

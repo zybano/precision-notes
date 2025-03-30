@@ -23,7 +23,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className={`min-h-screen bg-background ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
+    <div className={`min-h-screen bg-background w-full overflow-x-hidden ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
       <SEO 
         title="Documedly - AI-powered Clinical Documentation Assistant"
         description="Transform your medical documentation workflow with real-time transcription and AI-powered assistance. Save time and focus more on patient care."
