@@ -20,6 +20,11 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           <LoginForm />
+          <div className="mt-4 text-center">
+            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
         </CardContent>
         <CardFooter className="justify-center">
           <div className="text-sm text-muted-foreground">
