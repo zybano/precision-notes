@@ -10,7 +10,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
-import Documentation from "./pages/Documentation";
+import Documentation from "./pages/DocumentationPage.tsx";
 import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
 import Pricing from "./pages/Pricing";
