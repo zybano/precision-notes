@@ -83,7 +83,8 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         const transcriptResult: TranscriptionResult = {
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
-          isMock: parsedData.isMock || false
+          isMock: parsedData.isMock || false,
+          provider: parsedData.provider || "default" // Add the missing provider property
         };
         
         // Make transcript data available to the form
@@ -112,7 +113,8 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         setParsedTranscript({
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
-          isMock: parsedData.isMock || false
+          isMock: parsedData.isMock || false,
+          provider: parsedData.provider || "default" // Add the missing provider property
         });
         
         setTranscriptText(parsedData.text || "");
