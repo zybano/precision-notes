@@ -1,58 +1,20 @@
 
-// src/pages/UpdatedDocumentationPage.tsx
-import { useState, useEffect } from "react";
-import { FadeIn } from "@/components/ui/motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Mic, Search } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  transcribeAudio,
-  TranscriptionResult,
-  TranscriptionProvider,
-  LLMProvider,
-  DocumentFormat,
-  generateMedicalDocument
-} from "@/services/transcription";
-import { generateBriefSummary } from "@/services/summaryUtils";
-import RecentDocuments from "@/components/documentation/RecentDocuments";
-import SharedDocuments from "@/components/documentation/SharedDocuments";
-import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
-import { documentTemplates } from "@/data/documentTemplates";
 import { useAuth } from "@/contexts/AuthContext";
+import { documentTemplates } from "@/data/documentTemplates";
+
+import DocumentationHeader from "@/components/documentation/DocumentationHeader";
+import DocumentTabs from "@/components/documentation/DocumentTabs";
+import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
+import { toast } from "sonner";
+import { useRecording } from "@/hooks/use-recording";
+import { useDocumentFormat } from "@/hooks/use-document-format";
 
 const DocumentationPage = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("saved");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [transcript, setTranscript] = useState("");
-  const [transcriptSummary, setTranscriptSummary] = useState("");
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
   const [showSummary, setShowSummary] = useState(true);
-  const [recordingTimer, setRecordingTimer] = useState<NodeJS.Timeout | null>(null);
-  const [transcriptResult, setTranscriptResult] = useState<TranscriptionResult | null>(null);
-
-  // Add state for selected providers
-  const [transcriptionProvider, setTranscriptionProvider] = useState<TranscriptionProvider>(
-      TranscriptionProvider.ASSEMBLYAI
-  );
-
-  // Add state for LLM provider and document format
-  const [llmProvider, setLlmProvider] = useState<LLMProvider>(
-      LLMProvider.OPENAI
-  );
-
-  const [documentFormat, setDocumentFormat] = useState<DocumentFormat>(
-      DocumentFormat.SOAP
-  );
 
   const form = useForm({
     defaultValues: {
@@ -65,271 +27,105 @@ const DocumentationPage = () => {
     },
   });
 
+  const {
+    isRecording,
+    isPaused,
+    recordingTime,
+    isTranscribing,
+    useSpeechModelNano,
+    setUseSpeechModelNano,
+    transcript,
+    transcriptSummary,
+    transcriptResult,
+    transcriptionProvider,
+    setTranscriptionProvider,
+    startRecording,
+    pauseRecording,
+    stopRecording,
+    handleFileUpload,
+    formatTime
+  } = useRecording({
+    onTranscriptionComplete: (result) => {
+      form.setValue("notes", result.text);
+      form.setValue("transcript", result.text);
+      form.setValue("transcriptResult", result);
+      form.setValue("transcriptSummary", transcriptSummary);
+    }
+  });
+
+  const {
+    documentFormat,
+    setDocumentFormat,
+    llmProvider,
+    setLlmProvider
+  } = useDocumentFormat();
+
   const handleCreateNewDocument = (data: any) => {
-    setActiveTab("saved");
-    form.reset();
     stopRecording();
+    form.reset();
 
     toast.success("Document Saved", {
       description: "Your consultation has been saved successfully.",
     });
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks: BlobPart[] = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        setAudioChunks(chunks);
-        processRecording(chunks);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      setMediaRecorder(recorder);
-      recorder.start(1000);
-      setIsRecording(true);
-      setIsPaused(false);
-
-      const timer = setInterval(() => {
-        setRecordingTime(prevTime => prevTime + 1);
-      }, 1000);
-
-      setRecordingTimer(timer);
-
-      toast.success("Recording Started", {
-        description: `Recording with ${TranscriptionProvider[transcriptionProvider]}. Speak clearly into your microphone.`,
-      });
-    } catch (error) {
-      console.error("Error starting recording:", error);
-      toast.error("Recording Error", {
-        description: "Could not access microphone. Please check permissions.",
-      });
-    }
-  };
-
-  const pauseRecording = () => {
-    if (mediaRecorder && isRecording && !isPaused) {
-      mediaRecorder.pause();
-      setIsPaused(true);
-
-      if (recordingTimer) {
-        clearInterval(recordingTimer);
-        setRecordingTimer(null);
-      }
-
-      toast.success("Recording Paused", {
-        description: "Click resume to continue recording.",
-      });
-    } else if (mediaRecorder && isRecording && isPaused) {
-      mediaRecorder.resume();
-      setIsPaused(false);
-
-      const timer = setInterval(() => {
-        setRecordingTime(prevTime => prevTime + 1);
-      }, 1000);
-
-      setRecordingTimer(timer);
-
-      toast.success("Recording Resumed", {
-        description: "Recording has been resumed.",
-      });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      setIsPaused(false);
-
-      if (recordingTimer) {
-        clearInterval(recordingTimer);
-        setRecordingTimer(null);
-      }
-      setRecordingTime(0);
-
-      toast.success("Recording Stopped", {
-        description: "Your recording will be processed shortly.",
-      });
-    }
-  };
-
-  const processRecording = async (chunks: BlobPart[]) => {
-    const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-
-    setIsTranscribing(true);
-    toast.success("Processing Audio", {
-      description: `Your recording is being transcribed with ${TranscriptionProvider[transcriptionProvider]}...`,
+  const handleNewDocumentClick = () => {
+    form.reset({
+      type: "Consultation",
+      notes: "",
+      documentId: "",
     });
-
-    try {
-      const result = await transcribeAudio(audioBlob, {
-        provider: transcriptionProvider,
-        speakerLabels: true,
-        useSpeechModelNano: useSpeechModelNano
-      });
-
-      setTranscriptResult(result);
-      setTranscript(result.text);
-      form.setValue("notes", result.text); // Initial value before document generation
-      form.setValue("transcript", result.text);
-      form.setValue("transcriptResult", result);
-
-      const summary = generateBriefSummary(result.text);
-      setTranscriptSummary(summary);
-      form.setValue("transcriptSummary", summary);
-      setShowSummary(true);
-
-      //
-      if (result.text) {
-              toast.success("Transcription Completed Successfully", {
-            description: `Choose your document format to continue`,
-          });
-
-      }
-    } catch (error) {
-      console.error("Transcription error:", error);
-      toast.error("Transcription Error", {
-        description: "There was an error transcribing your audio. Please try again.",
-      });
-    } finally {
-      setIsTranscribing(false);
-    }
+    setTranscript("");
+    setShowSummary(true);
+    setNewDocumentOpen(true);
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const audioBlob = new Blob([new Uint8Array(e.target.result as ArrayBuffer)], { type: 'audio/webm' });
-      const chunks = [audioBlob];
-      await processRecording(chunks);
-    };
-    reader.readAsArrayBuffer(file);
-  }
   return (
-      <div className="space-y-8">
-        <FadeIn>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
-              <p className="text-muted-foreground mt-1">
-                Record consultations and generate medical documentation with multiple AI providers
-              </p>
-            </div>
-          </div>
-        </FadeIn>
+    <div className="space-y-8">
+      <DocumentationHeader onNewDocumentClick={handleNewDocumentClick} />
+      
+      <DocumentTabs 
+        setNewDocumentOpen={setNewDocumentOpen} 
+        form={form} 
+        currentUserId={user?.id}
+      />
 
-        <FadeIn delay={0.1}>
-          <div className="relative flex items-center justify-between mb-6">
-            <div className="flex items-center border border-input rounded-lg px-3 w-full max-w-md focus-within:ring-1 focus-within:ring-ring">
-              <Search className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
-              <Input
-                  type="text"
-                  placeholder="Search documents..."
-                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-10"
-              />
-            </div>
-            <Button
-                size="sm"
-                className="ml-4 shadow-sm hover:shadow-md transition-all"
-                onClick={() => {
-                  form.reset({
-                    type: "Consultation",
-                    notes: "",
-                    documentId: "",
-                  });
-                  setTranscript("");
-                  setTranscriptSummary("");
-                  setTranscriptResult(null);
-                  setNewDocumentOpen(true);
-                }}
-            >
-              <Mic className="h-4 w-4 mr-1" />
-              Record New Consultation
-            </Button>
-          </div>
-        </FadeIn>
-
-        <FadeIn delay={0.2}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-2 w-full max-w-md">
-              <TabsTrigger value="saved">My Documents</TabsTrigger>
-              <TabsTrigger value="shared">Shared Documents</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="saved" className="space-y-6">
-              <RecentDocuments
-                  setNewDocumentOpen={setNewDocumentOpen}
-                  form={form}
-                  currentUserId={user?.id} // Pass current user ID for filtering
-              />
-            </TabsContent>
-
-            <TabsContent value="shared" className="space-y-6">
-              <SharedDocuments
-                  setNewDocumentOpen={setNewDocumentOpen}
-                  form={form}
-                  currentUserId={user?.id} // Pass current user ID for filtering
-              />
-            </TabsContent>
-          </Tabs>
-        </FadeIn>
-
-        <UpdatedNewDocumentDialog
-            open={newDocumentOpen}
-            onOpenChange={(open) => {
-              setNewDocumentOpen(open);
-              if (!open) {
-                stopRecording();
-                setTranscript("");
-                setTranscriptSummary("");
-                setShowSummary(true);
-                setTranscriptResult(null);
-                form.reset();
-              }
-            }}
-            form={form}
-            onSubmit={handleCreateNewDocument}
-            isRecording={isRecording}
-            isPaused={isPaused}
-            recordingTime={recordingTime}
-            isTranscribing={isTranscribing}
-            useSpeechModelNano={useSpeechModelNano}
-            setUseSpeechModelNano={setUseSpeechModelNano}
-            startRecording={startRecording}
-            pauseRecording={pauseRecording}
-            stopRecording={stopRecording}
-            formatTime={formatTime}
-            transcript={transcript}
-            transcriptSummary={transcriptSummary}
-            showSummary={showSummary}
-            setShowSummary={setShowSummary}
-            transcriptResult={transcriptResult}
-            documentTemplates={documentTemplates}
-            transcriptionProvider={transcriptionProvider}
-            setTranscriptionProvider={setTranscriptionProvider}
-            llmProvider={llmProvider}
-            setLlmProvider={setLlmProvider}
-            documentFormat={documentFormat}
-            setDocumentFormat={setDocumentFormat}
-            onFileUpload={handleFileUpload}
-            currentUserId={user?.id} // Pass current user ID for document creation
-        />
-      </div>
+      <UpdatedNewDocumentDialog
+        open={newDocumentOpen}
+        onOpenChange={(open) => {
+          setNewDocumentOpen(open);
+          if (!open) {
+            stopRecording();
+          }
+        }}
+        form={form}
+        onSubmit={handleCreateNewDocument}
+        isRecording={isRecording}
+        isPaused={isPaused}
+        recordingTime={recordingTime}
+        isTranscribing={isTranscribing}
+        useSpeechModelNano={useSpeechModelNano}
+        setUseSpeechModelNano={setUseSpeechModelNano}
+        startRecording={startRecording}
+        pauseRecording={pauseRecording}
+        stopRecording={stopRecording}
+        formatTime={formatTime}
+        transcript={transcript}
+        transcriptSummary={transcriptSummary}
+        showSummary={showSummary}
+        setShowSummary={setShowSummary}
+        transcriptResult={transcriptResult}
+        documentTemplates={documentTemplates}
+        transcriptionProvider={transcriptionProvider}
+        setTranscriptionProvider={setTranscriptionProvider}
+        llmProvider={llmProvider}
+        setLlmProvider={setLlmProvider}
+        documentFormat={documentFormat}
+        setDocumentFormat={setDocumentFormat}
+        onFileUpload={handleFileUpload}
+        currentUserId={user?.id}
+      />
+    </div>
   );
 };
 

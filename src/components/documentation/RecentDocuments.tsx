@@ -12,9 +12,14 @@ import { TranscriptionResult } from "@/services/transcription";
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
   form: UseFormReturn<any>;
+  currentUserId?: string;
 }
 
-const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
+const RecentDocuments: React.FC<RecentDocumentsProps> = ({ 
+  setNewDocumentOpen, 
+  form,
+  currentUserId
+}) => {
   const { toast } = useToast();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,16 +32,22 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
   
   useEffect(() => {
     fetchRecentDocuments();
-  }, []);
+  }, [currentUserId]);
   
   const fetchRecentDocuments = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('medical_documents')
         .select('*')
-        .order('updated_at', { ascending: false })
-        .limit(10);
+        .order('updated_at', { ascending: false });
+      
+      // Filter by user ID if provided
+      if (currentUserId) {
+        query = query.eq('user_id', currentUserId);
+      }
+      
+      const { data, error } = await query.limit(10);
         
       if (error) {
         throw error;
