@@ -8,6 +8,8 @@ import { UseFormReturn } from "react-hook-form";
 import EnhancedRecordingInterface from "./EnhancedRecordingInterface";
 import { DocumentFormat, LLMProvider, TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
 import { Textarea } from "@/components/ui/textarea";
+import { FileDown, FileText } from "lucide-react";
+import { toast } from "sonner";
 
 export interface UpdatedNewDocumentDialogProps {
   open: boolean;
@@ -78,15 +80,38 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
     form.setValue("notes", documentText);
   };
 
+  const handleExport = (format: string) => {
+    const notes = form.getValues("notes");
+    if (!notes) {
+      toast("No document content to export");
+      return;
+    }
+
+    const documentType = form.getValues("type") || "Document";
+    const patientNameValue = form.getValues("patientName") || "Patient";
+    const filename = `${documentType}_${patientNameValue}_${new Date().toISOString().slice(0, 10)}.${format === 'pdf' ? 'txt' : format}`;
+    
+    const element = document.createElement('a');
+    const file = new Blob([notes], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = filename;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    toast(`Document exported as ${filename}`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] overflow-y-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 h-full flex flex-col">
             <Tabs defaultValue="record" className="flex-1 flex flex-col">
-              <TabsList className="grid grid-cols-2 w-full max-w-md mb-4">
+              <TabsList className="grid grid-cols-3 w-full max-w-md mb-4">
                 <TabsTrigger value="record">Record & Generate</TabsTrigger>
                 <TabsTrigger value="edit">Edit Document</TabsTrigger>
+                <TabsTrigger value="export">Export</TabsTrigger>
               </TabsList>
 
               <TabsContent value="record" className="flex-1 overflow-auto">
@@ -146,6 +171,92 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                       {...form.register("notes")}
                       className="min-h-[400px] font-mono text-sm"
                     />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="export" className="flex-1 overflow-auto">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Export Document</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Export your document in various formats for sharing or archiving
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow transition-shadow">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="rounded-full bg-primary/10 p-2">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-muted">Plain Text</span>
+                      </div>
+                      <h4 className="text-base font-medium mb-1">Text Document</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Export as a simple text document (.txt)
+                      </p>
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="w-full" 
+                        onClick={() => handleExport('txt')}
+                      >
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Export as TXT
+                      </Button>
+                    </div>
+
+                    <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow transition-shadow">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="rounded-full bg-blue-500/10 p-2">
+                          <FileText className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-muted">Markdown</span>
+                      </div>
+                      <h4 className="text-base font-medium mb-1">Markdown</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Export as a markdown file (.md)
+                      </p>
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="w-full" 
+                        onClick={() => handleExport('md')}
+                      >
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Export as MD
+                      </Button>
+                    </div>
+
+                    <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow transition-shadow">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="rounded-full bg-red-500/10 p-2">
+                          <FileText className="h-4 w-4 text-red-500" />
+                        </div>
+                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-muted">PDF Format</span>
+                      </div>
+                      <h4 className="text-base font-medium mb-1">PDF Document</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Export as a simple PDF document
+                      </p>
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="w-full" 
+                        onClick={() => handleExport('pdf')}
+                      >
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Export as PDF
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 bg-muted/50 p-4 rounded-md">
+                    <h4 className="text-sm font-medium mb-2">Document Preview</h4>
+                    <div className="bg-card border rounded-md p-4 max-h-[300px] overflow-y-auto font-mono text-sm whitespace-pre-wrap">
+                      {form.getValues("notes") || "No document content to preview"}
+                    </div>
                   </div>
                 </div>
               </TabsContent>
