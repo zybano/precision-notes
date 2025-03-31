@@ -37,7 +37,9 @@ export interface UpdatedNewDocumentDialogProps {
   documentFormat: DocumentFormat;
   setDocumentFormat: (format: DocumentFormat) => void;
   onFileUpload: (file: File) => void;
-  currentUserId?: string; // Add this prop
+  currentUserId?: string;
+  patientName?: string;
+  setPatientName?: (name: string) => void;
 }
 
 const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
@@ -68,7 +70,9 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
   documentFormat,
   setDocumentFormat,
   onFileUpload,
-  currentUserId // We can use this when creating new documents
+  currentUserId,
+  patientName = "",
+  setPatientName
 }) => {
   const handleDocumentGenerated = (documentText: string) => {
     form.setValue("notes", documentText);
@@ -102,6 +106,8 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                   setDocumentFormat={setDocumentFormat}
                   onDocumentGenerated={handleDocumentGenerated}
                   onFileUpload={onFileUpload}
+                  patientName={patientName}
+                  setPatientName={setPatientName}
                 />
               </TabsContent>
 
@@ -128,6 +134,7 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                         id="patientName"
                         {...form.register("patientName")}
                         className="w-full border border-input bg-background px-3 py-2 text-sm rounded-md"
+                        onChange={(e) => setPatientName && setPatientName(e.target.value)}
                       />
                     </div>
                   </div>

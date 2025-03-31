@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/contexts/AuthContext";
 import { documentTemplates } from "@/data/documentTemplates";
+import { supabase } from "@/integrations/supabase/client";
 
 import DocumentationHeader from "@/components/documentation/DocumentationHeader";
 import DocumentTabs from "@/components/documentation/DocumentTabs";
@@ -24,6 +24,7 @@ const DocumentationPage = () => {
       transcript: "",
       transcriptSummary: "",
       transcriptResult: null,
+      patientName: "",
     },
   });
 
@@ -39,11 +40,14 @@ const DocumentationPage = () => {
     transcriptResult,
     transcriptionProvider,
     setTranscriptionProvider,
+    patientName,
+    setPatientName,
     startRecording,
     pauseRecording,
     stopRecording,
     handleFileUpload,
-    formatTime
+    formatTime,
+    getRecordingMetadata
   } = useRecording({
     onTranscriptionComplete: (result) => {
       form.setValue("notes", result.text);
@@ -60,13 +64,62 @@ const DocumentationPage = () => {
     setLlmProvider
   } = useDocumentFormat();
 
-  const handleCreateNewDocument = (data: any) => {
-    stopRecording();
-    form.reset();
+  const handleCreateNewDocument = async (data: any) => {
+    try {
+      stopRecording();
+      const metadata = getRecordingMetadata();
+      
+      const documentData = {
+        title: `${data.type} - ${data.patientName || 'Unnamed Patient'}`,
+        type: data.type,
+        patient_name: data.patientName || patientName || 'Unnamed Patient',
+        status: 'Completed',
+        notes: data.notes,
+        user_id: user?.id,
+        transcript_data: transcriptResult ? JSON.stringify({
+          text: transcriptResult.text,
+          summary: transcriptSummary,
+          utterances: transcriptResult.utterances,
+          provider: transcriptResult.provider,
+          recordingDuration: recordingTime,
+          documentFormat: documentFormat,
+          isMock: transcriptResult.isMock,
+          createdAt: new Date().toISOString()
+        }) : null
+      };
 
-    toast.success("Document Saved", {
-      description: "Your consultation has been saved successfully.",
-    });
+      if (data.documentId) {
+        const { error } = await supabase
+          .from('medical_documents')
+          .update(documentData)
+          .eq('id', data.documentId);
+
+        if (error) throw error;
+        
+        toast.success("Document Updated", {
+          description: "Your consultation has been updated successfully.",
+        });
+      } 
+      else {
+        const { error } = await supabase
+          .from('medical_documents')
+          .insert([documentData]);
+
+        if (error) throw error;
+        
+        toast.success("Document Saved", {
+          description: "Your consultation has been saved successfully.",
+        });
+      }
+
+      form.reset();
+      setNewDocumentOpen(false);
+    } catch (error) {
+      console.error("Error saving document:", error);
+      toast.error("Save Error", {
+        description: "There was a problem saving your document. Please try again.",
+      });
+    }
   };
 
   const handleNewDocumentClick = () => {
@@ -74,8 +127,8 @@ const DocumentationPage = () => {
       type: "Consultation",
       notes: "",
       documentId: "",
+      patientName: "",
     });
-    setTranscript("");
     setShowSummary(true);
     setNewDocumentOpen(true);
   };
@@ -124,6 +177,8 @@ const DocumentationPage = () => {
         setDocumentFormat={setDocumentFormat}
         onFileUpload={handleFileUpload}
         currentUserId={user?.id}
+        patientName={patientName}
+        setPatientName={setPatientName}
       />
     </div>
   );

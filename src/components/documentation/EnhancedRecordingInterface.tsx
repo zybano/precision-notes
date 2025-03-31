@@ -1,123 +1,114 @@
 
 import React from "react";
+import { 
+  DocumentFormat, LLMProvider, TranscriptionProvider, TranscriptionResult 
+} from "@/services/transcription";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, FileText } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DocumentFormat, LLMProvider, TranscriptionResult } from "@/services/transcription";
-import DocumentGenerationPanel from "./DocumentGenerationPanel";
+import { Card, CardContent } from "@/components/ui/card";
 import RecordingControls from "./recording/RecordingControls";
 import ModelSwitcher from "./recording/ModelSwitcher";
 import DocumentFormatSelector from "./recording/DocumentFormatSelector";
 import TranscriptPreview from "./recording/TranscriptPreview";
+import DocumentGenerationPanel from "./DocumentGenerationPanel";
 
 interface EnhancedRecordingInterfaceProps {
-    isRecording: boolean;
-    isPaused: boolean;
-    recordingTime: number;
-    isTranscribing: boolean;
-    useSpeechModelNano: boolean;
-    setUseSpeechModelNano: (value: boolean) => void;
-    startRecording: () => void;
-    pauseRecording: () => void;
-    stopRecording: () => void;
-    formatTime: (seconds: number) => string;
-    onDownloadPdf?: () => void;
-    onCopyToEMR?: () => void;
-    onPrint?: () => void;
-    transcriptResult: TranscriptionResult | null;
-    documentFormat: DocumentFormat;
-    setDocumentFormat: (format: DocumentFormat) => void;
-    onDocumentGenerated: (document: string) => void;
-    onFileUpload: (file: File) => void;
+  isRecording: boolean;
+  isPaused: boolean;
+  recordingTime: number;
+  isTranscribing: boolean;
+  useSpeechModelNano: boolean;
+  setUseSpeechModelNano: (value: boolean) => void;
+  startRecording: () => void;
+  pauseRecording: () => void;
+  stopRecording: () => void;
+  formatTime: (seconds: number) => string;
+  transcriptResult: TranscriptionResult | null;
+  documentFormat: DocumentFormat;
+  setDocumentFormat: (format: DocumentFormat) => void;
+  onDocumentGenerated: (document: string) => void;
+  onFileUpload: (file: File) => void;
+  patientName?: string;
+  setPatientName?: (name: string) => void;
 }
 
 const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
-    isRecording,
-    isPaused,
-    recordingTime,
-    isTranscribing,
-    useSpeechModelNano,
-    setUseSpeechModelNano,
-    startRecording,
-    pauseRecording,
-    stopRecording,
-    formatTime,
-    onDownloadPdf,
-    onCopyToEMR,
-    onPrint,
-    transcriptResult,
-    documentFormat,
-    setDocumentFormat,
-    onDocumentGenerated,
-    onFileUpload,
+  isRecording,
+  isPaused,
+  recordingTime,
+  isTranscribing,
+  useSpeechModelNano,
+  setUseSpeechModelNano,
+  startRecording,
+  pauseRecording,
+  stopRecording,
+  formatTime,
+  transcriptResult,
+  documentFormat,
+  setDocumentFormat,
+  onDocumentGenerated,
+  onFileUpload,
+  patientName = "",
+  setPatientName
 }) => {
-    return (
-        <div className="space-y-6">
-            <Tabs defaultValue="record" className="w-full">
-                <TabsList className="grid grid-cols-3 mb-4">
-                    <TabsTrigger value="record" className="flex items-center">
-                        <Mic className="h-4 w-4 mr-2"/> Record
-                    </TabsTrigger>
-                    <TabsTrigger value="document-config" className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2" /> Document Config
-                    </TabsTrigger>
-                    <TabsTrigger value="generate" className="flex items-center" disabled={!transcriptResult}>
-                        <FileText className="h-4 w-4 mr-2" /> Generate
-                    </TabsTrigger>
-                </TabsList>
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6 pb-4">
+            <ModelSwitcher 
+              useSpeechModelNano={useSpeechModelNano} 
+              setUseSpeechModelNano={setUseSpeechModelNano}
+              patientName={patientName}
+              setPatientName={setPatientName}
+            />
+          </CardContent>
+        </Card>
 
-                <TabsContent value="record" className="mt-0">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <Mic className="h-5 w-5 mr-2" />
-                                Record Consultation
-                            </CardTitle>
-                            <CardDescription>
-                                Record your consultation with the patient or upload an audio file
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <RecordingControls
-                                isRecording={isRecording}
-                                isPaused={isPaused}
-                                isTranscribing={isTranscribing}
-                                recordingTime={recordingTime}
-                                formatTime={formatTime}
-                                startRecording={startRecording}
-                                pauseRecording={pauseRecording}
-                                stopRecording={stopRecording}
-                                onFileUpload={onFileUpload}
-                            />
+        <RecordingControls
+          isRecording={isRecording}
+          isPaused={isPaused}
+          recordingTime={recordingTime}
+          isTranscribing={isTranscribing}
+          formatTime={formatTime}
+          startRecording={startRecording}
+          pauseRecording={pauseRecording}
+          stopRecording={stopRecording}
+          onFileUpload={onFileUpload}
+        />
 
-                            <ModelSwitcher
-                                useSpeechModelNano={useSpeechModelNano}
-                                setUseSpeechModelNano={setUseSpeechModelNano}
-                            />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+        <Tabs defaultValue="format" className="w-full">
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="format">Document Format</TabsTrigger>
+            <TabsTrigger value="preview">Transcript Preview</TabsTrigger>
+          </TabsList>
 
-                <TabsContent value="document-config" className="mt-0">
-                    <DocumentFormatSelector
-                        documentFormat={documentFormat}
-                        setDocumentFormat={setDocumentFormat}
-                    />
-                </TabsContent>
+          <TabsContent value="format" className="space-y-4">
+            <DocumentFormatSelector
+              documentFormat={documentFormat}
+              setDocumentFormat={setDocumentFormat}
+            />
+          </TabsContent>
 
-                <TabsContent value="generate" className="mt-0">
-                    <DocumentGenerationPanel
-                        transcriptResult={transcriptResult}
-                        llmProvider={LLMProvider.OPENAI}
-                        documentFormat={documentFormat}
-                        onDocumentGenerated={onDocumentGenerated}
-                    />
-                </TabsContent>
-            </Tabs>
+          <TabsContent value="preview">
+            <TranscriptPreview 
+              transcriptResult={transcriptResult} 
+              recordingDuration={recordingTime}
+              formatTime={formatTime}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
 
-            <TranscriptPreview transcriptResult={transcriptResult} />
-        </div>
-    );
+      <div>
+        <DocumentGenerationPanel
+          transcriptResult={transcriptResult}
+          llmProvider={LLMProvider.CLAUDE}
+          documentFormat={documentFormat}
+          onDocumentGenerated={onDocumentGenerated}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default EnhancedRecordingInterface;

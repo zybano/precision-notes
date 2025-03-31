@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { UseFormReturn } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Document, RawDocumentData } from "./DocumentTypes";
@@ -20,7 +20,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
   form,
   currentUserId
 }) => {
-  const { toast } = useToast();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
@@ -72,8 +71,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
       console.error("Error fetching documents:", error);
       toast({
         title: "Error",
-        description: "Failed to fetch recent documents",
-        duration: 3000,
+        description: "Failed to fetch recent documents"
       });
     } finally {
       setIsLoading(false);
@@ -83,8 +81,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
   const handleOpenDocument = (doc: Document) => {
     toast({
       title: "Continuing Document",
-      description: `Opening ${doc.title} for editing`,
-      duration: 3000,
+      description: `Opening ${doc.title} for editing`
     });
     
     // If there's transcript data, parse it and set it in the form
@@ -95,13 +92,14 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default" // Add the missing provider property
+          provider: parsedData.provider || "default"
         };
         
         // Make transcript data available to the form
         form.setValue("transcriptResult", transcriptResult);
         form.setValue("transcript", parsedData.text || "");
         form.setValue("transcriptSummary", parsedData.summary || "");
+        form.setValue("patientName", doc.patient_name || "");
       } catch (e) {
         console.error("Error parsing transcript data:", e);
       }
@@ -125,7 +123,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default" // Add the missing provider property
+          provider: parsedData.provider || "default"
         });
         
         setTranscriptText(parsedData.text || "");
@@ -135,15 +133,13 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         console.error("Error parsing transcript data:", e);
         toast({
           title: "Error",
-          description: "Failed to parse transcript data",
-          duration: 3000,
+          description: "Failed to parse transcript data"
         });
       }
     } else {
       toast({
         title: "No Transcript",
-        description: "This document does not have any saved transcript data",
-        duration: 3000,
+        description: "This document does not have any saved transcript data"
       });
     }
   };
@@ -161,8 +157,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
       
       toast({
         title: "Document Deleted",
-        description: `${doc.title} has been deleted`,
-        duration: 3000,
+        description: `${doc.title} has been deleted`
       });
       
       // Refresh the list
@@ -171,8 +166,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
       console.error("Error deleting document:", error);
       toast({
         title: "Error",
-        description: "Failed to delete document",
-        duration: 3000,
+        description: "Failed to delete document"
       });
     }
   };
@@ -207,22 +201,19 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         
         toast({
           title: "Documents Loaded",
-          description: `Loaded ${data.length} more documents`,
-          duration: 3000,
+          description: `Loaded ${data.length} more documents`
         });
       } else {
         toast({
           title: "No More Documents",
-          description: "You've reached the end of your document list",
-          duration: 3000,
+          description: "You've reached the end of your document list"
         });
       }
     } catch (error) {
       console.error("Error loading more documents:", error);
       toast({
         title: "Error",
-        description: "Failed to load more documents",
-        duration: 3000,
+        description: "Failed to load more documents"
       });
     }
   };

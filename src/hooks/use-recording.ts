@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { 
@@ -27,6 +26,8 @@ export const useRecording = (options?: UseRecordingOptions) => {
   const [transcriptionProvider, setTranscriptionProvider] = useState<TranscriptionProvider>(
     TranscriptionProvider.ASSEMBLYAI
   );
+  const [patientName, setPatientName] = useState("");
+  const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(null);
 
   const startRecording = async () => {
     try {
@@ -50,6 +51,7 @@ export const useRecording = (options?: UseRecordingOptions) => {
       recorder.start(1000);
       setIsRecording(true);
       setIsPaused(false);
+      setRecordingStartTime(new Date());
 
       const timer = setInterval(() => {
         setRecordingTime(prevTime => prevTime + 1);
@@ -170,7 +172,17 @@ export const useRecording = (options?: UseRecordingOptions) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Clean up on unmount
+  const getRecordingMetadata = () => {
+    return {
+      recordingDuration: recordingTime,
+      recordingStartTime: recordingStartTime,
+      patientName: patientName,
+      speakers: transcriptResult?.utterances 
+        ? [...new Set(transcriptResult.utterances.map(u => u.speaker))] 
+        : []
+    };
+  };
+
   useEffect(() => {
     return () => {
       if (recordingTimer) {
@@ -191,10 +203,13 @@ export const useRecording = (options?: UseRecordingOptions) => {
     transcriptResult,
     transcriptionProvider,
     setTranscriptionProvider,
+    patientName,
+    setPatientName,
     startRecording,
     pauseRecording,
     stopRecording,
     handleFileUpload,
     formatTime,
+    getRecordingMetadata
   };
 };
