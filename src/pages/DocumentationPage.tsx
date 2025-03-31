@@ -1,23 +1,24 @@
-// src/pages/DocumentationPage.tsx
+// src/pages/UpdatedDocumentationPage.tsx
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Search } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import {
   transcribeAudio,
   TranscriptionResult,
   TranscriptionProvider,
   LLMProvider,
-  DocumentFormat
+  DocumentFormat,
+  generateMedicalDocument
 } from "@/services/transcription";
 import { generateBriefSummary } from "@/services/summaryUtils";
 import RecentDocuments from "@/components/documentation/RecentDocuments";
 import SharedDocuments from "@/components/documentation/SharedDocuments";
-import NewDocumentDialog from "@/components/documentation/NewDocumentDialog";
+import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
 import { documentTemplates } from "@/data/documentTemplates";
 
 const DocumentationPage = () => {
@@ -43,14 +44,12 @@ const DocumentationPage = () => {
 
   // Add state for LLM provider and document format
   const [llmProvider, setLlmProvider] = useState<LLMProvider>(
-      LLMProvider.CLAUDE
+      LLMProvider.OPENAI
   );
 
   const [documentFormat, setDocumentFormat] = useState<DocumentFormat>(
       DocumentFormat.SOAP
   );
-
-  const { toast } = useToast();
 
   const form = useForm({
     defaultValues: {
@@ -68,10 +67,8 @@ const DocumentationPage = () => {
     form.reset();
     stopRecording();
 
-    toast({
-      title: "Document Saved",
+    toast.success("Document Saved", {
       description: "Your consultation has been saved successfully.",
-      duration: 3000,
     });
   };
 
@@ -89,9 +86,7 @@ const DocumentationPage = () => {
 
       recorder.onstop = async () => {
         setAudioChunks(chunks);
-
         processRecording(chunks);
-
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -106,17 +101,13 @@ const DocumentationPage = () => {
 
       setRecordingTimer(timer);
 
-      toast({
-        title: "Recording Started",
+      toast.success("Recording Started", {
         description: `Recording with ${TranscriptionProvider[transcriptionProvider]}. Speak clearly into your microphone.`,
-        duration: 3000,
       });
     } catch (error) {
       console.error("Error starting recording:", error);
-      toast({
-        title: "Recording Error",
+      toast.error("Recording Error", {
         description: "Could not access microphone. Please check permissions.",
-        duration: 3000,
       });
     }
   };
@@ -131,10 +122,8 @@ const DocumentationPage = () => {
         setRecordingTimer(null);
       }
 
-      toast({
-        title: "Recording Paused",
+      toast.success("Recording Paused", {
         description: "Click resume to continue recording.",
-        duration: 3000,
       });
     } else if (mediaRecorder && isRecording && isPaused) {
       mediaRecorder.resume();
@@ -146,10 +135,8 @@ const DocumentationPage = () => {
 
       setRecordingTimer(timer);
 
-      toast({
-        title: "Recording Resumed",
+      toast.success("Recording Resumed", {
         description: "Recording has been resumed.",
-        duration: 3000,
       });
     }
   };
@@ -166,10 +153,8 @@ const DocumentationPage = () => {
       }
       setRecordingTime(0);
 
-      toast({
-        title: "Recording Stopped",
+      toast.success("Recording Stopped", {
         description: "Your recording will be processed shortly.",
-        duration: 3000,
       });
     }
   };
@@ -178,10 +163,8 @@ const DocumentationPage = () => {
     const audioBlob = new Blob(chunks, { type: 'audio/webm' });
 
     setIsTranscribing(true);
-    toast({
-      title: "Processing Audio",
+    toast.success("Processing Audio", {
       description: `Your recording is being transcribed with ${TranscriptionProvider[transcriptionProvider]}...`,
-      duration: 3000,
     });
 
     try {
@@ -193,7 +176,7 @@ const DocumentationPage = () => {
 
       setTranscriptResult(result);
       setTranscript(result.text);
-      form.setValue("notes", result.text);
+      form.setValue("notes", result.text); // Initial value before document generation
       form.setValue("transcript", result.text);
       form.setValue("transcriptResult", result);
 
@@ -202,18 +185,17 @@ const DocumentationPage = () => {
       form.setValue("transcriptSummary", summary);
       setShowSummary(true);
 
-      toast({
-        title: "Transcription Complete",
-        description: `Your recording has been transcribed successfully with ${TranscriptionProvider[result.provider]}.`,
-        duration: 3000,
-      });
+      //
+      if (result.text) {
+              toast.success("Transcription Completed Successfully", {
+            description: `Choose your document format to continue`,
+          });
+
+      }
     } catch (error) {
       console.error("Transcription error:", error);
-      toast({
-        title: "Transcription Error",
+      toast.error("Transcription Error", {
         description: "There was an error transcribing your audio. Please try again.",
-        variant: "destructive",
-        duration: 5000,
       });
     } finally {
       setIsTranscribing(false);
@@ -226,6 +208,15 @@ const DocumentationPage = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const audioBlob = new Blob([new Uint8Array(e.target.result as ArrayBuffer)], { type: 'audio/webm' });
+      const chunks = [audioBlob];
+      await processRecording(chunks);
+    };
+    reader.readAsArrayBuffer(file);
+  }
   return (
       <div className="space-y-8">
         <FadeIn>
@@ -258,6 +249,9 @@ const DocumentationPage = () => {
                     notes: "",
                     documentId: "",
                   });
+                  setTranscript("");
+                  setTranscriptSummary("");
+                  setTranscriptResult(null);
                   setNewDocumentOpen(true);
                 }}
             >
@@ -290,7 +284,7 @@ const DocumentationPage = () => {
           </Tabs>
         </FadeIn>
 
-        <NewDocumentDialog
+        <UpdatedNewDocumentDialog
             open={newDocumentOpen}
             onOpenChange={(open) => {
               setNewDocumentOpen(open);
@@ -321,6 +315,13 @@ const DocumentationPage = () => {
             setShowSummary={setShowSummary}
             transcriptResult={transcriptResult}
             documentTemplates={documentTemplates}
+            transcriptionProvider={transcriptionProvider}
+            setTranscriptionProvider={setTranscriptionProvider}
+            llmProvider={llmProvider}
+            setLlmProvider={setLlmProvider}
+            documentFormat={documentFormat}
+            setDocumentFormat={setDocumentFormat}
+            onFileUpload={ handleFileUpload}
         />
       </div>
   );
