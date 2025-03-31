@@ -1,5 +1,6 @@
+
 // src/pages/UpdatedDocumentationPage.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -20,8 +21,10 @@ import RecentDocuments from "@/components/documentation/RecentDocuments";
 import SharedDocuments from "@/components/documentation/SharedDocuments";
 import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
 import { documentTemplates } from "@/data/documentTemplates";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DocumentationPage = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("saved");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -272,6 +275,7 @@ const DocumentationPage = () => {
               <RecentDocuments
                   setNewDocumentOpen={setNewDocumentOpen}
                   form={form}
+                  currentUserId={user?.id} // Pass current user ID for filtering
               />
             </TabsContent>
 
@@ -279,6 +283,7 @@ const DocumentationPage = () => {
               <SharedDocuments
                   setNewDocumentOpen={setNewDocumentOpen}
                   form={form}
+                  currentUserId={user?.id} // Pass current user ID for filtering
               />
             </TabsContent>
           </Tabs>
@@ -321,7 +326,8 @@ const DocumentationPage = () => {
             setLlmProvider={setLlmProvider}
             documentFormat={documentFormat}
             setDocumentFormat={setDocumentFormat}
-            onFileUpload={ handleFileUpload}
+            onFileUpload={handleFileUpload}
+            currentUserId={user?.id} // Pass current user ID for document creation
         />
       </div>
   );

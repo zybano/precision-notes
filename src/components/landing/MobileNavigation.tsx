@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { ContactDialog } from "@/components/ContactDialog";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowLeft } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,20 +16,42 @@ import {
 export function MobileNavigation() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  
+  // Check if we're on a page that should show back button
+  const showBackButton = location.pathname !== "/" && 
+                       !location.pathname.includes("/login") && 
+                       !location.pathname.includes("/signup");
   
   return (
     <div className="md:hidden">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Menu">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
+        <div className="flex items-center gap-2">
+          {showBackButton && (
+            <Link to="/">
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Menu">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+        </div>
         <SheetContent side="right" className="pt-10">
           <SheetHeader>
             <SheetTitle>Documedly</SheetTitle>
           </SheetHeader>
           <div className="flex flex-col space-y-4 mt-8">
+            <Link 
+              to="/" 
+              className="px-2 py-2 text-lg hover:bg-accent rounded-md transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
             <Link 
               to="/about" 
               className="px-2 py-2 text-lg hover:bg-accent rounded-md transition-colors"
