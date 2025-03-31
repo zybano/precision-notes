@@ -69,20 +69,14 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
       }
     } catch (error) {
       console.error("Error fetching documents:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch recent documents"
-      });
+      toast("Failed to fetch recent documents");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOpenDocument = (doc: Document) => {
-    toast({
-      title: "Continuing Document",
-      description: `Opening ${doc.title} for editing`
-    });
+    toast(`Opening ${doc.title} for editing`);
     
     // If there's transcript data, parse it and set it in the form
     if (doc.transcript_data) {
@@ -131,16 +125,10 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         setTranscriptDialogOpen(true);
       } catch (e) {
         console.error("Error parsing transcript data:", e);
-        toast({
-          title: "Error",
-          description: "Failed to parse transcript data"
-        });
+        toast("Failed to parse transcript data");
       }
     } else {
-      toast({
-        title: "No Transcript",
-        description: "This document does not have any saved transcript data"
-      });
+      toast("This document does not have any saved transcript data");
     }
   };
   
@@ -155,19 +143,13 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         throw error;
       }
       
-      toast({
-        title: "Document Deleted",
-        description: `${doc.title} has been deleted`
-      });
+      toast(`${doc.title} has been deleted`);
       
       // Refresh the list
       fetchRecentDocuments();
     } catch (error) {
       console.error("Error deleting document:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete document"
-      });
+      toast("Failed to delete document");
     }
   };
 
@@ -199,22 +181,13 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         
         setRecentDocuments(prev => [...prev, ...mappedDocuments]);
         
-        toast({
-          title: "Documents Loaded",
-          description: `Loaded ${data.length} more documents`
-        });
+        toast(`Loaded ${data.length} more documents`);
       } else {
-        toast({
-          title: "No More Documents",
-          description: "You've reached the end of your document list"
-        });
+        toast("You've reached the end of your document list");
       }
     } catch (error) {
       console.error("Error loading more documents:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load more documents"
-      });
+      toast("Failed to load more documents");
     }
   };
 
