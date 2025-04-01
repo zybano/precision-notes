@@ -1,10 +1,19 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
 import { FolderOpen } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface SharedDocument {
+  title: string;
+  author: string;
+  date: string;
+  id: string;
+}
 
 interface SharedDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
@@ -13,21 +22,64 @@ interface SharedDocumentsProps {
 
 const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, form }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [sharedDocuments, setSharedDocuments] = useState<SharedDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Empty array for shared documents
-  const sharedDocuments: Array<{ title: string; author: string; date: string }> = [];
+  useEffect(() => {
+    if (user?.id) {
+      fetchSharedDocuments();
+    }
+  }, [user?.id]);
+  
+  const fetchSharedDocuments = async () => {
+    if (!user?.id) return;
+    
+    setIsLoading(true);
+    try {
+      // Query documents shared with the current user
+      const { data, error } = await supabase
+        .from('shared_documents')
+        .select('document_id, shared_by, shared_at, medical_documents(id, title, patient_name, type)')
+        .eq('shared_with', user.id);
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const mappedDocuments: SharedDocument[] = data.map(item => ({
+          id: item.document_id,
+          title: item.medical_documents?.title || 'Unnamed Document',
+          author: item.shared_by,
+          date: new Date(item.shared_at).toLocaleDateString()
+        }));
+        
+        setSharedDocuments(mappedDocuments);
+      }
+    } catch (error) {
+      console.error("Error fetching shared documents:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleViewDocument = (doc: typeof sharedDocuments[0]) => {
+  const handleViewDocument = (doc: SharedDocument) => {
     toast({
       title: "Viewing Shared Document",
-      description: `Opening ${doc.title}`,
-      duration: 3000,
+      description: `Opening ${doc.title}`
     });
     setNewDocumentOpen(true);
     form.setValue("type", "Shared Document");
     form.setValue("patientName", doc.title);
-    form.setValue("notes", `Shared by ${doc.author} on ${doc.date.split(" on ")[1]}`);
+    form.setValue("notes", `Shared by ${doc.author} on ${doc.date}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-10">
+        <div className="animate-pulse">Loading shared documents...</div>
+      </div>
+    );
+  }
 
   if (sharedDocuments.length === 0) {
     return (

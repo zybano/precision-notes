@@ -1,23 +1,38 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { ContactDialog } from "@/components/ContactDialog";
 import { MobileNavigation } from "./MobileNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ArrowLeft } from "lucide-react";
 
 export function Navigation() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   return (
     <nav className="px-4 sm:px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border w-full">
       <div className="container mx-auto max-w-7xl flex justify-between items-center">
         <div className="flex items-center">
-          <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">D</span>
-          </div>
-          <span className="ml-3 text-xl font-medium">Documedly</span>
+          {/* Add back button for pages other than home */}
+          {window.location.pathname !== "/" && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mr-2" 
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+          )}
+          <Link to="/" className="flex items-center">
+            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">D</span>
+            </div>
+            <span className="ml-3 text-xl font-medium">Documedly</span>
+          </Link>
         </div>
         
         <div className="hidden md:flex items-center space-x-6">

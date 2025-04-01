@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { ContactDialog } from "@/components/ContactDialog";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowLeft } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +16,7 @@ import {
 export function MobileNavigation() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   
   return (
     <div className="md:hidden">
@@ -27,9 +28,29 @@ export function MobileNavigation() {
         </SheetTrigger>
         <SheetContent side="right" className="pt-10">
           <SheetHeader>
-            <SheetTitle>Documedly</SheetTitle>
+            <SheetTitle className="flex items-center">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mr-2" 
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate(-1);
+                }}
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" /> Back
+              </Button>
+              <span>Documedly</span>
+            </SheetTitle>
           </SheetHeader>
           <div className="flex flex-col space-y-4 mt-8">
+            <Link 
+              to="/"
+              className="px-2 py-2 text-lg hover:bg-accent rounded-md transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
             <Link 
               to="/about" 
               className="px-2 py-2 text-lg hover:bg-accent rounded-md transition-colors"

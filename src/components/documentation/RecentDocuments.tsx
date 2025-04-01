@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +7,7 @@ import { Document, RawDocumentData } from "./DocumentTypes";
 import DocumentTable from "./DocumentTable";
 import TranscriptDialog from "./TranscriptDialog";
 import { TranscriptionResult } from "@/services/transcription";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
@@ -16,6 +16,7 @@ interface RecentDocumentsProps {
 
 const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
@@ -26,15 +27,20 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
   const [showSummary, setShowSummary] = useState(true);
   
   useEffect(() => {
-    fetchRecentDocuments();
-  }, []);
+    if (user?.id) {
+      fetchRecentDocuments();
+    }
+  }, [user?.id]);
   
   const fetchRecentDocuments = async () => {
+    if (!user?.id) return;
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false })
         .limit(10);
         
@@ -61,8 +67,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       console.error("Error fetching documents:", error);
       toast({
         title: "Error",
-        description: "Failed to fetch recent documents",
-        duration: 3000,
+        description: "Failed to fetch recent documents"
       });
     } finally {
       setIsLoading(false);
@@ -167,10 +172,13 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
   };
 
   const loadMoreDocuments = async () => {
+    if (!user?.id) return;
+    
     try {
       const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false })
         .range(recentDocuments.length, recentDocuments.length + 10);
         
@@ -196,22 +204,19 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         
         toast({
           title: "Documents Loaded",
-          description: `Loaded ${data.length} more documents`,
-          duration: 3000,
+          description: `Loaded ${data.length} more documents`
         });
       } else {
         toast({
           title: "No More Documents",
-          description: "You've reached the end of your document list",
-          duration: 3000,
+          description: "You've reached the end of your document list"
         });
       }
     } catch (error) {
       console.error("Error loading more documents:", error);
       toast({
         title: "Error",
-        description: "Failed to load more documents",
-        duration: 3000,
+        description: "Failed to load more documents"
       });
     }
   };

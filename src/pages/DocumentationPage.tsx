@@ -1,12 +1,14 @@
+
 // src/pages/UpdatedDocumentationPage.tsx
 import { useState } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, Search } from "lucide-react";
+import { Mic, Search, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 import {
   transcribeAudio,
   TranscriptionResult,
@@ -20,8 +22,10 @@ import RecentDocuments from "@/components/documentation/RecentDocuments";
 import SharedDocuments from "@/components/documentation/SharedDocuments";
 import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
 import { documentTemplates } from "@/data/documentTemplates";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DocumentationPage = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("saved");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -217,10 +221,18 @@ const DocumentationPage = () => {
     };
     reader.readAsArrayBuffer(file);
   }
+  
   return (
-      <div className="space-y-8">
-        <FadeIn>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+    <div className="container px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
+      <FadeIn>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Link to="/dashboard">
+              <Button variant="outline" size="sm" className="mb-2 md:mb-0">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Dashboard
+              </Button>
+            </Link>
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
               <p className="text-muted-foreground mt-1">
@@ -228,102 +240,103 @@ const DocumentationPage = () => {
               </p>
             </div>
           </div>
-        </FadeIn>
+        </div>
+      </FadeIn>
 
-        <FadeIn delay={0.1}>
-          <div className="relative flex items-center justify-between mb-6">
-            <div className="flex items-center border border-input rounded-lg px-3 w-full max-w-md focus-within:ring-1 focus-within:ring-ring">
-              <Search className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
-              <Input
-                  type="text"
-                  placeholder="Search documents..."
-                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-10"
-              />
-            </div>
-            <Button
-                size="sm"
-                className="ml-4 shadow-sm hover:shadow-md transition-all"
-                onClick={() => {
-                  form.reset({
-                    type: "Consultation",
-                    notes: "",
-                    documentId: "",
-                  });
-                  setTranscript("");
-                  setTranscriptSummary("");
-                  setTranscriptResult(null);
-                  setNewDocumentOpen(true);
-                }}
-            >
-              <Mic className="h-4 w-4 mr-1" />
-              Record New Consultation
-            </Button>
+      <FadeIn delay={0.1}>
+        <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+          <div className="flex items-center border border-input rounded-lg px-3 w-full max-w-md focus-within:ring-1 focus-within:ring-ring">
+            <Search className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
+            <Input
+              type="text"
+              placeholder="Search documents..."
+              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-10"
+            />
           </div>
-        </FadeIn>
-
-        <FadeIn delay={0.2}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-2 w-full max-w-md">
-              <TabsTrigger value="saved">My Documents</TabsTrigger>
-              <TabsTrigger value="shared">Shared Documents</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="saved" className="space-y-6">
-              <RecentDocuments
-                  setNewDocumentOpen={setNewDocumentOpen}
-                  form={form}
-              />
-            </TabsContent>
-
-            <TabsContent value="shared" className="space-y-6">
-              <SharedDocuments
-                  setNewDocumentOpen={setNewDocumentOpen}
-                  form={form}
-              />
-            </TabsContent>
-          </Tabs>
-        </FadeIn>
-
-        <UpdatedNewDocumentDialog
-            open={newDocumentOpen}
-            onOpenChange={(open) => {
-              setNewDocumentOpen(open);
-              if (!open) {
-                stopRecording();
-                setTranscript("");
-                setTranscriptSummary("");
-                setShowSummary(true);
-                setTranscriptResult(null);
-                form.reset();
-              }
+          <Button
+            size="sm"
+            className="shadow-sm hover:shadow-md transition-all w-full sm:w-auto"
+            onClick={() => {
+              form.reset({
+                type: "Consultation",
+                notes: "",
+                documentId: "",
+              });
+              setTranscript("");
+              setTranscriptSummary("");
+              setTranscriptResult(null);
+              setNewDocumentOpen(true);
             }}
-            form={form}
-            onSubmit={handleCreateNewDocument}
-            isRecording={isRecording}
-            isPaused={isPaused}
-            recordingTime={recordingTime}
-            isTranscribing={isTranscribing}
-            useSpeechModelNano={useSpeechModelNano}
-            setUseSpeechModelNano={setUseSpeechModelNano}
-            startRecording={startRecording}
-            pauseRecording={pauseRecording}
-            stopRecording={stopRecording}
-            formatTime={formatTime}
-            transcript={transcript}
-            transcriptSummary={transcriptSummary}
-            showSummary={showSummary}
-            setShowSummary={setShowSummary}
-            transcriptResult={transcriptResult}
-            documentTemplates={documentTemplates}
-            transcriptionProvider={transcriptionProvider}
-            setTranscriptionProvider={setTranscriptionProvider}
-            llmProvider={llmProvider}
-            setLlmProvider={setLlmProvider}
-            documentFormat={documentFormat}
-            setDocumentFormat={setDocumentFormat}
-            onFileUpload={ handleFileUpload}
-        />
-      </div>
+          >
+            <Mic className="h-4 w-4 mr-1" />
+            Record New Consultation
+          </Button>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={0.2}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-2 w-full max-w-md">
+            <TabsTrigger value="saved">My Documents</TabsTrigger>
+            <TabsTrigger value="shared">Shared Documents</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="saved" className="space-y-6">
+            <RecentDocuments
+              setNewDocumentOpen={setNewDocumentOpen}
+              form={form}
+            />
+          </TabsContent>
+
+          <TabsContent value="shared" className="space-y-6">
+            <SharedDocuments
+              setNewDocumentOpen={setNewDocumentOpen}
+              form={form}
+            />
+          </TabsContent>
+        </Tabs>
+      </FadeIn>
+
+      <UpdatedNewDocumentDialog
+        open={newDocumentOpen}
+        onOpenChange={(open) => {
+          setNewDocumentOpen(open);
+          if (!open) {
+            stopRecording();
+            setTranscript("");
+            setTranscriptSummary("");
+            setShowSummary(true);
+            setTranscriptResult(null);
+            form.reset();
+          }
+        }}
+        form={form}
+        onSubmit={handleCreateNewDocument}
+        isRecording={isRecording}
+        isPaused={isPaused}
+        recordingTime={recordingTime}
+        isTranscribing={isTranscribing}
+        useSpeechModelNano={useSpeechModelNano}
+        setUseSpeechModelNano={setUseSpeechModelNano}
+        startRecording={startRecording}
+        pauseRecording={pauseRecording}
+        stopRecording={stopRecording}
+        formatTime={formatTime}
+        transcript={transcript}
+        transcriptSummary={transcriptSummary}
+        showSummary={showSummary}
+        setShowSummary={setShowSummary}
+        transcriptResult={transcriptResult}
+        documentTemplates={documentTemplates}
+        transcriptionProvider={transcriptionProvider}
+        setTranscriptionProvider={setTranscriptionProvider}
+        llmProvider={llmProvider}
+        setLlmProvider={setLlmProvider}
+        documentFormat={documentFormat}
+        setDocumentFormat={setDocumentFormat}
+        onFileUpload={handleFileUpload}
+      />
+    </div>
   );
 };
 
