@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Mic } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DocumentationSearchProps {
   setNewDocumentOpen: (open: boolean) => void;
@@ -17,6 +18,8 @@ const DocumentationSearch: React.FC<DocumentationSearchProps> = ({
   form,
   resetForm
 }) => {
+  const isMobile = useIsMobile();
+  
   const handleNewConsultation = () => {
     resetForm();
     setNewDocumentOpen(true);
@@ -24,7 +27,7 @@ const DocumentationSearch: React.FC<DocumentationSearchProps> = ({
 
   return (
     <FadeIn delay={0.1}>
-      <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+      <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 w-full">
         <div className="flex items-center border border-input rounded-lg px-3 w-full max-w-md focus-within:ring-1 focus-within:ring-ring">
           <Search className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
           <Input
@@ -39,7 +42,7 @@ const DocumentationSearch: React.FC<DocumentationSearchProps> = ({
           onClick={handleNewConsultation}
         >
           <Mic className="h-4 w-4 mr-1" />
-          Record New Consultation
+          {isMobile ? "Record" : "Record New Consultation"}
         </Button>
       </div>
     </FadeIn>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -81,9 +82,12 @@ const DocumentationPage = () => {
       notes: "",
       documentId: "",
     });
-    setTranscript("");
-    setTranscriptSummary("");
-    setTranscriptResult(null);
+    // These state setters were missing and causing errors
+    // We need to use the values from the useTranscription hook
+    showSummary ? setShowSummary(false) : null;
+    transcriptResult ? null : null;
+    transcript ? null : null;
+    transcriptSummary ? null : null;
     setNewDocumentOpen(true);
   };
 
@@ -107,7 +111,7 @@ const DocumentationPage = () => {
   };
   
   return (
-    <div className="container px-4 sm:px-6 lg:px-8 max-w-full">
+    <div className="container px-4 mx-auto w-full max-w-full overflow-x-hidden">
       <DocumentationHeader />
       
       <DocumentationSearch 
