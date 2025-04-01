@@ -24,12 +24,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Database, Settings2, PlugZap, FileText, ArrowLeft } from "lucide-react";
+import { Database, Stethoscope, PlugZap, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
-import { Link } from "react-router-dom";
 
 const profileSchema = z.object({
   fullName: z.string().min(2, {
@@ -181,14 +180,7 @@ const Settings = () => {
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Link to="/dashboard">
-            <Button variant="outline" size="icon" className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        </div>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -196,9 +188,9 @@ const Settings = () => {
           <CardHeader className="pb-4">
             <div className="flex items-center gap-4 mb-2">
               <Avatar className="h-16 w-16 border-2 border-primary/20">
-                <AvatarImage src="https://ui.shadcn.com/avatars/01.png" alt="User" />
+                <AvatarImage src="https://ui.shadcn.com/avatars/01.png" alt="Doctor" />
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  <Settings2 size={24} />
+                  <Stethoscope size={24} />
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -207,7 +199,7 @@ const Settings = () => {
               </div>
             </div>
             <Badge variant="outline" className="w-fit gap-1 px-2 py-1 text-xs">
-              <Settings2 size={14} /> Personal
+              <Stethoscope size={14} /> Personal
             </Badge>
           </CardHeader>
           <CardContent>

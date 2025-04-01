@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Document, RawDocumentData } from "./DocumentTypes";
@@ -12,14 +12,10 @@ import { TranscriptionResult } from "@/services/transcription";
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
   form: UseFormReturn<any>;
-  currentUserId?: string;
 }
 
-const RecentDocuments: React.FC<RecentDocumentsProps> = ({ 
-  setNewDocumentOpen, 
-  form,
-  currentUserId
-}) => {
+const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
+  const { toast } = useToast();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
@@ -31,22 +27,16 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
   
   useEffect(() => {
     fetchRecentDocuments();
-  }, [currentUserId]);
+  }, []);
   
   const fetchRecentDocuments = async () => {
     setIsLoading(true);
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
-        .order('updated_at', { ascending: false });
-      
-      // Filter by user ID if provided
-      if (currentUserId) {
-        query = query.eq('user_id', currentUserId);
-      }
-      
-      const { data, error } = await query.limit(10);
+        .order('updated_at', { ascending: false })
+        .limit(10);
         
       if (error) {
         throw error;
@@ -69,14 +59,22 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
       }
     } catch (error) {
       console.error("Error fetching documents:", error);
-      toast("Failed to fetch recent documents");
+      toast({
+        title: "Error",
+        description: "Failed to fetch recent documents",
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOpenDocument = (doc: Document) => {
-    toast(`Opening ${doc.title} for editing`);
+    toast({
+      title: "Continuing Document",
+      description: `Opening ${doc.title} for editing`,
+      duration: 3000,
+    });
     
     // If there's transcript data, parse it and set it in the form
     if (doc.transcript_data) {
@@ -86,14 +84,13 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default"
+          provider: parsedData.provider || "default" // Add the missing provider property
         };
         
         // Make transcript data available to the form
         form.setValue("transcriptResult", transcriptResult);
         form.setValue("transcript", parsedData.text || "");
         form.setValue("transcriptSummary", parsedData.summary || "");
-        form.setValue("patientName", doc.patient_name || "");
       } catch (e) {
         console.error("Error parsing transcript data:", e);
       }
@@ -117,7 +114,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default"
+          provider: parsedData.provider || "default" // Add the missing provider property
         });
         
         setTranscriptText(parsedData.text || "");
@@ -125,10 +122,18 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         setTranscriptDialogOpen(true);
       } catch (e) {
         console.error("Error parsing transcript data:", e);
-        toast("Failed to parse transcript data");
+        toast({
+          title: "Error",
+          description: "Failed to parse transcript data",
+          duration: 3000,
+        });
       }
     } else {
-      toast("This document does not have any saved transcript data");
+      toast({
+        title: "No Transcript",
+        description: "This document does not have any saved transcript data",
+        duration: 3000,
+      });
     }
   };
   
@@ -143,13 +148,21 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         throw error;
       }
       
-      toast(`${doc.title} has been deleted`);
+      toast({
+        title: "Document Deleted",
+        description: `${doc.title} has been deleted`,
+        duration: 3000,
+      });
       
       // Refresh the list
       fetchRecentDocuments();
     } catch (error) {
       console.error("Error deleting document:", error);
-      toast("Failed to delete document");
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        duration: 3000,
+      });
     }
   };
 
@@ -181,13 +194,25 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
         
         setRecentDocuments(prev => [...prev, ...mappedDocuments]);
         
-        toast(`Loaded ${data.length} more documents`);
+        toast({
+          title: "Documents Loaded",
+          description: `Loaded ${data.length} more documents`,
+          duration: 3000,
+        });
       } else {
-        toast("You've reached the end of your document list");
+        toast({
+          title: "No More Documents",
+          description: "You've reached the end of your document list",
+          duration: 3000,
+        });
       }
     } catch (error) {
       console.error("Error loading more documents:", error);
-      toast("Failed to load more documents");
+      toast({
+        title: "Error",
+        description: "Failed to load more documents",
+        duration: 3000,
+      });
     }
   };
 

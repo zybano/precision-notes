@@ -1,9 +1,9 @@
 
-import { Outlet, Navigate, Link } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Settings2, LogOut, Home } from "lucide-react";
+import { Stethoscope, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -49,20 +49,12 @@ const Layout = () => {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <header className="h-14 flex items-center justify-between gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger />
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                <Home className="h-4 w-4 mr-2" />
-                Home
-              </Button>
-            </Link>
-          </div>
+          <SidebarTrigger />
           <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
-                  <Settings2 className="h-5 w-5" />
+                  <Stethoscope className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

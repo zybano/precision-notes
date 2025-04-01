@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Check, RefreshCw } from "lucide-react";
+import { Loader2, FileType, Check, RefreshCw } from "lucide-react";
 import {
     TranscriptionResult,
     LLMProvider,
@@ -21,11 +21,11 @@ interface DocumentGenerationPanelProps {
 }
 
 const DocumentGenerationPanel: React.FC<DocumentGenerationPanelProps> = ({
-    transcriptResult,
-    llmProvider,
-    documentFormat,
-    onDocumentGenerated
-}) => {
+                                                                             transcriptResult,
+                                                                             llmProvider,
+                                                                             documentFormat,
+                                                                             onDocumentGenerated
+                                                                         }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [apiKey, setApiKey] = useState("");
 
@@ -61,6 +61,15 @@ const DocumentGenerationPanel: React.FC<DocumentGenerationPanelProps> = ({
         }
     };
 
+    const getProviderName = (provider: LLMProvider) => {
+        switch (provider) {
+            case LLMProvider.CLAUDE: return "Claude";
+            case LLMProvider.OPENAI: return "OpenAI";
+            case LLMProvider.GEMINI: return "Gemini";
+            default: return "AI Provider";
+        }
+    };
+
     const getFormatName = (format: DocumentFormat) => {
         switch (format) {
             case DocumentFormat.SOAP: return "SOAP Note";
@@ -85,6 +94,7 @@ const DocumentGenerationPanel: React.FC<DocumentGenerationPanelProps> = ({
                     <p className="text-sm font-medium mb-2">Selected Document Format:</p>
                     <p className="font-medium">{getFormatName(documentFormat)}</p>
                 </div>
+
             </CardContent>
             <CardFooter className="flex justify-between">
                 <Button variant="outline" disabled={isGenerating}>

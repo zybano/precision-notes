@@ -9,14 +9,9 @@ import { FolderOpen } from "lucide-react";
 interface SharedDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
   form: UseFormReturn<any>;
-  currentUserId?: string; // Add this prop
 }
 
-const SharedDocuments: React.FC<SharedDocumentsProps> = ({ 
-  setNewDocumentOpen, 
-  form,
-  currentUserId // We can use this to filter shared documents in the future
-}) => {
+const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, form }) => {
   const { toast } = useToast();
   
   // Empty array for shared documents

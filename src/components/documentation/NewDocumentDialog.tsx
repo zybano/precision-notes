@@ -1,20 +1,27 @@
-
-import React from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { UseFormReturn } from "react-hook-form";
-import EnhancedRecordingInterface from "./EnhancedRecordingInterface";
-import { DocumentFormat, LLMProvider, TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { FileDown, FileText } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Check, LayoutDashboard, FileText, Eye, FileCog, Copy, Download, Printer, Brain } from "lucide-react";
 import { toast } from "sonner";
+import {
+  TranscriptionResult,
+  TranscriptionProvider,
+  LLMProvider,
+  DocumentFormat
+} from "@/services/transcription";
+import EnhancedRecordingInterface from "@/components/documentation/EnhancedRecordingInterface";
+import DrugMonograph from "@/components/documentation/DrugMonograph";
+import EnhancedContextPanel from "@/components/documentation/EnhancedContextPanel";
 
-export interface UpdatedNewDocumentDialogProps {
+interface UpdatedNewDocumentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  form: UseFormReturn<any>;
+  form: any;
   onSubmit: (data: any) => void;
   isRecording: boolean;
   isPaused: boolean;
@@ -29,7 +36,7 @@ export interface UpdatedNewDocumentDialogProps {
   transcript: string;
   transcriptSummary: string;
   showSummary: boolean;
-  setShowSummary: (show: boolean) => void;
+  setShowSummary: (value: boolean) => void;
   transcriptResult: TranscriptionResult | null;
   documentTemplates: any[];
   transcriptionProvider: TranscriptionProvider;
@@ -38,240 +45,310 @@ export interface UpdatedNewDocumentDialogProps {
   setLlmProvider: (provider: LLMProvider) => void;
   documentFormat: DocumentFormat;
   setDocumentFormat: (format: DocumentFormat) => void;
-  onFileUpload: (file: File) => void;
-  currentUserId?: string;
-  patientName?: string;
-  setPatientName?: (name: string) => void;
+    onFileUpload: (file: File) => void;
 }
 
 const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
-  open,
-  onOpenChange,
-  form,
-  onSubmit,
-  isRecording,
-  isPaused,
-  recordingTime,
-  isTranscribing,
-  useSpeechModelNano,
-  setUseSpeechModelNano,
-  startRecording,
-  pauseRecording,
-  stopRecording,
-  formatTime,
-  transcript,
-  transcriptSummary,
-  showSummary,
-  setShowSummary,
-  transcriptResult,
-  documentTemplates,
-  transcriptionProvider,
-  setTranscriptionProvider,
-  llmProvider,
-  setLlmProvider,
-  documentFormat,
-  setDocumentFormat,
-  onFileUpload,
-  currentUserId,
-  patientName = "",
-  setPatientName
-}) => {
-  const handleDocumentGenerated = (documentText: string) => {
-    form.setValue("notes", documentText);
+                                                                             open,
+                                                                             onOpenChange,
+                                                                             form,
+                                                                             onSubmit,
+                                                                             isRecording,
+                                                                             isPaused,
+                                                                             recordingTime,
+                                                                             isTranscribing,
+                                                                             useSpeechModelNano,
+                                                                             setUseSpeechModelNano,
+                                                                             startRecording,
+                                                                             pauseRecording,
+                                                                             stopRecording,
+                                                                             formatTime,
+                                                                             transcript,
+                                                                             transcriptSummary,
+                                                                             showSummary,
+                                                                             setShowSummary,
+                                                                             transcriptResult,
+                                                                             documentTemplates,
+                                                                             transcriptionProvider,
+                                                                             setTranscriptionProvider,
+                                                                             llmProvider,
+                                                                             setLlmProvider,
+                                                                             documentFormat,
+                                                                             setDocumentFormat,
+                                                                             onFileUpload
+                                                                           }) => {
+  const [activeTab, setActiveTab] = useState("record");
+  const { register, handleSubmit, formState: { errors }, setValue } = form;
+
+  const handleCopyToEMR = () => {
+    navigator.clipboard.writeText(form.getValues().notes);
+    toast.success("Notes copied to clipboard for EMR entry", {
+      description: "The formatted notes can now be pasted into your EMR system."
+    });
   };
 
-  const handleExport = (format: string) => {
-    const notes = form.getValues("notes");
-    if (!notes) {
-      toast("No document content to export");
-      return;
-    }
+  const handleDownloadPDF = () => {
+    toast.success("PDF download started", {
+      description: "Your document is being prepared for download."
+    });
 
-    const documentType = form.getValues("type") || "Document";
-    const patientNameValue = form.getValues("patientName") || "Patient";
-    const filename = `${documentType}_${patientNameValue}_${new Date().toISOString().slice(0, 10)}.${format === 'pdf' ? 'txt' : format}`;
-    
-    const element = document.createElement('a');
-    const file = new Blob([notes], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = filename;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    
-    toast(`Document exported as ${filename}`);
+    // Simulate PDF generation delay
+    setTimeout(() => {
+      toast.success("PDF document ready", {
+        description: "Your document has been downloaded."
+      });
+    }, 1500);
+  };
+
+  const handlePrint = () => {
+    toast.success("Preparing document for printing", {
+      description: "Your document is being sent to the printer dialog."
+    });
+
+    // In a real implementation, this would trigger window.print()
+    setTimeout(() => {
+      toast.success("Document sent to printer", {
+        description: "Please check your printer dialog to complete printing."
+      });
+    }, 1000);
+  };
+
+  const handleDocumentGenerated = (document: string) => {
+    setValue("notes", document);
+    setActiveTab("notes");
+    toast.success("Document generated successfully", {
+      description: "Your notes have been updated with the generated document."
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] overflow-y-auto">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 h-full flex flex-col">
-            <Tabs defaultValue="record" className="flex-1 flex flex-col">
-              <TabsList className="grid grid-cols-3 w-full max-w-md mb-4">
-                <TabsTrigger value="record">Record & Generate</TabsTrigger>
-                <TabsTrigger value="edit">Edit Document</TabsTrigger>
-                <TabsTrigger value="export">Export</TabsTrigger>
-              </TabsList>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="text-2xl">Consultation Documentation</DialogTitle>
+            <DialogDescription>
+              Record your consultation, generate notes, and export to your EMR system
+            </DialogDescription>
+          </DialogHeader>
 
-              <TabsContent value="record" className="flex-1 overflow-auto">
-                <EnhancedRecordingInterface
-                  isRecording={isRecording}
-                  isPaused={isPaused}
-                  recordingTime={recordingTime}
-                  isTranscribing={isTranscribing}
-                  useSpeechModelNano={useSpeechModelNano}
-                  setUseSpeechModelNano={setUseSpeechModelNano}
-                  startRecording={startRecording}
-                  pauseRecording={pauseRecording}
-                  stopRecording={stopRecording}
-                  formatTime={formatTime}
-                  transcriptResult={transcriptResult}
-                  documentFormat={documentFormat}
-                  setDocumentFormat={setDocumentFormat}
-                  onDocumentGenerated={handleDocumentGenerated}
-                  onFileUpload={onFileUpload}
-                  patientName={patientName}
-                  setPatientName={setPatientName}
-                />
-              </TabsContent>
+          <div className="flex flex-col lg:flex-row h-full">
+            <div className="lg:w-2/3 p-6 pt-0 border-r">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-4 mb-8">
+                  <TabsTrigger value="record" className="flex items-center">
+                    <FileText className="h-4 w-4 mr-2" /> Record
+                  </TabsTrigger>
+                  <TabsTrigger value="notes" className="flex items-center" disabled={!transcript}>
+                    <FileText className="h-4 w-4 mr-2" /> Notes
+                  </TabsTrigger>
+                  {/*<TabsTrigger value="context" className="flex items-center" disabled={!transcript}>*/}
+                  {/*  <Brain className="h-4 w-4 mr-2" /> Context*/}
+                  {/*</TabsTrigger>*/}
+                  <TabsTrigger value="export" className="flex items-center" disabled={!transcript}>
+                    <FileCog className="h-4 w-4 mr-2" /> Export
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="edit" className="flex-1 overflow-auto">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <TabsContent value="record" className="mt-0">
+                  <form onSubmit={handleSubmit(onSubmit)}>
+                    <EnhancedRecordingInterface
+                        isRecording={isRecording}
+                        isPaused={isPaused}
+                        recordingTime={recordingTime}
+                        isTranscribing={isTranscribing}
+                        useSpeechModelNano={useSpeechModelNano}
+                        setUseSpeechModelNano={setUseSpeechModelNano}
+                        startRecording={startRecording}
+                        pauseRecording={pauseRecording}
+                        stopRecording={stopRecording}
+                        formatTime={formatTime}
+                        onDownloadPdf={handleDownloadPDF}
+                        onCopyToEMR={handleCopyToEMR}
+                        onPrint={handlePrint}
+                        transcriptResult={transcriptResult}
+                        documentFormat={documentFormat}
+                        setDocumentFormat={setDocumentFormat}
+                        onDocumentGenerated={handleDocumentGenerated}
+                        onFileUpload={onFileUpload}
+                    />
+                  </form>
+                </TabsContent>
+
+                <TabsContent value="notes" className="mt-0">
+                  <div className="space-y-6">
                     <div className="space-y-2">
-                      <label htmlFor="type" className="text-sm font-medium">Document Type</label>
-                      <select
-                        id="type"
-                        {...form.register("type")}
-                        className="w-full border border-input bg-background px-3 py-2 text-sm rounded-md"
-                      >
-                        <option value="Consultation">Consultation</option>
-                        <option value="Progress Note">Progress Note</option>
-                        <option value="Discharge Summary">Discharge Summary</option>
-                        <option value="Referral">Referral</option>
-                        <option value="Prescription">Prescription</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="patientName" className="text-sm font-medium">Patient Name</label>
-                      <input
-                        id="patientName"
-                        {...form.register("patientName")}
-                        className="w-full border border-input bg-background px-3 py-2 text-sm rounded-md"
-                        onChange={(e) => setPatientName && setPatientName(e.target.value)}
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="notes" className="text-lg font-medium">Generated Notes</Label>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                              id="showSummary"
+                              checked={showSummary}
+                              onCheckedChange={setShowSummary}
+                          />
+                          <Label htmlFor="showSummary" className="text-sm">Show Summary</Label>
+                        </div>
+                      </div>
+
+                      {showSummary && transcriptSummary && (
+                          <div className="bg-muted p-3 rounded-md text-sm mb-4">
+                            <p className="font-medium mb-1">Summary:</p>
+                            <p>{transcriptSummary}</p>
+                          </div>
+                      )}
+
+                      <div className="bg-accent/10 p-3 rounded-md text-sm mb-4">
+                        <p className="font-medium mb-1">Document Format: <span className="text-primary">{DocumentFormat[documentFormat]}</span></p>
+                        <p className="font-medium">Generated by: <span className="text-primary">{LLMProvider[llmProvider]}</span></p>
+                      </div>
+
+                      <Textarea
+                          id="notes"
+                          className="min-h-[350px] font-mono text-sm resize-y"
+                          {...register("notes")}
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="notes" className="text-sm font-medium">Notes</label>
-                    <Textarea
-                      id="notes"
-                      {...form.register("notes")}
-                      className="min-h-[400px] font-mono text-sm"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="export" className="flex-1 overflow-auto">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Export Document</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Export your document in various formats for sharing or archiving
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="rounded-full bg-primary/10 p-2">
-                          <FileText className="h-4 w-4 text-primary" />
-                        </div>
-                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-muted">Plain Text</span>
-                      </div>
-                      <h4 className="text-base font-medium mb-1">Text Document</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Export as a simple text document (.txt)
-                      </p>
-                      <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        className="w-full" 
-                        onClick={() => handleExport('txt')}
+                    <div className="flex justify-between">
+                      <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setActiveTab("record")}
                       >
-                        <FileDown className="h-4 w-4 mr-2" />
-                        Export as TXT
+                        Back to Recording
+                      </Button>
+                      <div className="space-x-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleCopyToEMR}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy to EMR
+                        </Button>
+                        {/*<Button*/}
+                        {/*    type="button"*/}
+                        {/*    className="flex items-center"*/}
+                        {/*    onClick={() => setActiveTab("context")}*/}
+                        {/*>*/}
+                        {/*  View Context*/}
+                        {/*  <Brain className="ml-2 h-4 w-4" />*/}
+                        {/*</Button>*/}
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/*<TabsContent value="context" className="mt-0">*/}
+                {/*  <div className="space-y-6">*/}
+                {/*    /!*<EnhancedContextPanel context={enhancedContextData} />*!/*/}
+
+                {/*    <div className="flex justify-between">*/}
+                {/*      <Button*/}
+                {/*          type="button"*/}
+                {/*          variant="outline"*/}
+                {/*          onClick={() => setActiveTab("notes")}*/}
+                {/*      >*/}
+                {/*        Back to Notes*/}
+                {/*      </Button>*/}
+                {/*      <Button*/}
+                {/*          type="button"*/}
+                {/*          className="flex items-center"*/}
+                {/*          onClick={() => setActiveTab("export")}*/}
+                {/*      >*/}
+                {/*        Export Options*/}
+                {/*        <FileCog className="ml-2 h-4 w-4" />*/}
+                {/*      </Button>*/}
+                {/*    </div>*/}
+                {/*  </div>*/}
+                {/*</TabsContent>*/}
+
+                <TabsContent value="export" className="mt-0">
+                  <div className="space-y-6">
+                    <div className="rounded-lg border p-6">
+                      <h3 className="text-lg font-medium mb-4 flex items-center">
+                        <FileCog className="h-5 w-5 mr-2" />
+                        Export Options
+                      </h3>
+
+                      <div className="space-y-4">
+                        <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                          <div className="bg-accent rounded-full p-1 mt-0.5">
+                            <FileText className="h-5 w-5 text-accent-foreground" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Copy to EMR</h4>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Copy the formatted notes to paste directly into your EMR system
+                            </p>
+                            <Button onClick={handleCopyToEMR} size="sm">
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copy to Clipboard
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                          <div className="bg-accent rounded-full p-1 mt-0.5">
+                            <Download className="h-5 w-5 text-accent-foreground" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Download PDF</h4>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Save the consultation notes as a PDF document
+                            </p>
+                            <Button onClick={handleDownloadPDF} size="sm">
+                              <Download className="h-4 w-4 mr-2" />
+                              Download PDF
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                          <div className="bg-accent rounded-full p-1 mt-0.5">
+                            <Printer className="h-5 w-5 text-accent-foreground" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Print Document</h4>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Print the consultation notes for physical records
+                            </p>
+                            <Button onClick={handlePrint} size="sm">
+                              <Printer className="h-4 w-4 mr-2" />
+                              Print
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setActiveTab("context")}
+                      >
+                        Back to Context
+                      </Button>
+                      <Button
+                          type="submit"
+                          onClick={handleSubmit(onSubmit)}
+                          className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Save Document
                       </Button>
                     </div>
-
-                    <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="rounded-full bg-blue-500/10 p-2">
-                          <FileText className="h-4 w-4 text-blue-500" />
-                        </div>
-                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-muted">Markdown</span>
-                      </div>
-                      <h4 className="text-base font-medium mb-1">Markdown</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Export as a markdown file (.md)
-                      </p>
-                      <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        className="w-full" 
-                        onClick={() => handleExport('md')}
-                      >
-                        <FileDown className="h-4 w-4 mr-2" />
-                        Export as MD
-                      </Button>
-                    </div>
-
-                    <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="rounded-full bg-red-500/10 p-2">
-                          <FileText className="h-4 w-4 text-red-500" />
-                        </div>
-                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-muted">PDF Format</span>
-                      </div>
-                      <h4 className="text-base font-medium mb-1">PDF Document</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Export as a simple PDF document
-                      </p>
-                      <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        className="w-full" 
-                        onClick={() => handleExport('pdf')}
-                      >
-                        <FileDown className="h-4 w-4 mr-2" />
-                        Export as PDF
-                      </Button>
-                    </div>
                   </div>
-
-                  <div className="mt-6 bg-muted/50 p-4 rounded-md">
-                    <h4 className="text-sm font-medium mb-2">Document Preview</h4>
-                    <div className="bg-card border rounded-md p-4 max-h-[300px] overflow-y-auto font-mono text-sm whitespace-pre-wrap">
-                      {form.getValues("notes") || "No document content to preview"}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Save Document</Button>
+                </TabsContent>
+              </Tabs>
             </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+
+            <div className="lg:w-1/3 p-6 space-y-6">
+              <DrugMonograph />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
   );
 };
 
