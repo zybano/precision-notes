@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { UseFormReturn } from "react-hook-form";
 import { FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,6 @@ interface SharedDocumentsProps {
 }
 
 const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, form }) => {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [sharedDocuments, setSharedDocuments] = useState<SharedDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,10 +36,20 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
     
     setIsLoading(true);
     try {
-      // Query documents shared with the current user
+      // Query documents shared with the current user using correct schema
       const { data, error } = await supabase
         .from('shared_documents')
-        .select('document_id, shared_by, shared_at, medical_documents(id, title, patient_name, type)')
+        .select(`
+          document_id,
+          shared_by,
+          shared_at,
+          documents:document_id(
+            id, 
+            title,
+            patient_name,
+            type
+          )
+        `)
         .eq('shared_with', user.id);
         
       if (error) throw error;
@@ -48,23 +57,25 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
       if (data && data.length > 0) {
         const mappedDocuments: SharedDocument[] = data.map(item => ({
           id: item.document_id,
-          title: item.medical_documents?.title || 'Unnamed Document',
+          title: item.documents?.title || 'Unnamed Document',
           author: item.shared_by,
           date: new Date(item.shared_at).toLocaleDateString()
         }));
         
         setSharedDocuments(mappedDocuments);
+      } else {
+        setSharedDocuments([]);
       }
     } catch (error) {
       console.error("Error fetching shared documents:", error);
+      toast.error("Failed to load shared documents");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleViewDocument = (doc: SharedDocument) => {
-    toast({
-      title: "Viewing Shared Document",
+    toast.success("Viewing Shared Document", {
       description: `Opening ${doc.title}`
     });
     setNewDocumentOpen(true);

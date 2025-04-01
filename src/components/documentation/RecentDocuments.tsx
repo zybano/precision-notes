@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { UseFormReturn } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Document, RawDocumentData } from "./DocumentTypes";
@@ -15,7 +16,6 @@ interface RecentDocumentsProps {
 }
 
 const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, form }) => {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +40,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('creator_id', user.id)
         .order('updated_at', { ascending: false })
         .limit(10);
         
@@ -65,20 +65,15 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       }
     } catch (error) {
       console.error("Error fetching documents:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch recent documents"
-      });
+      toast.error("Failed to fetch recent documents");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOpenDocument = (doc: Document) => {
-    toast({
-      title: "Continuing Document",
-      description: `Opening ${doc.title} for editing`,
-      duration: 3000,
+    toast.success("Continuing Document", {
+      description: `Opening ${doc.title} for editing`
     });
     
     // If there's transcript data, parse it and set it in the form
@@ -89,7 +84,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default" // Add the missing provider property
+          provider: parsedData.provider || "default"
         };
         
         // Make transcript data available to the form
@@ -119,7 +114,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default" // Add the missing provider property
+          provider: parsedData.provider || "default"
         });
         
         setTranscriptText(parsedData.text || "");
@@ -127,17 +122,11 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         setTranscriptDialogOpen(true);
       } catch (e) {
         console.error("Error parsing transcript data:", e);
-        toast({
-          title: "Error",
-          description: "Failed to parse transcript data",
-          duration: 3000,
-        });
+        toast.error("Failed to parse transcript data");
       }
     } else {
-      toast({
-        title: "No Transcript",
-        description: "This document does not have any saved transcript data",
-        duration: 3000,
+      toast.error("No Transcript", {
+        description: "This document does not have any saved transcript data"
       });
     }
   };
@@ -153,21 +142,15 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         throw error;
       }
       
-      toast({
-        title: "Document Deleted",
-        description: `${doc.title} has been deleted`,
-        duration: 3000,
+      toast.success("Document Deleted", {
+        description: `${doc.title} has been deleted`
       });
       
       // Refresh the list
       fetchRecentDocuments();
     } catch (error) {
       console.error("Error deleting document:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete document",
-        duration: 3000,
-      });
+      toast.error("Failed to delete document");
     }
   };
 
@@ -178,7 +161,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('creator_id', user.id)
         .order('updated_at', { ascending: false })
         .range(recentDocuments.length, recentDocuments.length + 10);
         
@@ -202,22 +185,17 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         
         setRecentDocuments(prev => [...prev, ...mappedDocuments]);
         
-        toast({
-          title: "Documents Loaded",
+        toast.success("Documents Loaded", {
           description: `Loaded ${data.length} more documents`
         });
       } else {
-        toast({
-          title: "No More Documents",
+        toast.info("No More Documents", {
           description: "You've reached the end of your document list"
         });
       }
     } catch (error) {
       console.error("Error loading more documents:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load more documents"
-      });
+      toast.error("Failed to load more documents");
     }
   };
 
