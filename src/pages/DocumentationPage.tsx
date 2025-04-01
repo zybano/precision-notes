@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
@@ -11,11 +11,33 @@ import { useDocumentFormat } from "@/hooks/useDocumentFormat";
 import DocumentationHeader from "@/components/documentation/DocumentationHeader";
 import DocumentationSearch from "@/components/documentation/DocumentationSearch";
 import DocumentationTabs from "@/components/documentation/DocumentationTabs";
+import { setupSupabaseFunctions, checkCreatorIdColumn } from "@/services/supabaseSetup";
 
 const DocumentationPage = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("saved");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Initialize Supabase functions if needed
+  useEffect(() => {
+    const initDb = async () => {
+      if (user) {
+        try {
+          const hasCreatorId = await checkCreatorIdColumn();
+          if (!hasCreatorId) {
+            console.log("Creator ID column doesn't exist, using alternative queries");
+          }
+          setIsInitializing(false);
+        } catch (error) {
+          console.error("Error initializing database:", error);
+          setIsInitializing(false);
+        }
+      }
+    };
+    
+    initDb();
+  }, [user]);
 
   const form = useForm({
     defaultValues: {
@@ -82,12 +104,8 @@ const DocumentationPage = () => {
       notes: "",
       documentId: "",
     });
-    // These state setters were missing and causing errors
-    // We need to use the values from the useTranscription hook
-    showSummary ? setShowSummary(false) : null;
-    transcriptResult ? null : null;
-    transcript ? null : null;
-    transcriptSummary ? null : null;
+    
+    setShowSummary(false);
     setNewDocumentOpen(true);
   };
 
@@ -109,6 +127,14 @@ const DocumentationPage = () => {
       useSpeechModelNano
     });
   };
+  
+  if (isInitializing) {
+    return (
+      <div className="container px-4 mx-auto w-full h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg">Loading documentation...</div>
+      </div>
+    );
+  }
   
   return (
     <div className="container px-4 mx-auto w-full max-w-full overflow-x-hidden">

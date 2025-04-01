@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -38,17 +37,12 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('medical_documents')
-        .select('*')
-        .eq('creator_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(10);
+        .rpc('get_user_documents', { user_id: user.id });
         
       if (error) {
         throw error;
       }
       
-      // Convert the data to Document[] type
       if (data) {
         const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
           id: doc.id,
@@ -66,6 +60,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast.error("Failed to fetch recent documents");
+      setRecentDocuments([]);
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +71,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       description: `Opening ${doc.title} for editing`
     });
     
-    // If there's transcript data, parse it and set it in the form
     if (doc.transcript_data) {
       try {
         const parsedData = JSON.parse(doc.transcript_data);
@@ -87,7 +81,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           provider: parsedData.provider || "default"
         };
         
-        // Make transcript data available to the form
         form.setValue("transcriptResult", transcriptResult);
         form.setValue("transcript", parsedData.text || "");
         form.setValue("transcriptSummary", parsedData.summary || "");
@@ -146,7 +139,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
         description: `${doc.title} has been deleted`
       });
       
-      // Refresh the list
       fetchRecentDocuments();
     } catch (error) {
       console.error("Error deleting document:", error);
@@ -170,7 +162,6 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       }
       
       if (data && data.length > 0) {
-        // Convert the data to Document[] type
         const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
           id: doc.id,
           title: doc.title,

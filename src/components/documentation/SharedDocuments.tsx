@@ -36,30 +36,18 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
     
     setIsLoading(true);
     try {
-      // Query documents shared with the current user using correct schema
+      // Using a raw query approach to handle the missing type definitions
       const { data, error } = await supabase
-        .from('shared_documents')
-        .select(`
-          document_id,
-          shared_by,
-          shared_at,
-          documents:document_id(
-            id, 
-            title,
-            patient_name,
-            type
-          )
-        `)
-        .eq('shared_with', user.id);
+        .rpc('get_shared_documents', { user_id: user.id });
         
       if (error) throw error;
       
       if (data && data.length > 0) {
         const mappedDocuments: SharedDocument[] = data.map(item => ({
-          id: item.document_id,
-          title: item.documents?.title || 'Unnamed Document',
-          author: item.shared_by,
-          date: new Date(item.shared_at).toLocaleDateString()
+          id: item.document_id || item.id,
+          title: item.title || 'Unnamed Document',
+          author: item.shared_by || 'Unknown',
+          date: item.shared_at ? new Date(item.shared_at).toLocaleDateString() : new Date().toLocaleDateString()
         }));
         
         setSharedDocuments(mappedDocuments);
@@ -69,6 +57,9 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
     } catch (error) {
       console.error("Error fetching shared documents:", error);
       toast.error("Failed to load shared documents");
+      
+      // Fallback to an empty array if there's an error
+      setSharedDocuments([]);
     } finally {
       setIsLoading(false);
     }
