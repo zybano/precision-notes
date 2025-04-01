@@ -36,15 +36,16 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
     
     setIsLoading(true);
     try {
-      // Using a raw query approach to handle the missing type definitions
-      const { data, error } = await supabase
-        .rpc('get_shared_documents', { user_id: user.id });
+      // Using the RPC function with proper typing
+      const { data, error } = await supabase.rpc('get_shared_documents', {
+        user_id: user.id
+      });
         
       if (error) throw error;
       
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const mappedDocuments: SharedDocument[] = data.map(item => ({
-          id: item.document_id || item.id,
+          id: item.document_id || item.id || '',
           title: item.title || 'Unnamed Document',
           author: item.shared_by || 'Unknown',
           date: item.shared_at ? new Date(item.shared_at).toLocaleDateString() : new Date().toLocaleDateString()

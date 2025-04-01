@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -36,15 +37,16 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .rpc('get_user_documents', { user_id: user.id });
+      const { data, error } = await supabase.rpc('get_user_documents', {
+        user_id: user.id
+      });
         
       if (error) {
         throw error;
       }
       
-      if (data) {
-        const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
+      if (data && Array.isArray(data)) {
+        const mappedDocuments: Document[] = data.map((doc: any) => ({
           id: doc.id,
           title: doc.title,
           type: doc.type,
@@ -150,6 +152,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
     if (!user?.id) return;
     
     try {
+      // For load more, we'll still use the direct table approach since our RPC doesn't support pagination yet
       const { data, error } = await supabase
         .from('medical_documents')
         .select('*')
@@ -162,7 +165,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
       }
       
       if (data && data.length > 0) {
-        const mappedDocuments: Document[] = data.map((doc: RawDocumentData) => ({
+        const newDocs = data.map((doc: any) => ({
           id: doc.id,
           title: doc.title,
           type: doc.type,
@@ -174,7 +177,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           transcript_data: doc.transcript_data || null
         }));
         
-        setRecentDocuments(prev => [...prev, ...mappedDocuments]);
+        setRecentDocuments(prev => [...prev, ...newDocs]);
         
         toast.success("Documents Loaded", {
           description: `Loaded ${data.length} more documents`

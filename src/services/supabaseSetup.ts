@@ -6,11 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const setupSupabaseFunctions = async () => {
   try {
-    // Function to get user's documents
-    await supabase.rpc('create_get_user_documents_function', {});
+    // Function to get user's documents - using a more type-safe approach
+    await supabase.rpc('create_get_user_documents_function');
     
     // Function to get documents shared with a user
-    await supabase.rpc('create_get_shared_documents_function', {});
+    await supabase.rpc('create_get_shared_documents_function');
     
     console.log("Supabase functions created successfully");
     return true;
@@ -24,8 +24,8 @@ export const setupSupabaseFunctions = async () => {
 export const checkCreatorIdColumn = async () => {
   try {
     const { data, error } = await supabase.rpc('check_column_exists', {
-      table_name: 'medical_documents',
-      column_name: 'creator_id'
+      p_table_name: 'medical_documents',
+      p_column_name: 'creator_id'
     });
     
     if (error) throw error;

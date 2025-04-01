@@ -24,6 +24,10 @@ const DocumentationPage = () => {
     const initDb = async () => {
       if (user) {
         try {
+          // First ensure our RPC functions exist
+          await setupSupabaseFunctions();
+          
+          // Then check for the creator_id column
           const hasCreatorId = await checkCreatorIdColumn();
           if (!hasCreatorId) {
             console.log("Creator ID column doesn't exist, using alternative queries");
@@ -33,6 +37,8 @@ const DocumentationPage = () => {
           console.error("Error initializing database:", error);
           setIsInitializing(false);
         }
+      } else {
+        setIsInitializing(false);
       }
     };
     
