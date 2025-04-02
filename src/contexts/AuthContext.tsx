@@ -1,7 +1,7 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AuthContextType {
   session: Session | null;
@@ -20,11 +20,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setIsLoading(false);
-      }
+        (event, currentSession) => {
+          if (event === 'SIGNED_IN' && currentSession) {
+            toast.success("Signed in successfully!");
+          } else if (event === 'SIGNED_OUT') {
+            toast.info("Signed out successfully");
+          }
+
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          setIsLoading(false);
+        }
     );
 
     // Check for existing session
@@ -34,7 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
@@ -42,9 +50,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
+        {children}
+      </AuthContext.Provider>
   );
 };
 
