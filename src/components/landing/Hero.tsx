@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import precisionNote from '/lovable-uploads/PrecisionNote.jpeg';
 
 export function Hero() {
   const [demoOpen, setDemoOpen] = useState(false);
@@ -72,7 +73,7 @@ export function Hero() {
             <FadeIn delay={0.3} className="hidden lg:flex lg:justify-center lg:items-center">
               <div className="glass rounded-2xl shadow-xl overflow-hidden hero-image-container">
                 <img
-                    src="/public/lovable-uploads/PrecisionNote.jpeg"
+                    src={precisionNote}
                     alt="Doctor using PrecisionNote for documentation"
                     className="w-full h-full object-cover"
                 />

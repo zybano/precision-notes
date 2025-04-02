@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import precisionLogo from '/lovable-uploads/precision.jpeg'; // Adjust path as needed
+import precisionNote from '/lovable-uploads/PrecisionNote.jpeg'; // Adjust path as needed
 
 const Login = () => {
   return (
@@ -14,7 +16,7 @@ const Login = () => {
                   <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
                    <a href="/" target="_self" rel="noreferrer">
                     <img
-                        src="/public/lovable-uploads/precision.jpeg"
+                        src={precisionLogo}
                         alt="PrecisionNote"
                         className="h-full w-full object-contain"
                     />
@@ -48,7 +50,7 @@ const Login = () => {
           {/* Right side with image - hidden on mobile, visible on md and up */}
           <div className="hidden md:flex md:flex-1 items-center justify-center bg-gray-100">
             <img
-                src="/public/lovable-uploads/PrecisionNote.jpeg"
+                src={precisionNote}
                 alt="Login illustration"
                 className="h-full w-full object-contain"
             />
