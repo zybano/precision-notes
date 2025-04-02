@@ -15,7 +15,7 @@ const SignUp = () => {
           </div>
           <CardTitle className="text-2xl text-center">Create an account</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to get started with Documedly
+            Enter your information to get started with PrecisionNote
           </CardDescription>
         </CardHeader>
         <CardContent>

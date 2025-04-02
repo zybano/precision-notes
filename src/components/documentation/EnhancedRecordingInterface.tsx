@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DocumentGenerationPanel from "./DocumentGenerationPanel";
 import {DocumentFormat, LLMProvider, TranscriptionResult} from "@/services/transcription";
+import SpecialtyTemplates from "@/components/SpecialtyTemplates.tsx";
 
 interface EnhancedRecordingInterfaceProps {
     isRecording: boolean;
@@ -92,23 +93,28 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
     };
 
     const formatOptions = [
+        { format: DocumentFormat.DICTATION, label: "Dictation" },
         { format: DocumentFormat.SOAP, label: "SOAP Note" },
         { format: DocumentFormat.HISTORY_AND_PHYSICAL, label: "History & Physical" },
         { format: DocumentFormat.PROGRESS_NOTE, label: "Progress Note" },
         { format: DocumentFormat.DISCHARGE_SUMMARY, label: "Discharge Summary" },
         { format: DocumentFormat.CONSULTATION, label: "Consultation" },
-        { format: DocumentFormat.PROCEDURE_NOTE, label: "Procedure Note" }
+        { format: DocumentFormat.PROCEDURE_NOTE, label: "Procedure Note" },
+        { format: DocumentFormat.PEDIATRICS, label: "Pediatrics" },
+        { format: DocumentFormat.CARDIOLOGY, label: "Cardiology" },
+        { format: DocumentFormat.ORTHOPEDICS, label: "Orthopedics" },
+        { format: DocumentFormat.PSYCHIATRY, label: "Psychiatry" },
+        { format: DocumentFormat.GERIATRICS, label: "Geriatrics" },
+        { format: DocumentFormat.OBSTETRICS, label: "Obstetrics" },
+        { format: DocumentFormat.ENDOCRINOLOGY, label: "Endocrinology" },
+
     ];
 
     // Document format options component
     const DocumentFormatSelection = () => (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center">
-                    <FileText className="h-5 w-5 mr-2" />
-                    Document Configuration
-                </CardTitle>
-                <CardDescription>
+                  <CardDescription >
                     Configure how you want the consultation documents to be formatted
                 </CardDescription>
             </CardHeader>
@@ -140,7 +146,7 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                         <Mic className="h-4 w-4 mr-2"/> Record
                     </TabsTrigger>
                     <TabsTrigger value="document-config" className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2" /> Document Config
+                        <FileText className="h-4 w-4 mr-2" /> Select Template
                     </TabsTrigger>
                     <TabsTrigger value="generate" className="flex items-center" disabled={!transcriptResult}>
                         <FileText className="h-4 w-4 mr-2" /> Generate
@@ -150,11 +156,8 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                 <TabsContent value="record" className="mt-0">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <Mic className="h-5 w-5 mr-2" />
-                                Record Consultation
-                            </CardTitle>
-                            <CardDescription>
+
+                            <CardDescription className={"text-center"}>
                                 Record your consultation with the patient or upload an audio file
                             </CardDescription>
                         </CardHeader>

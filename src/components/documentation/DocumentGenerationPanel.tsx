@@ -78,7 +78,14 @@ const DocumentGenerationPanel: React.FC<DocumentGenerationPanelProps> = ({
             case DocumentFormat.DISCHARGE_SUMMARY: return "Discharge Summary";
             case DocumentFormat.CONSULTATION: return "Consultation Note";
             case DocumentFormat.PROCEDURE_NOTE: return "Procedure Note";
-            default: return "Medical Document";
+            case DocumentFormat.CARDIOLOGY: return "Cardiology Note";
+            case DocumentFormat.DICTATION: return "Dictation";
+            case DocumentFormat.ENDOCRINOLOGY: return "Endocrinology Note";
+            case DocumentFormat.GERIATRICS: return "Geriatrics Note";
+            case DocumentFormat.OBSTETRICS: return "Obstetrics Note";
+            case DocumentFormat.PSYCHIATRY: return "Psychiatry Note";
+            case DocumentFormat.ORTHOPEDICS: return "Orthopedics Note";
+            case DocumentFormat.PEDIATRICS: return "Pediatrics Note";
         }
     };
 

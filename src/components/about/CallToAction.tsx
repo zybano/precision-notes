@@ -15,13 +15,13 @@ export function CallToAction() {
           <h2 className="text-2xl font-semibold m-0">Join Us in Revolutionizing Healthcare</h2>
         </div>
         <p className="text-muted-foreground mt-2 leading-relaxed">
-          At Documedly, we believe better documentation leads to better care. Our journey is just beginning, and we're committed to fostering a future where clinicians thrive, patients feel heard, and healthcare systems worldwide operate at their full potential.
+          At PrecisionNote, we believe better documentation leads to better care. Our journey is just beginning, and we're committed to fostering a future where clinicians thrive, patients feel heard, and healthcare systems worldwide operate at their full potential.
         </p>
       </div>
 
       <div className="text-center max-w-2xl mx-auto">
         <h3 className="font-bold text-xl md:text-2xl mb-4">Simplify. Connect. Transform.</h3>
-        <p className="text-lg italic">That's the Documedly promise.</p>
+        <p className="text-lg italic">That's the PrecisionNote promise.</p>
         <div className="mt-8">
           <Link to="/signup">
             <Button size="lg" className="shadow hover:shadow-md transition-all">

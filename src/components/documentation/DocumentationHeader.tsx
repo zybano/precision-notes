@@ -10,7 +10,7 @@ interface DocumentationHeaderProps {
 
 const DocumentationHeader: React.FC<DocumentationHeaderProps> = ({ 
   title = "Documentation",
-  description = "Record consultations and generate medical documentation with multiple AI providers"
+  description = "Record consultations and generate medical documentation"
 }) => {
   const isMobile = useIsMobile();
   

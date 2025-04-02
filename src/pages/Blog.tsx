@@ -35,13 +35,13 @@ const Blog = () => {
       image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1170&auto=format&fit=crop"
     },
     {
-      id: "documedly-case-study",
-      title: "How Documedly Reduced Documentation Time by 70%",
+      id: "PrecisionNote-case-study",
+      title: "How PrecisionNote Reduced Documentation Time by 70%",
       excerpt: "Case study of how a large medical practice implemented AI documentation and the results they achieved.",
       content: `
-        <h2>How Documedly Reduced Documentation Time by 70%</h2>
-        <p>When Northwest Medical Associates, a multi-specialty practice with over 50 physicians, approached Documedly, they were facing a crisis. Their physicians were spending an average of 2-3 hours daily on documentation, leading to burnout, decreased patient satisfaction, and reduced revenue.</p>
-        <p>After implementing Documedly's AI-powered documentation solution, the results were dramatic:</p>
+        <h2>How PrecisionNote Reduced Documentation Time by 70%</h2>
+        <p>When Northwest Medical Associates, a multi-specialty practice with over 50 physicians, approached PrecisionNote, they were facing a crisis. Their physicians were spending an average of 2-3 hours daily on documentation, leading to burnout, decreased patient satisfaction, and reduced revenue.</p>
+        <p>After implementing PrecisionNote's AI-powered documentation solution, the results were dramatic:</p>
         <ul>
           <li>Documentation time decreased from an average of 150 minutes to 45 minutes daily per physician</li>
           <li>Physician satisfaction scores increased by 35%</li>
@@ -158,7 +158,7 @@ const Blog = () => {
               <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">D</span>
               </div>
-              <span className="ml-3 text-xl font-medium">Documedly</span>
+              <span className="ml-3 text-xl font-medium">PrecisionNote</span>
             </Link>
             
             <div className="hidden md:flex items-center space-x-6">
@@ -191,7 +191,7 @@ const Blog = () => {
                   <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-lg">D</span>
                   </div>
-                  <span className="ml-2 text-lg font-medium">Documedly</span>
+                  <span className="ml-2 text-lg font-medium">PrecisionNote</span>
                 </Link>
                 <p className="text-muted-foreground mt-2 text-sm">
                   Transforming clinical documentation
@@ -228,7 +228,7 @@ const Blog = () => {
             </div>
             
             <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-              <p>© 2025 Documedly, Inc. All rights reserved.</p>
+              <p>© 2025 PrecisionNote, Inc. All rights reserved.</p>
               <div className="mt-4 md:mt-0 flex space-x-4">
                 <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
                 <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>
@@ -249,7 +249,7 @@ const Blog = () => {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Documedly</span>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -342,7 +342,7 @@ const Blog = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">Documedly</span>
+                <span className="ml-2 text-lg font-medium">PrecisionNote</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -379,7 +379,7 @@ const Blog = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2025 Documedly, Inc. All rights reserved.</p>
+            <p>© 2025 PrecisionNote, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>

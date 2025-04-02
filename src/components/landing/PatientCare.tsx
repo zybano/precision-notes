@@ -13,7 +13,7 @@ export function PatientCare() {
             <div className="space-y-4 sm:space-y-6">
               <h2 className="text-2xl sm:text-3xl font-semibold leading-tight">Real-world <span className="text-primary">Patient Care</span></h2>
               <p className="text-base sm:text-lg text-muted-foreground">
-                Documedly seamlessly integrates into healthcare environments, enabling medical professionals to focus on what matters most - the patient.
+                PrecisionNote seamlessly integrates into healthcare environments, enabling medical professionals to focus on what matters most - the patient.
               </p>
               <div className="space-y-4 pt-4">
                 <div className="flex items-start space-x-3 sm:space-x-4">

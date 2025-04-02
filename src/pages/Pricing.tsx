@@ -13,7 +13,7 @@ const Pricing = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    document.title = "Pricing | Documedly";
+    document.title = "Pricing | PrecisionNote";
   }, []);
 
   return (
@@ -28,14 +28,14 @@ const Pricing = () => {
         <h1 className="text-3xl font-bold tracking-tight mb-3">Simple, Transparent Pricing</h1>
         <div className="mt-4 text-xl px-8 py-6 bg-amber-100 text-amber-800 rounded-xl text-center mx-auto max-w-2xl">
           <p className="font-semibold mb-2">We are currently in Beta!</p>
-          <p className="text-base">Documedly is launching in Africa. Join us to be among the first to experience our revolutionary clinical documentation platform.</p>
+          <p className="text-base">PrecisionNote is launching in Africa. Join us to be among the first to experience our revolutionary clinical documentation platform.</p>
         </div>
         
         <div className="mt-8">
           <Button 
             variant="outline" 
             className="shadow-sm hover:shadow-md transition-all"
-            onClick={() => window.location.href = "mailto:hello@documedly.com?subject=Documedly Sales Inquiry"}
+            onClick={() => window.location.href = "mailto:hello@PrecisionNote.com?subject=PrecisionNote Sales Inquiry"}
           >
             Contact Sales
           </Button>
@@ -51,7 +51,7 @@ const Pricing = () => {
           </div>
           <div className="text-left">
             <h3 className="font-medium mb-2">What happens after my free trial ends?</h3>
-            <p className="text-muted-foreground">After your 7-day free trial expires, you'll need to subscribe to one of our paid plans to continue using Documedly.</p>
+            <p className="text-muted-foreground">After your 7-day free trial expires, you'll need to subscribe to one of our paid plans to continue using PrecisionNote.</p>
           </div>
           <div className="text-left">
             <h3 className="font-medium mb-2">How does billing work?</h3>

@@ -83,7 +83,7 @@ const Features = () => {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Documedly</span>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -112,7 +112,7 @@ const Features = () => {
           <div className="text-center mb-16">
             <h1 className="text-4xl font-semibold mb-6">Features</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Documedly is built specifically for healthcare professionals to streamline documentation
+              PrecisionNote is built specifically for healthcare professionals to streamline documentation
               and improve patient care.
             </p>
           </div>
@@ -140,7 +140,7 @@ const Features = () => {
           <div className="mt-24 mb-16 text-center">
             <h2 className="text-3xl font-semibold mb-6">Medical Specialty Support</h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-12">
-              Documedly adapts to your specialty needs with custom templates and tools
+              PrecisionNote adapts to your specialty needs with custom templates and tools
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -245,7 +245,7 @@ const Features = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">Documedly</span>
+                <span className="ml-2 text-lg font-medium">PrecisionNote</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -254,7 +254,7 @@ const Features = () => {
                 A product of PrecisionNote Inc.
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
+                Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-primary">hello@PrecisionNote.com</a>
               </p>
             </div>
             

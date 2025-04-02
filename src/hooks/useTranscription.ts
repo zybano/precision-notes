@@ -6,7 +6,7 @@ import {
   transcribeAudio,
   TranscriptionResult
 } from "@/services/transcription";
-import { generateBriefSummary } from "@/services/summaryUtils";
+import {generateBriefSummary, generatePatientSummary} from "@/services/summaryUtils";
 
 interface TranscriptionOptions {
   provider: TranscriptionProvider;
@@ -41,8 +41,8 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       setTranscriptResult(result);
       setTranscript(result.text);
       
-      const summary = generateBriefSummary(result.text);
-      setTranscriptSummary(summary);
+      const summary = generatePatientSummary(result.text);
+      setTranscriptSummary(await summary);
       setShowSummary(true);
 
       if (result.text) {

@@ -147,7 +147,7 @@ const Sidebar = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xl">D</span>
                 </div>
-                <span className="ml-2 font-semibold">Documedly</span>
+                <span className="ml-2 font-semibold">PrecisionNote</span>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setSheetOpen(false)} className="hover:bg-accent rounded-full">
                 <X size={18} />
@@ -187,7 +187,7 @@ const Sidebar = () => {
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">D</span>
           </div>
-          <span className="ml-2 font-semibold">Documedly</span>
+          <span className="ml-2 font-semibold">PrecisionNote</span>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hover:bg-accent rounded-full">
           <Menu size={20} />

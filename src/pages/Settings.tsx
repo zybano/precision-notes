@@ -278,193 +278,193 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <Card className="medical-card">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent/20 text-accent-foreground">
-                <Database size={32} />
-              </div>
-              <div>
-                <CardTitle>EMR/EHR Integration</CardTitle>
-                <CardDescription>Connect to your medical records system</CardDescription>
-              </div>
-            </div>
-            <Badge 
-              variant={isConnected ? "default" : "outline"} 
-              className="w-fit gap-1 px-2 py-1 text-xs"
-            >
-              <PlugZap size={14} /> 
-              {isConnected ? "Connected" : "Not Connected"}
-            </Badge>
-          </CardHeader>
-          <CardContent>
-            <Form {...emrForm}>
-              <form onSubmit={emrForm.handleSubmit(onEmrSubmit)} className="space-y-4">
-                <FormField
-                  control={emrForm.control}
-                  name="providerName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>EMR Provider</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Epic, Cerner, Allscripts" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={emrForm.control}
-                  name="apiKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>API Key</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Enter your API key" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={emrForm.control}
-                  name="endpointUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Endpoint URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://api.emrprovider.com/v1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <CardFooter className="px-0 pt-2">
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isConnecting || isConnected}
-                  >
-                    {isConnecting ? "Connecting..." : isConnected ? "Connected" : "Connect"}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+        {/*<Card className="medical-card">*/}
+        {/*  <CardHeader className="pb-4">*/}
+        {/*    <div className="flex items-center gap-4 mb-2">*/}
+        {/*      <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent/20 text-accent-foreground">*/}
+        {/*        <Database size={32} />*/}
+        {/*      </div>*/}
+        {/*      <div>*/}
+        {/*        <CardTitle>EMR/EHR Integration</CardTitle>*/}
+        {/*        <CardDescription>Connect to your medical records system</CardDescription>*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*    <Badge */}
+        {/*      variant={isConnected ? "default" : "outline"} */}
+        {/*      className="w-fit gap-1 px-2 py-1 text-xs"*/}
+        {/*    >*/}
+        {/*      <PlugZap size={14} /> */}
+        {/*      {isConnected ? "Connected" : "Not Connected"}*/}
+        {/*    </Badge>*/}
+        {/*  </CardHeader>*/}
+        {/*  <CardContent>*/}
+        {/*    <Form {...emrForm}>*/}
+        {/*      <form onSubmit={emrForm.handleSubmit(onEmrSubmit)} className="space-y-4">*/}
+        {/*        <FormField*/}
+        {/*          control={emrForm.control}*/}
+        {/*          name="providerName"*/}
+        {/*          render={({ field }) => (*/}
+        {/*            <FormItem>*/}
+        {/*              <FormLabel>EMR Provider</FormLabel>*/}
+        {/*              <FormControl>*/}
+        {/*                <Input placeholder="e.g., Epic, Cerner, Allscripts" {...field} />*/}
+        {/*              </FormControl>*/}
+        {/*              <FormMessage />*/}
+        {/*            </FormItem>*/}
+        {/*          )}*/}
+        {/*        />*/}
+        {/*        <FormField*/}
+        {/*          control={emrForm.control}*/}
+        {/*          name="apiKey"*/}
+        {/*          render={({ field }) => (*/}
+        {/*            <FormItem>*/}
+        {/*              <FormLabel>API Key</FormLabel>*/}
+        {/*              <FormControl>*/}
+        {/*                <Input type="password" placeholder="Enter your API key" {...field} />*/}
+        {/*              </FormControl>*/}
+        {/*              <FormMessage />*/}
+        {/*            </FormItem>*/}
+        {/*          )}*/}
+        {/*        />*/}
+        {/*        <FormField*/}
+        {/*          control={emrForm.control}*/}
+        {/*          name="endpointUrl"*/}
+        {/*          render={({ field }) => (*/}
+        {/*            <FormItem>*/}
+        {/*              <FormLabel>Endpoint URL</FormLabel>*/}
+        {/*              <FormControl>*/}
+        {/*                <Input placeholder="https://api.emrprovider.com/v1" {...field} />*/}
+        {/*              </FormControl>*/}
+        {/*              <FormMessage />*/}
+        {/*            </FormItem>*/}
+        {/*          )}*/}
+        {/*        />*/}
+        {/*        <CardFooter className="px-0 pt-2">*/}
+        {/*          <Button */}
+        {/*            type="submit" */}
+        {/*            className="w-full" */}
+        {/*            disabled={isConnecting || isConnected}*/}
+        {/*          >*/}
+        {/*            {isConnecting ? "Connecting..." : isConnected ? "Connected" : "Connect"}*/}
+        {/*          </Button>*/}
+        {/*        </CardFooter>*/}
+        {/*      </form>*/}
+        {/*    </Form>*/}
+        {/*  </CardContent>*/}
+        {/*</Card>*/}
 
-        <Card className="medical-card">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent/20 text-accent-foreground">
-                <FileText size={32} />
-              </div>
-              <div>
-                <CardTitle>Transcript Settings</CardTitle>
-                <CardDescription>Configure AI-enhanced transcript processing</CardDescription>
-              </div>
-            </div>
-            <Badge 
-              variant={transcriptForm.watch('enableOpenAI') ? "default" : "outline"} 
-              className="w-fit gap-1 px-2 py-1 text-xs"
-            >
-              <FileText size={14} /> 
-              {transcriptForm.watch('enableOpenAI') ? "AI Enhancement Enabled" : "Basic Processing"}
-            </Badge>
-          </CardHeader>
-          <CardContent>
-            <Form {...transcriptForm}>
-              <form onSubmit={transcriptForm.handleSubmit(onTranscriptSettingsSubmit)} className="space-y-4">
-                <FormField
-                  control={transcriptForm.control}
-                  name="enableOpenAI"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>Enable OpenAI Enhancement</FormLabel>
-                        <FormDescription>
-                          Use OpenAI to improve transcript-to-note conversion
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                {transcriptForm.watch('enableOpenAI') && (
-                  <FormField
-                    control={transcriptForm.control}
-                    name="openAIApiKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>OpenAI API Key</FormLabel>
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input 
-                              type={apiKeyVisible ? "text" : "password"} 
-                              placeholder="Enter your OpenAI API key" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <Button 
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setApiKeyVisible(!apiKeyVisible)}
-                          >
-                            {apiKeyVisible ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            )}
-                          </Button>
-                        </div>
-                        <FormDescription>
-                          Your API key is stored securely in your browser and never sent to our servers
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                
-                <FormField
-                  control={transcriptForm.control}
-                  name="preferAccuracy"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>Prioritize Accuracy</FormLabel>
-                        <FormDescription>
-                          Higher accuracy but slower processing for clinical notes
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={isUpdatingTranscriptSettings}
-                >
-                  {isUpdatingTranscriptSettings ? "Updating..." : "Update Transcript Settings"}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+        {/*<Card className="medical-card">*/}
+        {/*  <CardHeader className="pb-4">*/}
+        {/*    <div className="flex items-center gap-4 mb-2">*/}
+        {/*      <div className="h-16 w-16 rounded-full flex items-center justify-center bg-accent/20 text-accent-foreground">*/}
+        {/*        <FileText size={32} />*/}
+        {/*      </div>*/}
+        {/*      <div>*/}
+        {/*        <CardTitle>Transcript Settings</CardTitle>*/}
+        {/*        <CardDescription>Configure AI-enhanced transcript processing</CardDescription>*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*    <Badge */}
+        {/*      variant={transcriptForm.watch('enableOpenAI') ? "default" : "outline"} */}
+        {/*      className="w-fit gap-1 px-2 py-1 text-xs"*/}
+        {/*    >*/}
+        {/*      <FileText size={14} /> */}
+        {/*      {transcriptForm.watch('enableOpenAI') ? "AI Enhancement Enabled" : "Basic Processing"}*/}
+        {/*    </Badge>*/}
+        {/*  </CardHeader>*/}
+        {/*  <CardContent>*/}
+        {/*    <Form {...transcriptForm}>*/}
+        {/*      <form onSubmit={transcriptForm.handleSubmit(onTranscriptSettingsSubmit)} className="space-y-4">*/}
+        {/*        <FormField*/}
+        {/*          control={transcriptForm.control}*/}
+        {/*          name="enableOpenAI"*/}
+        {/*          render={({ field }) => (*/}
+        {/*            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">*/}
+        {/*              <div className="space-y-0.5">*/}
+        {/*                <FormLabel>Enable OpenAI Enhancement</FormLabel>*/}
+        {/*                <FormDescription>*/}
+        {/*                  Use OpenAI to improve transcript-to-note conversion*/}
+        {/*                </FormDescription>*/}
+        {/*              </div>*/}
+        {/*              <FormControl>*/}
+        {/*                <Switch*/}
+        {/*                  checked={field.value}*/}
+        {/*                  onCheckedChange={field.onChange}*/}
+        {/*                />*/}
+        {/*              </FormControl>*/}
+        {/*            </FormItem>*/}
+        {/*          )}*/}
+        {/*        />*/}
+        {/*        */}
+        {/*        {transcriptForm.watch('enableOpenAI') && (*/}
+        {/*          <FormField*/}
+        {/*            control={transcriptForm.control}*/}
+        {/*            name="openAIApiKey"*/}
+        {/*            render={({ field }) => (*/}
+        {/*              <FormItem>*/}
+        {/*                <FormLabel>OpenAI API Key</FormLabel>*/}
+        {/*                <div className="flex gap-2">*/}
+        {/*                  <FormControl>*/}
+        {/*                    <Input */}
+        {/*                      type={apiKeyVisible ? "text" : "password"} */}
+        {/*                      placeholder="Enter your OpenAI API key" */}
+        {/*                      {...field} */}
+        {/*                    />*/}
+        {/*                  </FormControl>*/}
+        {/*                  <Button */}
+        {/*                    type="button"*/}
+        {/*                    variant="outline"*/}
+        {/*                    size="icon"*/}
+        {/*                    onClick={() => setApiKeyVisible(!apiKeyVisible)}*/}
+        {/*                  >*/}
+        {/*                    {apiKeyVisible ? (*/}
+        {/*                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>*/}
+        {/*                    ) : (*/}
+        {/*                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>*/}
+        {/*                    )}*/}
+        {/*                  </Button>*/}
+        {/*                </div>*/}
+        {/*                <FormDescription>*/}
+        {/*                  Your API key is stored securely in your browser and never sent to our servers*/}
+        {/*                </FormDescription>*/}
+        {/*                <FormMessage />*/}
+        {/*              </FormItem>*/}
+        {/*            )}*/}
+        {/*          />*/}
+        {/*        )}*/}
+        {/*        */}
+        {/*        <FormField*/}
+        {/*          control={transcriptForm.control}*/}
+        {/*          name="preferAccuracy"*/}
+        {/*          render={({ field }) => (*/}
+        {/*            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">*/}
+        {/*              <div className="space-y-0.5">*/}
+        {/*                <FormLabel>Prioritize Accuracy</FormLabel>*/}
+        {/*                <FormDescription>*/}
+        {/*                  Higher accuracy but slower processing for clinical notes*/}
+        {/*                </FormDescription>*/}
+        {/*              </div>*/}
+        {/*              <FormControl>*/}
+        {/*                <Switch*/}
+        {/*                  checked={field.value}*/}
+        {/*                  onCheckedChange={field.onChange}*/}
+        {/*                />*/}
+        {/*              </FormControl>*/}
+        {/*            </FormItem>*/}
+        {/*          )}*/}
+        {/*        />*/}
+        {/*        */}
+        {/*        <Button */}
+        {/*          type="submit" */}
+        {/*          className="w-full"*/}
+        {/*          disabled={isUpdatingTranscriptSettings}*/}
+        {/*        >*/}
+        {/*          {isUpdatingTranscriptSettings ? "Updating..." : "Update Transcript Settings"}*/}
+        {/*        </Button>*/}
+        {/*      </form>*/}
+        {/*    </Form>*/}
+        {/*  </CardContent>*/}
+        {/*</Card>*/}
       </div>
     </div>
   );

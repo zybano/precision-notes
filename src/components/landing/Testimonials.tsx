@@ -20,7 +20,7 @@ interface TestimonialItem {
 export function Testimonials() {
   const testimonials: TestimonialItem[] = [
     {
-      quote: "Documedly has transformed our clinical documentation process. We've reduced administrative time by 60% and can focus more on patient care.",
+      quote: "PrecisionNote has transformed our clinical documentation process. We've reduced administrative time by 60% and can focus more on patient care.",
       author: "Dr. Sarah Johnson",
       role: "Chief Medical Officer",
       organization: "Northside Medical Group"
@@ -32,7 +32,7 @@ export function Testimonials() {
       organization: "Heart & Vascular Institute"
     },
     {
-      quote: "Implementation was seamless, and the ROI was evident within weeks. Our clinicians actually enjoy using Documedly.",
+      quote: "Implementation was seamless, and the ROI was evident within weeks. Our clinicians actually enjoy using PrecisionNote.",
       author: "Emma Rodriguez",
       role: "Healthcare IT Director",
       organization: "City Health Partners"
@@ -50,13 +50,13 @@ export function Testimonials() {
       organization: "Brain & Spine Institute"
     },
     {
-      quote: "As a busy pediatrician, Documedly has given me back precious time with my patients. The AI understands child-specific terminology perfectly.",
+      quote: "As a busy pediatrician, PrecisionNote has given me back precious time with my patients. The AI understands child-specific terminology perfectly.",
       author: "Dr. David Lee",
       role: "Pediatrician",
       organization: "Children's Wellness Center"
     },
     {
-      quote: "Our rural clinic has limited resources, and Documedly has been a game-changer for our efficiency and patient throughput.",
+      quote: "Our rural clinic has limited resources, and PrecisionNote has been a game-changer for our efficiency and patient throughput.",
       author: "Dr. Maria Sanchez",
       role: "Family Physician",
       organization: "Community Health Access"
@@ -68,7 +68,7 @@ export function Testimonials() {
       organization: "Metropolitan Healthcare Systems"
     },
     {
-      quote: "Documedly integrates seamlessly with our existing EHR system, which was a major concern before adoption.",
+      quote: "PrecisionNote integrates seamlessly with our existing EHR system, which was a major concern before adoption.",
       author: "Patricia Okafor",
       role: "Clinical Systems Manager",
       organization: "Unity Medical Network"

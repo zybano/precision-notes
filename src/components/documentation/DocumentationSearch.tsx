@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Mic } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {Link} from "react-router-dom";
 
 interface DocumentationSearchProps {
   setNewDocumentOpen: (open: boolean) => void;

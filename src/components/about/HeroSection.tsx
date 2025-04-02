@@ -20,9 +20,9 @@ export function HeroSection() {
           <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-2xl">D</span>
           </div>
-          <span className="ml-3 text-2xl font-medium">Documedly</span>
+          <span className="ml-3 text-2xl font-medium">PrecisionNote</span>
         </div>
-        <h1 className="text-3xl md:text-5xl font-bold text-center">About Documedly</h1>
+        <h1 className="text-3xl md:text-5xl font-bold text-center">About PrecisionNote</h1>
         <p className="mt-4 text-lg md:text-xl text-center max-w-2xl text-muted-foreground font-light italic">
           Empowering Care, One Word at a Time
         </p>

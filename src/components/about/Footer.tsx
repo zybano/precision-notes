@@ -14,7 +14,7 @@ export function Footer() {
               <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">D</span>
               </div>
-              <span className="ml-2 text-lg font-medium">Documedly</span>
+              <span className="ml-2 text-lg font-medium">PrecisionNote</span>
             </Link>
             <p className="text-muted-foreground mt-2 text-sm">
               Transforming clinical documentation
@@ -23,7 +23,7 @@ export function Footer() {
               A product of PrecisionNote Inc.
             </p>
             <p className="text-muted-foreground mt-1 text-sm">
-              Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
+              Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-primary">hello@PrecisionNote.com</a>
             </p>
           </div>
           

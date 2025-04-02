@@ -30,7 +30,7 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto py-6 space-y-8">
       <Helmet>
-        <title>Dashboard | Documedly</title>
+        <title>Dashboard | PrecisionNote</title>
       </Helmet>
 
       <FadeIn>

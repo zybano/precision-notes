@@ -17,7 +17,7 @@ export function StorySection() {
                 <h2 className="text-2xl font-semibold m-0">Our Story</h2>
               </div>
               <p className="text-muted-foreground mt-2 leading-relaxed">
-                Documedly was founded by physicians who experienced firsthand the toll of clinical burnout—long hours spent on documentation, fragmented patient interactions, and the strain of balancing care with administrative demands. We recognized that poor eye contact and rushed visits were symptoms of a broken system, and we set out to redefine clinical documentation for providers and patients alike.
+                PrecisionNote was founded by physicians who experienced firsthand the toll of clinical burnout—long hours spent on documentation, fragmented patient interactions, and the strain of balancing care with administrative demands. We recognized that poor eye contact and rushed visits were symptoms of a broken system, and we set out to redefine clinical documentation for providers and patients alike.
               </p>
             </div>
             <div className="md:w-1/3 rounded-xl overflow-hidden shadow-lg">
@@ -38,7 +38,7 @@ export function StorySection() {
                 <h2 className="text-2xl font-semibold m-0">A Solution for Every Care Setting</h2>
               </div>
               <p className="text-muted-foreground mt-2 leading-relaxed">
-                Our platform is designed to adapt seamlessly to the unique demands of healthcare environments—whether in hospitals, outpatient clinics, emergency rooms, operating theaters, or even remote field assessments. By integrating AI-powered tools with intuitive design, Documedly streamlines charting, reduces redundant tasks, and reclaims time for what matters most: meaningful patient care.
+                Our platform is designed to adapt seamlessly to the unique demands of healthcare environments—whether in hospitals, outpatient clinics, emergency rooms, operating theaters, or even remote field assessments. By integrating AI-powered tools with intuitive design, PrecisionNote streamlines charting, reduces redundant tasks, and reclaims time for what matters most: meaningful patient care.
               </p>
             </div>
             <div className="md:w-1/3 rounded-xl overflow-hidden shadow-lg">
@@ -80,7 +80,7 @@ export function StorySection() {
                 <h2 className="text-2xl font-semibold m-0">The Team Behind the Innovation</h2>
               </div>
               <p className="text-muted-foreground mt-2 leading-relaxed">
-                Documedly unites a passionate team of healthcare professionals, AI experts, and user experience designers. Together, we've built a platform that respects the nuances of clinical workflows while prioritizing human connection. By merging medical expertise with cutting-edge technology, we deliver solutions that enhance—not hinder—the art of healing.
+                PrecisionNote unites a passionate team of healthcare professionals, AI experts, and user experience designers. Together, we've built a platform that respects the nuances of clinical workflows while prioritizing human connection. By merging medical expertise with cutting-edge technology, we deliver solutions that enhance—not hinder—the art of healing.
               </p>
             </div>
             <div className="md:w-1/3 rounded-xl overflow-hidden shadow-lg">

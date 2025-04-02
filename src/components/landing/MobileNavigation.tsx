@@ -40,7 +40,7 @@ export function MobileNavigation() {
               >
                 <ArrowLeft className="h-4 w-4 mr-1" /> Back
               </Button>
-              <span>Documedly</span>
+              <span>PrecisionNote</span>
             </SheetTitle>
           </SheetHeader>
           <div className="flex flex-col space-y-4 mt-8">

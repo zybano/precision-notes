@@ -31,7 +31,7 @@ export function Navigation() {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Documedly</span>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
         </div>
         

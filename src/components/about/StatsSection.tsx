@@ -21,7 +21,7 @@ export function StatsSection() {
             </div>
             <h3 className="font-medium text-lg mb-2">Healthcare Providers</h3>
             <p className="text-3xl font-bold">2,500+</p>
-            <p className="text-sm text-muted-foreground mt-1">professionals using Documedly</p>
+            <p className="text-sm text-muted-foreground mt-1">professionals using PrecisionNote</p>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">

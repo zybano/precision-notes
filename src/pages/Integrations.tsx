@@ -46,7 +46,7 @@ const Integrations = () => {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Documedly</span>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -74,7 +74,7 @@ const Integrations = () => {
           <div className="text-center mb-16">
             <h1 className="text-4xl font-semibold mb-6">Integrations</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Documedly seamlessly connects with your existing healthcare systems and workflows.
+              PrecisionNote seamlessly connects with your existing healthcare systems and workflows.
             </p>
           </div>
         </FadeIn>
@@ -121,7 +121,7 @@ const Integrations = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">Documedly</span>
+                <span className="ml-2 text-lg font-medium">PrecisionNote</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -130,7 +130,7 @@ const Integrations = () => {
                 A product of PrecisionNote Inc.
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
+                Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-primary">hello@PrecisionNote.com</a>
               </p>
             </div>
             

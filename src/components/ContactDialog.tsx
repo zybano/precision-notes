@@ -55,8 +55,8 @@ export function ContactDialog({ children }: ContactDialogProps) {
     
     // Simulate form submission with email destination
     setTimeout(() => {
-      console.log("Form submitted to hello@documedly.com:", data);
-      toast.success("Message sent to hello@documedly.com! We'll get back to you soon.");
+      console.log("Form submitted to hello@PrecisionNote.com:", data);
+      toast.success("Message sent to hello@PrecisionNote.com! We'll get back to you soon.");
       setIsSubmitting(false);
       setOpen(false);
       form.reset();

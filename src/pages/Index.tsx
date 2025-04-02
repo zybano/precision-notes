@@ -25,7 +25,7 @@ const Index = () => {
   return (
     <div className={`min-h-screen bg-background w-full overflow-x-hidden ${loaded ? 'animate-fade-in' : 'opacity-0'}`}>
       <SEO 
-        title="Documedly - AI-powered Clinical Documentation Assistant"
+        title="PrecisionNote - AI-powered Clinical Documentation Assistant"
         description="Transform your medical documentation workflow with real-time transcription and AI-powered assistance. Save time and focus more on patient care."
         keywords="clinical documentation, AI transcription, medical notes, healthcare technology, patient care"
       />
@@ -33,7 +33,6 @@ const Index = () => {
       <ChatWidget />
       
       <Navigation />
-      <BrandBanner />
       <Hero />
       <Advantages />
       <Features />

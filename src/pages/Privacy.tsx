@@ -11,7 +11,7 @@ const Privacy = () => {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Documedly</span>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -44,7 +44,7 @@ const Privacy = () => {
           
           <div className="prose prose-slate max-w-none">
             <p>
-              At Documedly, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, 
+              At PrecisionNote, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, 
               and safeguard your information when you visit our website or use our service.
             </p>
             
@@ -66,7 +66,7 @@ const Privacy = () => {
             
             <h2>HIPAA Compliance</h2>
             <p>
-              As a healthcare technology provider, Documedly is committed to maintaining HIPAA compliance. 
+              As a healthcare technology provider, PrecisionNote is committed to maintaining HIPAA compliance. 
               We implement physical, technical, and administrative safeguards to protect personal health information.
             </p>
             <p>
@@ -107,7 +107,7 @@ const Privacy = () => {
             
             <h2>Contact Us</h2>
             <p>
-              If you have any questions about this Privacy Policy, please contact us at privacy@documedly.com
+              If you have any questions about this Privacy Policy, please contact us at privacy@PrecisionNote.com
             </p>
           </div>
         </FadeIn>
@@ -121,7 +121,7 @@ const Privacy = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">Documedly</span>
+                <span className="ml-2 text-lg font-medium">PrecisionNote</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -159,7 +159,7 @@ const Privacy = () => {
           </div>
           
           <div className="mt-8 pt-8 border-t border-border text-sm text-muted-foreground flex flex-col md:flex-row justify-between items-center">
-            <p>© 2025 Documedly, Inc. All rights reserved.</p>
+            <p>© 2025 PrecisionNote, Inc. All rights reserved.</p>
             <div className="mt-4 md:mt-0 flex space-x-4">
               <a href="https://twitter.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">LinkedIn</a>

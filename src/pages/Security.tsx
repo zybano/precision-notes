@@ -46,7 +46,7 @@ const Security = () => {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Documedly</span>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -73,7 +73,7 @@ const Security = () => {
       <section className="container mx-auto px-6 py-16 md:py-24 max-w-7xl">
         <FadeIn>
           <div className="text-center mb-16">
-            <h1 className="text-4xl font-semibold mb-6">Security at Documedly</h1>
+            <h1 className="text-4xl font-semibold mb-6">Security at PrecisionNote</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Protecting your data and your patients' information is our highest priority.
             </p>
@@ -125,7 +125,7 @@ const Security = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">Documedly</span>
+                <span className="ml-2 text-lg font-medium">PrecisionNote</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -134,7 +134,7 @@ const Security = () => {
                 A product of PrecisionNote Inc.
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
+                Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-primary">hello@PrecisionNote.com</a>
               </p>
             </div>
             

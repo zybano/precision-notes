@@ -34,7 +34,7 @@ export function CustomizableSettings() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-semibold mb-4">Fully Customizable <span className="text-primary">To Your Practice</span></h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Configure Documedly to match your specific workflow and requirements. Personalize settings to maximize efficiency.
+              Configure PrecisionNote to match your specific workflow and requirements. Personalize settings to maximize efficiency.
             </p>
           </div>
         </FadeIn>

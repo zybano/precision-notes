@@ -46,7 +46,7 @@ const Careers = () => {
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
-            <span className="ml-3 text-xl font-medium">Documedly</span>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
@@ -84,15 +84,15 @@ const Careers = () => {
             <div className="rounded-2xl overflow-hidden shadow-xl h-full">
               <img 
                 src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop" 
-                alt="Documedly team" 
+                alt="PrecisionNote team" 
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
-              <h2 className="text-3xl font-semibold mb-6">Life at Documedly</h2>
+              <h2 className="text-3xl font-semibold mb-6">Life at PrecisionNote</h2>
               <div className="space-y-4 text-lg">
                 <p>
-                  At Documedly, we're passionate about using AI to solve real healthcare problems. Our diverse team 
+                  At PrecisionNote, we're passionate about using AI to solve real healthcare problems. Our diverse team 
                   combines expertise in machine learning, healthcare, and software development.
                 </p>
                 <p>
@@ -112,7 +112,7 @@ const Careers = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-semibold mb-6">Our Values</h2>
             <p className="text-muted-foreground max-w-3xl mx-auto mb-12">
-              These core principles guide everything we do at Documedly.
+              These core principles guide everything we do at PrecisionNote.
             </p>
           </div>
         </FadeIn>
@@ -157,7 +157,7 @@ const Careers = () => {
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">D</span>
                 </div>
-                <span className="ml-2 text-lg font-medium">Documedly</span>
+                <span className="ml-2 text-lg font-medium">PrecisionNote</span>
               </Link>
               <p className="text-muted-foreground mt-2 text-sm">
                 Transforming clinical documentation
@@ -166,7 +166,7 @@ const Careers = () => {
                 A product of PrecisionNote Inc.
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Contact: <a href="mailto:hello@documedly.com" className="hover:text-primary">hello@documedly.com</a>
+                Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-primary">hello@PrecisionNote.com</a>
               </p>
             </div>
             

@@ -143,7 +143,7 @@ const DocumentationPage = () => {
   }
   
   return (
-    <div className="container px-4 mx-auto w-full max-w-full overflow-x-hidden">
+    <div className={"container mx-auto py-6 space-y-8"} >
       <DocumentationHeader />
       
       <DocumentationSearch 

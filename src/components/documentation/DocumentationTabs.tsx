@@ -23,28 +23,28 @@ const DocumentationTabs: React.FC<DocumentationTabsProps> = ({
   const isMobile = useIsMobile();
   
   return (
-    <FadeIn delay={0.2}>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full">
-        <TabsList className={`grid grid-cols-2 ${isMobile ? 'w-full' : 'max-w-md w-full'}`}>
-          <TabsTrigger value="saved">My Documents</TabsTrigger>
-          <TabsTrigger value="shared">Shared Documents</TabsTrigger>
-        </TabsList>
+      <FadeIn delay={0.2}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full flex flex-col items-center">
+          <TabsList className={`grid grid-cols-2 ${isMobile ? 'w-full' : 'max-w-md w-full'}`}>
+            <TabsTrigger value="saved">My Documents</TabsTrigger>
+            <TabsTrigger value="shared">Shared Documents</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="saved" className="space-y-6 w-full">
-          <RecentDocuments
-            setNewDocumentOpen={setNewDocumentOpen}
-            form={form}
-          />
-        </TabsContent>
+          <TabsContent value="saved" className="space-y-6 w-full">
+            <RecentDocuments
+                setNewDocumentOpen={setNewDocumentOpen}
+                form={form}
+            />
+          </TabsContent>
 
-        <TabsContent value="shared" className="space-y-6 w-full">
-          <SharedDocuments
-            setNewDocumentOpen={setNewDocumentOpen}
-            form={form}
-          />
-        </TabsContent>
-      </Tabs>
-    </FadeIn>
+          <TabsContent value="shared" className="space-y-6 w-full">
+            <SharedDocuments
+                setNewDocumentOpen={setNewDocumentOpen}
+                form={form}
+            />
+          </TabsContent>
+        </Tabs>
+      </FadeIn>
   );
 };
 

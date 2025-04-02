@@ -13,7 +13,7 @@ export function Pricing() {
               Choose the perfect plan for your practice. All plans include core features with flexible options as you grow.
             </p>
             <div className="mt-4 inline-block px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
-              Currently in Beta as we launch in Africa. Join us to use Documedly!
+              Currently in Beta as we launch in Africa. Join us to use PrecisionNote!
             </div>
           </div>
         </FadeIn>
@@ -23,7 +23,7 @@ export function Pricing() {
           <Button 
             variant="outline" 
             className="shadow-sm hover:shadow-md transition-all"
-            onClick={() => window.location.href = "mailto:hello@documedly.com?subject=Documedly Sales Inquiry"}
+            onClick={() => window.location.href = "mailto:hello@PrecisionNote.com?subject=PrecisionNote Sales Inquiry"}
           >
             Contact Sales
           </Button>
