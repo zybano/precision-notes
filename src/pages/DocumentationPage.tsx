@@ -11,13 +11,14 @@ import { useDocumentFormat } from "@/hooks/useDocumentFormat";
 import DocumentationHeader from "@/components/documentation/DocumentationHeader";
 import DocumentationSearch from "@/components/documentation/DocumentationSearch";
 import DocumentationTabs from "@/components/documentation/DocumentationTabs";
-import { setupSupabaseFunctions, checkCreatorIdColumn } from "@/services/supabaseSetup";
+import { setupSupabaseFunctions, checkCreatorIdColumn, saveDocument } from "@/services/supabaseSetup";
 
 const DocumentationPage = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("saved");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [documentSaved, setDocumentSaved] = useState(false);
 
   // Initialize Supabase functions if needed
   useEffect(() => {
@@ -65,7 +66,8 @@ const DocumentationPage = () => {
     pauseRecording,
     stopRecording,
     formatTime,
-    audioChunks
+    audioChunks,
+    resetRecording
   } = useAudioRecording();
 
   const {
@@ -87,7 +89,8 @@ const DocumentationPage = () => {
     setShowSummary,
     transcriptResult,
     processRecording,
-    handleFileUpload
+    handleFileUpload,
+    resetTranscription
   } = useTranscription((result) => {
     form.setValue("notes", result.text);
     form.setValue("transcript", result.text);
@@ -95,23 +98,68 @@ const DocumentationPage = () => {
     form.setValue("transcriptSummary", transcriptSummary);
   });
 
-  const handleCreateNewDocument = (data: any) => {
-    setActiveTab("saved");
-    form.reset();
-    stopRecording();
-    toast.success("Document Saved", {
-      description: "Your consultation has been saved successfully."
-    });
+  const handleCreateNewDocument = async (data: any) => {
+    if (!user) {
+      toast.error("Authentication Required", {
+        description: "Please sign in to save documents."
+      });
+      return;
+    }
+    
+    try {
+      const documentData = {
+        title: data.title || "Untitled Document",
+        patient_name: data.patientName || "Anonymous Patient",
+        type: data.type || "Consultation",
+        notes: data.notes || null,
+        transcript_data: JSON.stringify(transcriptResult) || null,
+        summary: transcriptSummary || null,
+        recording_duration: recordingTime || null,
+        document_format: DocumentFormat[documentFormat] || null,
+        creator_id: user.id,
+        generated_title: data.generatedTitle || null,
+      };
+      
+      const result = await saveDocument(documentData);
+      
+      if (result.success) {
+        setActiveTab("saved");
+        setDocumentSaved(true);
+        toast.success("Document Saved", {
+          description: "Your consultation has been saved successfully."
+        });
+        
+        // Only clear form after successful save
+        form.reset();
+        resetRecording();
+        resetTranscription();
+      } else {
+        console.error("Error saving document:", result.error);
+        toast.error("Save Failed", {
+          description: "There was an error saving your document. Please try again."
+        });
+      }
+    } catch (error) {
+      console.error("Error in document creation:", error);
+      toast.error("Save Failed", {
+        description: "There was an error saving your document. Please try again."
+      });
+    }
   };
 
   const resetForm = () => {
-    form.reset({
-      type: "Consultation",
-      notes: "",
-      documentId: "",
-    });
+    // Only reset if document was saved or user wants a fresh start
+    if (documentSaved) {
+      form.reset({
+        type: "Consultation",
+        notes: "",
+        documentId: "",
+      });
+      
+      setShowSummary(false);
+      setDocumentSaved(false);
+    }
     
-    setShowSummary(false);
     setNewDocumentOpen(true);
   };
 
@@ -132,6 +180,19 @@ const DocumentationPage = () => {
       provider: transcriptionProvider,
       useSpeechModelNano
     });
+  };
+  
+  // Handle dialog close with state preservation
+  const handleDialogOpenChange = (open: boolean) => {
+    setNewDocumentOpen(open);
+    if (!open && !documentSaved) {
+      // If dialog is closed without saving, don't reset recording state
+      // Just stop the recording if it's ongoing
+      if (isRecording) {
+        stopRecording();
+      }
+      // Don't reset form or transcription state here
+    }
   };
   
   if (isInitializing) {
@@ -161,14 +222,7 @@ const DocumentationPage = () => {
 
       <UpdatedNewDocumentDialog
         open={newDocumentOpen}
-        onOpenChange={(open) => {
-          setNewDocumentOpen(open);
-          if (!open) {
-            stopRecording();
-            setShowSummary(true);
-            form.reset();
-          }
-        }}
+        onOpenChange={handleDialogOpenChange}
         form={form}
         onSubmit={handleCreateNewDocument}
         isRecording={isRecording}
@@ -194,6 +248,7 @@ const DocumentationPage = () => {
         documentFormat={documentFormat}
         setDocumentFormat={setDocumentFormat}
         onFileUpload={onFileUpload}
+        documentSaved={documentSaved}
       />
     </div>
   );

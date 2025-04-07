@@ -83,6 +83,14 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
     });
   };
 
+  // Add a function to reset the transcription state
+  const resetTranscription = () => {
+    setTranscript("");
+    setTranscriptSummary("");
+    setTranscriptResult(null);
+    setShowSummary(true);
+  };
+
   return {
     transcript,
     transcriptSummary,
@@ -91,6 +99,7 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
     setShowSummary,
     transcriptResult,
     processRecording,
-    handleFileUpload
+    handleFileUpload,
+    resetTranscription
   };
 };

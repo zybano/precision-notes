@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useReactToPrint } from "react-to-print";
 import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import {
   TranscriptionResult,
   TranscriptionProvider,
@@ -49,6 +51,7 @@ interface UpdatedNewDocumentDialogProps {
   documentFormat: DocumentFormat;
   setDocumentFormat: (format: DocumentFormat) => void;
   onFileUpload: (file: File) => void;
+  documentSaved?: boolean;
 }
 
 const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
@@ -78,25 +81,23 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                                                                              setLlmProvider,
                                                                              documentFormat,
                                                                              setDocumentFormat,
-                                                                             onFileUpload
+                                                                             onFileUpload,
+                                                                             documentSaved = false
                                                                            }) => {
   const [activeTab, setActiveTab] = useState("record");
   const [isEditMode, setIsEditMode] = useState(false);
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+  const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = form;
   const notesContent = watch("notes");
   const printRef = useRef<HTMLDivElement>(null);
 
   const handleCopyToEMR = () => {
-    navigator.clipboard.writeText(form.getValues().notes);
+    navigator.clipboard.writeText(getValues().notes);
     toast.success("Notes copied to clipboard for EMR entry", {
       description: "The formatted notes can now be pasted into your EMR system."
     });
   };
 
-
-// Replace your existing handleDownloadPDF function with this enhanced version
-
-// Handle PDF download with direct HTML to PDF conversion
+  // Handle PDF download with direct HTML to PDF conversion
   const handleDownloadPDF = async () => {
     if (!printRef.current) {
       toast.error("Could not generate PDF", {
@@ -166,6 +167,7 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
       });
     }
   };
+  
   const handleDocumentGenerated = (document: string) => {
     setValue("notes", document);
     setActiveTab("notes");
@@ -300,7 +302,7 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                         Back to Recording
                       </Button>
                       <div className="space-x-2">
-                                              <Button
+                          <Button
                             type="button"
                             className="flex items-center"
                             onClick={() => setActiveTab("export")}
@@ -377,10 +379,6 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                 </TabsContent>
               </Tabs>
             </div>
-
-            {/*<div className="lg:w-1/3 p-6 space-y-6">*/}
-            {/*  <DrugMonograph />*/}
-            {/*</div>*/}
           </div>
 
           {/* Dedicated print container that's always in the DOM but visually hidden */}
@@ -406,8 +404,8 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
               </div>
 
               <div className="mt-8 pt-4 border-t text-sm text-gray-500">
-                <p>Document Format: {documentFormat}</p>
-                <p>Generated using {llmProvider}</p>
+                <p>Document Format: {DocumentFormat[documentFormat]}</p>
+                <p>Generated using {LLMProvider[llmProvider]}</p>
               </div>
             </div>
           </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -102,6 +101,15 @@ export const useAudioRecording = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Add a resetRecording function to clear the audio chunks and state
+  const resetRecording = () => {
+    // Clear audio chunks and reset state
+    setAudioChunks([]);
+    setRecordingTime(0);
+    setIsRecording(false);
+    setIsPaused(false);
+  };
+
   return {
     isRecording,
     isPaused,
@@ -110,6 +118,7 @@ export const useAudioRecording = () => {
     pauseRecording,
     stopRecording,
     formatTime,
-    audioChunks
+    audioChunks,
+    resetRecording
   };
 };
