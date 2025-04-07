@@ -9,6 +9,7 @@ import DocumentTable from "./DocumentTable";
 import TranscriptDialog from "./TranscriptDialog";
 import { TranscriptionResult } from "@/services/transcription";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchUserDocuments } from "@/services/supabaseSetup";
 
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
@@ -29,6 +30,9 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
   useEffect(() => {
     if (user?.id) {
       fetchRecentDocuments();
+    } else {
+      setIsLoading(false);
+      setRecentDocuments([]);
     }
   }, [user?.id]);
   
@@ -37,15 +41,15 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_user_documents', {
-        user_id: user.id
-      });
+      console.log("Fetching documents for user:", user.id);
+      const { success, data, error } = await fetchUserDocuments(user.id);
         
-      if (error) {
-        throw error;
+      if (!success || error) {
+        throw error || new Error("Failed to fetch documents");
       }
       
       if (data && Array.isArray(data)) {
+        console.log("Fetched documents:", data.length);
         const mappedDocuments: Document[] = data.map((doc: any) => ({
           id: doc.id,
           title: doc.title,
@@ -58,6 +62,9 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({ setNewDocumentOpen, f
           transcript_data: doc.transcript_data || null
         }));
         setRecentDocuments(mappedDocuments);
+      } else {
+        console.log("No documents found or data is not an array:", data);
+        setRecentDocuments([]);
       }
     } catch (error) {
       console.error("Error fetching documents:", error);

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { LLMProvider, DocumentFormat } from "@/services/transcription";
+import { LLMProvider, DocumentFormat, TranscriptionProvider } from "@/services/transcription";
 
 export const useDocumentFormat = () => {
   const [transcriptionProvider, setTranscriptionProvider] = useState<TranscriptionProvider>(
@@ -21,6 +21,3 @@ export const useDocumentFormat = () => {
     setUseSpeechModelNano
   };
 };
-
-// Import at the top of the file to ensure types are available
-import { TranscriptionProvider } from "@/services/transcription";

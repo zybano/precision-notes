@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -60,6 +61,8 @@ export const saveDocument = async (documentData: {
       documentData.creator_id = user.id;
     }
 
+    console.log("Saving document with creator_id:", documentData.creator_id);
+
     // Check if it's an update or a new document
     if (documentData.id) {
       // Update existing document
@@ -103,7 +106,10 @@ export const saveDocument = async (documentData: {
           })
           .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Insertion error details:", error);
+        throw error;
+      }
       return { success: true, data };
     }
   } catch (error) {
@@ -122,6 +128,8 @@ export const fetchUserDocuments = async (userId: string) => {
       }
       userId = user.id;
     }
+
+    console.log("Fetching documents for user:", userId);
 
     const { data, error } = await supabase.rpc('get_user_documents', {
       user_id: userId
