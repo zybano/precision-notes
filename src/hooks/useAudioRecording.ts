@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 
 export const useAudioRecording = () => {
@@ -9,21 +8,26 @@ export const useAudioRecording = () => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
   const [recordingTimer, setRecordingTimer] = useState<NodeJS.Timeout | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
-      const chunks: BlobPart[] = [];
+      
+      // Reset chunks at the start of a new recording
+      chunksRef.current = [];
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          chunks.push(e.data);
+          chunksRef.current.push(e.data);
+          setAudioChunks([...chunksRef.current]);
         }
       };
 
       recorder.onstop = () => {
-        setAudioChunks(chunks);
+        // Keep a reference to the final chunks
+        setAudioChunks([...chunksRef.current]);
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -38,12 +42,12 @@ export const useAudioRecording = () => {
 
       setRecordingTimer(timer);
 
-      toast.info("Recording Started", {
+      toast.info("Recording started", {
         description: "Your microphone is now active."
       });
     } catch (error) {
       console.error("Error starting recording:", error);
-      toast.error("Microphone Error", {
+      toast.error("Microphone error", {
         description: "Could not access microphone. Please check permissions."
       });
     }
@@ -59,9 +63,7 @@ export const useAudioRecording = () => {
         setRecordingTimer(null);
       }
 
-      toast.info("Recording Paused", {
-        description: "You can resume whenever you're ready."
-      });
+      toast.info("Recording paused");
     } else if (mediaRecorder && isRecording && isPaused) {
       mediaRecorder.resume();
       setIsPaused(false);
@@ -72,7 +74,7 @@ export const useAudioRecording = () => {
 
       setRecordingTimer(timer);
 
-      toast.info("Recording Resumed");
+      toast.info("Recording resumed");
     }
   };
 
@@ -86,9 +88,8 @@ export const useAudioRecording = () => {
         clearInterval(recordingTimer);
         setRecordingTimer(null);
       }
-      setRecordingTime(0);
 
-      toast.info("Recording Stopped");
+      toast.info("Recording stopped");
     }
   };
 
@@ -101,6 +102,7 @@ export const useAudioRecording = () => {
   // Add a resetRecording function to clear the audio chunks and state
   const resetRecording = () => {
     // Clear audio chunks and reset state
+    chunksRef.current = [];
     setAudioChunks([]);
     setRecordingTime(0);
     setIsRecording(false);

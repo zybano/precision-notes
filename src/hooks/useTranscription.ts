@@ -24,11 +24,18 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
     chunks: BlobPart[],
     options: TranscriptionOptions
   ) => {
+    if (chunks.length === 0) {
+      toast.error("No audio data", {
+        description: "No audio data was captured for transcription.",
+      });
+      return null;
+    }
+
     const audioBlob = new Blob(chunks, { type: 'audio/webm' });
 
     setIsTranscribing(true);
-    toast.info("Processing Audio", {
-      description: `Transcribing with ${TranscriptionProvider[options.provider]}...`,
+    toast.info("Processing audio", {
+      description: `Transcribing your audio...`,
     });
 
     try {
@@ -55,7 +62,7 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       setShowSummary(true);
 
       if (result.text) {
-        toast.success("Transcription Complete");
+        toast.success("Transcription complete");
       }
       
       if (onTranscriptionComplete) {
@@ -66,8 +73,8 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       return result;
     } catch (error) {
       console.error("Transcription error:", error);
-      toast.error("Transcription Error", {
-        description: "There was an error transcribing your audio. Please try again.",
+      toast.error("Transcription failed", {
+        description: "Failed to process your audio recording.",
       });
       return null;
     } finally {
@@ -82,11 +89,27 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
     return new Promise<TranscriptionResult | null>((resolve) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
+        if (!e.target || !e.target.result) {
+          toast.error("File read error", {
+            description: "Could not read the audio file.",
+          });
+          resolve(null);
+          return;
+        }
+        
         const audioBlob = new Blob([new Uint8Array(e.target.result as ArrayBuffer)], { type: 'audio/webm' });
         const chunks = [audioBlob];
         const result = await processRecording(chunks, options);
         resolve(result);
       };
+      
+      reader.onerror = () => {
+        toast.error("File read error", {
+          description: "Could not read the audio file.",
+        });
+        resolve(null);
+      };
+      
       reader.readAsArrayBuffer(file);
     });
   };

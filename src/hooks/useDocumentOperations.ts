@@ -150,17 +150,17 @@ export const useDocumentOperations = ({
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       // Add branding 
-      doc.setTextColor("#040523");
+      doc.setTextColor(4, 5, 35);
       doc.setFontSize(22);
       doc.text("PrecisionNote", 105, 20, { align: "center" });
       
       doc.setFontSize(12);
-      doc.setTextColor("#5768fd");
+      doc.setTextColor(87, 104, 253);
       const dateStr = new Date().toLocaleDateString();
       doc.text(`Generated on ${dateStr}`, 105, 30, { align: "center" });
       
       // Add accent line
-      doc.setDrawColor("#ffcd6a");
+      doc.setDrawColor(255, 205, 106);
       doc.setLineWidth(1);
       doc.line(20, 35, 190, 35);
       
@@ -176,7 +176,7 @@ export const useDocumentOperations = ({
         doc.addPage();
         
         // Add branding to each page
-        doc.setDrawColor("#ffcd6a");
+        doc.setDrawColor(255, 205, 106);
         doc.setLineWidth(0.5);
         doc.line(20, 10, 190, 10);
         
@@ -190,7 +190,7 @@ export const useDocumentOperations = ({
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(10);
-        doc.setTextColor("#5768fd");
+        doc.setTextColor(87, 104, 253);
         doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: "center" });
       }
       

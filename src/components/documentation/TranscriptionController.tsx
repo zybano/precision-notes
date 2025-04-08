@@ -1,3 +1,4 @@
+
 import { useAudioRecording } from "@/hooks/useAudioRecording";
 import { useTranscription } from "@/hooks/useTranscription";
 import { TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
@@ -75,12 +76,19 @@ export const useTranscriptionController = ({
   } = useTranscription(handleTranscriptionComplete);
 
   const handleStopRecording = async () => {
+    const chunks = [...audioChunks]; // Create a copy of the current chunks
     baseStopRecording();
-    if (audioChunks.length > 0) {
-      await processRecording(audioChunks, {
-        provider: transcriptionProvider,
-        useSpeechModelNano
-      });
+    
+    // Only process if we have audio to process
+    if (chunks.length > 0) {
+      try {
+        await processRecording(chunks, {
+          provider: transcriptionProvider,
+          useSpeechModelNano
+        });
+      } catch (error) {
+        console.error("Error processing recording:", error);
+      }
     }
   };
 
