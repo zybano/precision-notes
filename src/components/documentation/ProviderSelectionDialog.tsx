@@ -1,4 +1,4 @@
-// src/components/documentation/ProviderSelectionDialog.tsx
+
 import React from "react";
 import {
     Dialog,
@@ -32,17 +32,17 @@ interface ProviderSelectionDialogProps {
 }
 
 const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
-                                                                             open,
-                                                                             onOpenChange,
-                                                                             transcriptionProvider,
-                                                                             setTranscriptionProvider,
-                                                                             llmProvider,
-                                                                             setLLMProvider,
-                                                                             documentFormat,
-                                                                             setDocumentFormat,
-                                                                             useSpeechModelNano,
-                                                                             setUseSpeechModelNano,
-                                                                         }) => {
+    open,
+    onOpenChange,
+    transcriptionProvider,
+    setTranscriptionProvider,
+    llmProvider,
+    setLLMProvider,
+    documentFormat,
+    setDocumentFormat,
+    useSpeechModelNano,
+    setUseSpeechModelNano,
+}) => {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
@@ -57,13 +57,13 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium">Transcription Provider</h3>
                         <RadioGroup
-                            value={transcriptionProvider}
-                            onValueChange={(value) => setTranscriptionProvider(value as TranscriptionProvider)}
+                            value={String(transcriptionProvider)}
+                            onValueChange={(value) => setTranscriptionProvider(Number(value) as TranscriptionProvider)}
                             className="space-y-2"
                         >
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem
-                                    value={TranscriptionProvider.ASSEMBLYAI}
+                                    value={String(TranscriptionProvider.ASSEMBLYAI)}
                                     id="assemblyai"
                                 />
                                 <Label htmlFor="assemblyai" className="cursor-pointer">
@@ -72,7 +72,7 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem
-                                    value={TranscriptionProvider.GOOGLE_SPEECH}
+                                    value={String(TranscriptionProvider.GOOGLE_SPEECH)}
                                     id="google-speech"
                                 />
                                 <Label htmlFor="google-speech" className="cursor-pointer">
@@ -101,24 +101,24 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                     <div className="space-y-4 pt-4 border-t">
                         <h3 className="text-sm font-medium">Document Generation</h3>
                         <RadioGroup
-                            value={llmProvider}
-                            onValueChange={(value) => setLLMProvider(value as LLMProvider)}
+                            value={String(llmProvider)}
+                            onValueChange={(value) => setLLMProvider(Number(value) as LLMProvider)}
                             className="space-y-2"
                         >
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={LLMProvider.CLAUDE} id="claude" />
+                                <RadioGroupItem value={String(LLMProvider.CLAUDE)} id="claude" />
                                 <Label htmlFor="claude" className="cursor-pointer">
                                     Claude (Anthropic)
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={LLMProvider.OPENAI} id="openai" />
+                                <RadioGroupItem value={String(LLMProvider.OPENAI)} id="openai" />
                                 <Label htmlFor="openai" className="cursor-pointer">
                                     GPT-4o (OpenAI)
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={LLMProvider.GEMINI} id="gemini" />
+                                <RadioGroupItem value={String(LLMProvider.GEMINI)} id="gemini" />
                                 <Label htmlFor="gemini" className="cursor-pointer">
                                     Gemini (Google)
                                 </Label>
@@ -129,42 +129,42 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                     <div className="space-y-4 pt-4 border-t">
                         <h3 className="text-sm font-medium">Document Format</h3>
                         <RadioGroup
-                            value={documentFormat}
-                            onValueChange={(value) => setDocumentFormat(value as DocumentFormat)}
+                            value={String(documentFormat)}
+                            onValueChange={(value) => setDocumentFormat(Number(value) as DocumentFormat)}
                             className="space-y-2"
                         >
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.SOAP} id="soap" />
+                                <RadioGroupItem value={String(DocumentFormat.SOAP)} id="soap" />
                                 <Label htmlFor="soap" className="cursor-pointer">
                                     SOAP Note
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.HISTORY_AND_PHYSICAL} id="h-and-p" />
+                                <RadioGroupItem value={String(DocumentFormat.HISTORY_AND_PHYSICAL)} id="h-and-p" />
                                 <Label htmlFor="h-and-p" className="cursor-pointer">
                                     History & Physical
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.PROGRESS_NOTE} id="progress-note" />
+                                <RadioGroupItem value={String(DocumentFormat.PROGRESS_NOTE)} id="progress-note" />
                                 <Label htmlFor="progress-note" className="cursor-pointer">
                                     Progress Note
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.DISCHARGE_SUMMARY} id="discharge" />
+                                <RadioGroupItem value={String(DocumentFormat.DISCHARGE_SUMMARY)} id="discharge" />
                                 <Label htmlFor="discharge" className="cursor-pointer">
                                     Discharge Summary
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.CONSULTATION} id="consultation" />
+                                <RadioGroupItem value={String(DocumentFormat.CONSULTATION)} id="consultation" />
                                 <Label htmlFor="consultation" className="cursor-pointer">
                                     Consultation Note
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.PROCEDURE_NOTE} id="procedure" />
+                                <RadioGroupItem value={String(DocumentFormat.PROCEDURE_NOTE)} id="procedure" />
                                 <Label htmlFor="procedure" className="cursor-pointer">
                                     Procedure Note
                                 </Label>

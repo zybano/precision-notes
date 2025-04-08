@@ -24,82 +24,82 @@ export default {
 				display: ['Inter', 'system-ui', 'sans-serif'],
 			},
 			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
+				border: '#e2e8f0',
+				input: '#e2e8f0',
+				ring: '#5768fd',
+				background: '#fafbff',
+				foreground: '#040523',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: '#040523',
+					foreground: '#fafbff'
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: '#5768fd',
+					foreground: '#fafbff'
 				},
 				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+					DEFAULT: '#ff4747',
+					foreground: '#fafbff'
 				},
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
+					DEFAULT: '#f1f5f9',
+					foreground: '#475569'
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
+					DEFAULT: '#ffcd6a',
+					foreground: '#040523'
 				},
 				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
+					DEFAULT: '#fafbff',
+					foreground: '#040523'
 				},
 				card: {
-					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
+					DEFAULT: '#fafbff',
+					foreground: '#040523'
 				},
 				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+					DEFAULT: '#fafbff',
+					foreground: '#040523',
+					primary: '#040523',
+					'primary-foreground': '#fafbff',
+					accent: '#ffcd6a',
+					'accent-foreground': '#040523',
+					border: '#e2e8f0',
+					ring: '#5768fd'
 				},
-				// Blue palette (replacing the purple "medical" palette)
+				// Update the color palettes to use our brand colors
 				'medical': {
-					50: '#f0f7ff',
-					100: '#e0eefe', 
-					200: '#bae0fd',
-					300: '#90c8fc',
-					400: '#5ea8f7',
-					500: '#3b82f6',
-					600: '#2563eb',
-					700: '#1d4ed8',
-					800: '#1e40af',
-					900: '#1e3a8a',
-					950: '#172554',
+					50: '#eef0ff',
+					100: '#e0e4ff',
+					200: '#c7cdff',
+					300: '#a2acfe',
+					400: '#7c8afd',
+					500: '#5768fd',
+					600: '#4351f5',
+					700: '#3340e2',
+					800: '#2b36b7',
+					900: '#29348f',
+					950: '#040523',
 				},
 				// Yellow palette (replacing the neon green "sunshine" palette)
 				'sunshine': {
-					50: '#fefce8',
-					100: '#fef9c3',
-					200: '#fef08a',
-					300: '#fde047',
-					400: '#facc15',
-					500: '#eab308',
-					600: '#ca8a04',
-					700: '#a16207',
-					800: '#854d0e',
-					900: '#713f12',
-					950: '#422006',
+					50: '#fff9e6',
+					100: '#fff3cc',
+					200: '#ffea99',
+					300: '#ffdf66',
+					400: '#ffd633',
+					500: '#ffcd6a',
+					600: '#e6b700',
+					700: '#cc9900',
+					800: '#b38600',
+					900: '#997300',
+					950: '#806000',
 				}
 			},
 			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				lg: '0.5rem',
+				md: '0.375rem',
+				sm: '0.25rem'
 			},
 			keyframes: {
 				'accordion-down': {

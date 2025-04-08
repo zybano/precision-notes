@@ -1,3 +1,4 @@
+
 import React from "react";
 import { TranscriptionProvider, LLMProvider, DocumentFormat } from "@/services/transcription";
 import { Label } from "@/components/ui/label";
@@ -14,26 +15,40 @@ interface ProviderSelectionPanelProps {
     documentFormat: DocumentFormat;
     setDocumentFormat: (format: DocumentFormat) => void;
 }
+
 interface FormatDisplayInfo {
     id: string;
     label: string;
 }
-const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
-                                                                           transcriptionProvider,
-                                                                           setTranscriptionProvider,
-                                                                           llmProvider,
-                                                                           setLlmProvider,
-                                                                           documentFormat,
-                                                                           setDocumentFormat
-                                                                       }) => {
 
-    const formatDisplayMap: Record<DocumentFormat, FormatDisplayInfo> = {
+const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
+    transcriptionProvider,
+    setTranscriptionProvider,
+    llmProvider,
+    setLlmProvider,
+    documentFormat,
+    setDocumentFormat
+}) => {
+    // Create a complete map of all document format options
+    const formatDisplayMap: Record<number, FormatDisplayInfo> = {
         [DocumentFormat.SOAP]: { id: 'soap', label: 'SOAP Note' },
+        [DocumentFormat.HP]: { id: 'hp', label: 'H&P (Legacy)' },
+        [DocumentFormat.PROGRESS]: { id: 'progress-legacy', label: 'Progress (Legacy)' },
+        [DocumentFormat.DISCHARGE]: { id: 'discharge-legacy', label: 'Discharge (Legacy)' },
+        [DocumentFormat.PROCEDURE]: { id: 'procedure-legacy', label: 'Procedure (Legacy)' },
         [DocumentFormat.HISTORY_AND_PHYSICAL]: { id: 'hnp', label: 'H&P' },
         [DocumentFormat.PROGRESS_NOTE]: { id: 'progress', label: 'Progress Note' },
         [DocumentFormat.DISCHARGE_SUMMARY]: { id: 'discharge', label: 'Discharge Summary' },
         [DocumentFormat.CONSULTATION]: { id: 'consultation', label: 'Consultation' },
         [DocumentFormat.PROCEDURE_NOTE]: { id: 'procedure', label: 'Procedure Note' },
+        [DocumentFormat.CARDIOLOGY]: { id: 'cardiology', label: 'Cardiology' },
+        [DocumentFormat.DICTATION]: { id: 'dictation', label: 'Dictation' },
+        [DocumentFormat.ENDOCRINOLOGY]: { id: 'endocrinology', label: 'Endocrinology' },
+        [DocumentFormat.GERIATRICS]: { id: 'geriatrics', label: 'Geriatrics' },
+        [DocumentFormat.OBSTETRICS]: { id: 'obstetrics', label: 'Obstetrics' },
+        [DocumentFormat.PSYCHIATRY]: { id: 'psychiatry', label: 'Psychiatry' },
+        [DocumentFormat.ORTHOPEDICS]: { id: 'orthopedics', label: 'Orthopedics' },
+        [DocumentFormat.PEDIATRICS]: { id: 'pediatrics', label: 'Pediatrics' }
     };
 
     const formatValues = [
@@ -57,20 +72,20 @@ const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
                 {/* Transcription Provider Selection */}
                 <div className="space-y-3">
                     <div className="flex items-center">
-                        <Mic className="h-4 w-4 mr-2 text-primary" />
+                        <Mic className="h-4 w-4 mr-2 text-secondary" />
                         <Label className="font-medium">Transcription Provider</Label>
                     </div>
                     <RadioGroup
-                        value={transcriptionProvider}
-                        onValueChange={(value) => setTranscriptionProvider(value as TranscriptionProvider)}
+                        value={String(transcriptionProvider)}
+                        onValueChange={(value) => setTranscriptionProvider(Number(value) as TranscriptionProvider)}
                         className="flex flex-col space-y-2"
                     >
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value={TranscriptionProvider.ASSEMBLYAI} id="assemblyai" />
+                            <RadioGroupItem value={String(TranscriptionProvider.ASSEMBLYAI)} id="assemblyai" />
                             <Label htmlFor="assemblyai" className="cursor-pointer">AssemblyAI</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value={TranscriptionProvider.GOOGLE_SPEECH} id="google_speech" />
+                            <RadioGroupItem value={String(TranscriptionProvider.GOOGLE_SPEECH)} id="google_speech" />
                             <Label htmlFor="google_speech" className="cursor-pointer">Google Speech</Label>
                         </div>
                     </RadioGroup>
@@ -81,24 +96,24 @@ const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
                 {/* LLM Provider Selection */}
                 <div className="space-y-3">
                     <div className="flex items-center">
-                        <Laptop className="h-4 w-4 mr-2 text-primary" />
+                        <Laptop className="h-4 w-4 mr-2 text-secondary" />
                         <Label className="font-medium">LLM Provider</Label>
                     </div>
                     <RadioGroup
-                        value={llmProvider}
-                        onValueChange={(value) => setLlmProvider(value as LLMProvider)}
+                        value={String(llmProvider)}
+                        onValueChange={(value) => setLlmProvider(Number(value) as LLMProvider)}
                         className="flex flex-col space-y-2"
                     >
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value={LLMProvider.CLAUDE} id="claude" />
+                            <RadioGroupItem value={String(LLMProvider.CLAUDE)} id="claude" />
                             <Label htmlFor="claude" className="cursor-pointer">Claude</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value={LLMProvider.OPENAI} id="openai" />
+                            <RadioGroupItem value={String(LLMProvider.OPENAI)} id="openai" />
                             <Label htmlFor="openai" className="cursor-pointer">OpenAI</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value={LLMProvider.GEMINI} id="gemini" />
+                            <RadioGroupItem value={String(LLMProvider.GEMINI)} id="gemini" />
                             <Label htmlFor="gemini" className="cursor-pointer">Gemini</Label>
                         </div>
                     </RadioGroup>
@@ -109,19 +124,19 @@ const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
                 {/* Document Format Selection */}
                 <div className="space-y-3">
                     <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2 text-primary" />
+                        <FileText className="h-4 w-4 mr-2 text-secondary" />
                         <Label className="font-medium">Document Format</Label>
                     </div>
                     <RadioGroup
-                        value={documentFormat}
-                        onValueChange={(value) => setDocumentFormat(value as DocumentFormat)}
+                        value={String(documentFormat)}
+                        onValueChange={(value) => setDocumentFormat(Number(value) as DocumentFormat)}
                         className="grid grid-cols-2 gap-2"
                     >
                         {formatValues.map(format => {
                             const displayInfo = formatDisplayMap[format];
                             return (
                                 <div key={format} className="flex items-center space-x-2">
-                                    <RadioGroupItem value={format} id={displayInfo.id} />
+                                    <RadioGroupItem value={String(format)} id={displayInfo.id} />
                                     <Label htmlFor={displayInfo.id} className="cursor-pointer">
                                         {displayInfo.label}
                                     </Label>

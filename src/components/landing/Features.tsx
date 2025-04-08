@@ -23,8 +23,8 @@ export function Features() {
   ];
 
   return (
-    <section className="bg-white py-12 sm:py-16 md:py-24 border-y border-border overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+    <section className="bg-background py-12 sm:py-16 md:py-24 border-y border-border overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 max-w-[1200px]">
         <FadeIn>
           <div className="text-center mb-8 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl font-semibold mb-3 sm:mb-4">Features Designed for Healthcare Professionals</h2>
@@ -39,7 +39,7 @@ export function Features() {
             <FadeIn key={i} delay={0.2 + i * 0.1}>
               <div className="bg-background p-5 sm:p-6 rounded-xl border border-border hover:shadow-md transition-all duration-300">
                 <div className="h-10 w-10 sm:h-12 sm:w-12 bg-accent rounded-lg flex items-center justify-center mb-4">
-                  <div className="h-5 w-5 sm:h-6 sm:w-6 bg-primary rounded-md"></div>
+                  <div className="h-5 w-5 sm:h-6 sm:w-6 bg-secondary rounded-md"></div>
                 </div>
                 <h3 className="text-lg sm:text-xl font-medium mb-2">{feature.title}</h3>
                 <p className="text-sm sm:text-base text-muted-foreground">{feature.description}</p>

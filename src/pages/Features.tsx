@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FadeIn } from "@/components/ui/motion";
@@ -10,32 +11,32 @@ const Features = () => {
     {
       title: "AI-Powered Documentation",
       description: "Our platform uses advanced AI to understand medical terminology and context, automatically generating accurate clinical notes.",
-      icon: <FileText className="h-8 w-8 text-primary" />
+      icon: <FileText className="h-8 w-8 text-secondary" />
     },
     {
       title: "Time Savings",
       description: "Reduce documentation time by up to 70% with AI-assisted note taking and automated summaries.",
-      icon: <Clock className="h-8 w-8 text-primary" />
+      icon: <Clock className="h-8 w-8 text-secondary" />
     },
     {
       title: "Enhanced Security",
       description: "HIPAA-compliant platform with enterprise-grade security protocols to protect patient data.",
-      icon: <Shield className="h-8 w-8 text-primary" />
+      icon: <Shield className="h-8 w-8 text-secondary" />
     },
     {
       title: "Real-time Transcription",
       description: "Convert patient-doctor conversations into structured clinical notes as they happen.",
-      icon: <Zap className="h-8 w-8 text-primary" />
+      icon: <Zap className="h-8 w-8 text-secondary" />
     },
     {
       title: "Patient Care Focus",
       description: "Spend more time interacting with patients and less time on administrative tasks.",
-      icon: <UserCheck className="h-8 w-8 text-primary" />
+      icon: <UserCheck className="h-8 w-8 text-secondary" />
     },
     {
       title: "EHR Integration",
       description: "Seamlessly connect with major electronic health record systems for integrated workflow.",
-      icon: <Check className="h-8 w-8 text-primary" />
+      icon: <Check className="h-8 w-8 text-secondary" />
     }
   ];
   
@@ -43,17 +44,17 @@ const Features = () => {
     {
       title: "Primary Care",
       description: "Optimized templates for general practice with quick input fields for common conditions.",
-      icon: <HeartPulse className="h-8 w-8 text-primary" />
+      icon: <HeartPulse className="h-8 w-8 text-secondary" />
     },
     {
       title: "Cardiology",
       description: "Specialized terminology recognition and cardiac-specific documentation patterns.",
-      icon: <Stethoscope className="h-8 w-8 text-primary" />
+      icon: <Stethoscope className="h-8 w-8 text-secondary" />
     },
     {
       title: "Neurology",
       description: "Detailed neurological examination templates with integrated assessment scales.",
-      icon: <Brain className="h-8 w-8 text-primary" />
+      icon: <Brain className="h-8 w-8 text-secondary" />
     }
   ];
 
@@ -61,34 +62,34 @@ const Features = () => {
     {
       title: "REST API Access",
       description: "Integrate with our comprehensive API to build custom solutions on top of our platform.",
-      icon: <Code className="h-8 w-8 text-primary" />
+      icon: <Code className="h-8 w-8 text-secondary" />
     },
     {
       title: "Mobile Application",
       description: "Access all features on-the-go with our dedicated iOS and Android applications.",
-      icon: <Smartphone className="h-8 w-8 text-primary" />
+      icon: <Smartphone className="h-8 w-8 text-secondary" />
     },
     {
       title: "Offline Capabilities",
       description: "Continue working without internet connection with seamless syncing when back online.",
-      icon: <Globe className="h-8 w-8 text-primary" />
+      icon: <Globe className="h-8 w-8 text-secondary" />
     }
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
+      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border">
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">D</span>
+              <span className="text-background font-bold text-xl">D</span>
             </div>
             <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-            <Link to="/features" className="text-primary font-medium">Features</Link>
+            <Link to="/features" className="text-secondary font-medium">Features</Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
           </div>
           
@@ -107,7 +108,7 @@ const Features = () => {
         </div>
       </nav>
       
-      <section className="container mx-auto px-6 py-16 md:py-24 max-w-7xl">
+      <section className="container mx-auto px-6 py-16 md:py-24 max-w-[1200px]">
         <FadeIn>
           <div className="text-center mb-16">
             <h1 className="text-4xl font-semibold mb-6">Features</h1>
@@ -121,9 +122,9 @@ const Features = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, i) => (
             <FadeIn key={i} delay={0.1 + i * 0.1}>
-              <Card className="h-full shadow hover:shadow-md transition-shadow duration-300">
+              <Card className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
                 <CardHeader>
-                  <div className="mb-4 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center">
+                  <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
                     {feature.icon}
                   </div>
                   <CardTitle>{feature.title}</CardTitle>
@@ -145,9 +146,9 @@ const Features = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {specialtyFeatures.map((feature, i) => (
-                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300">
+                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
                   <CardHeader>
-                    <div className="mb-4 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center">
+                    <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
                       {feature.icon}
                     </div>
                     <CardTitle>{feature.title}</CardTitle>
@@ -164,7 +165,7 @@ const Features = () => {
         <FadeIn delay={0.4}>
           <div className="mt-24 mb-16">
             <h2 className="text-3xl font-semibold mb-6 text-center">Advanced AI Capabilities</h2>
-            <div className="bg-primary/5 rounded-2xl p-8 md:p-12 mt-8">
+            <div className="bg-accent/10 rounded-2xl p-8 md:p-12 mt-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div>
                   <h3 className="text-2xl font-medium mb-4">Natural Language Processing</h3>
@@ -177,14 +178,14 @@ const Features = () => {
                       "Sentiment analysis for patient concerns"
                     ].map((item, i) => (
                       <li key={i} className="flex items-start">
-                        <Check className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                        <Check className="h-5 w-5 text-secondary mr-2 mt-0.5" />
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <div className="h-64 w-full bg-gray-100 rounded-lg flex items-center justify-center">
+                <div className="bg-background rounded-xl p-6 shadow-lg border border-border">
+                  <div className="h-64 w-full bg-muted rounded-lg flex items-center justify-center">
                     <span className="text-muted-foreground">AI Processing Demo</span>
                   </div>
                 </div>
@@ -202,9 +203,9 @@ const Features = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {technicalFeatures.map((feature, i) => (
-                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300">
+                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
                   <CardHeader>
-                    <div className="mb-4 rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center">
+                    <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
                       {feature.icon}
                     </div>
                     <CardTitle>{feature.title}</CardTitle>
@@ -237,13 +238,13 @@ const Features = () => {
         </FadeIn>
       </section>
       
-      <footer className="bg-white border-t border-border py-12">
-        <div className="container mx-auto px-6 max-w-7xl">
+      <footer className="bg-background border-t border-border py-12">
+        <div className="container mx-auto px-6 max-w-[1200px]">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
               <Link to="/" className="flex items-center">
                 <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">D</span>
+                  <span className="text-background font-bold text-lg">D</span>
                 </div>
                 <span className="ml-2 text-lg font-medium">PrecisionNote</span>
               </Link>
@@ -254,7 +255,7 @@ const Features = () => {
                 A product of PrecisionNote Inc.
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
-                Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-primary">hello@PrecisionNote.com</a>
+                Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-secondary">hello@PrecisionNote.com</a>
               </p>
             </div>
             

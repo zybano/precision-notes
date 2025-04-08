@@ -6,83 +6,83 @@
 
 @layer base {
   :root {
-    --background: 210 50% 98%;
-    --foreground: 210 10% 10%;
+    --background: 225 100% 99%;
+    --foreground: 240 89% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 10% 10%;
+    --card-foreground: 240 89% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 10% 10%;
+    --popover-foreground: 240 89% 8%;
 
-    --primary: 210 100% 50%;
-    --primary-foreground: 210 50% 98%;
+    --primary: 240 89% 8%;
+    --primary-foreground: 225 100% 99%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 210 10% 10%;
+    --secondary: 240 98% 67%;
+    --secondary-foreground: 225 100% 99%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 210 10% 40%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 35%;
 
-    --accent: 48 96% 53%;
-    --accent-foreground: 48 96% 10%;
+    --accent: 43 100% 71%;
+    --accent-foreground: 240 89% 8%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 50% 98%;
+    --destructive: 0 83% 64%;
+    --destructive-foreground: 225 100% 99%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 210 100% 50%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 240 98% 67%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 210 10% 26%;
-    --sidebar-primary: 210 100% 50%;
+    --sidebar-foreground: 240 89% 8%;
+    --sidebar-primary: 240 89% 8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 10% 96%;
-    --sidebar-accent-foreground: 210 6% 10%;
-    --sidebar-border: 210 13% 91%;
-    --sidebar-ring: 210 100% 50%;
+    --sidebar-accent: 43 100% 71%;
+    --sidebar-accent-foreground: 240 89% 8%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 240 98% 67%;
   }
 
   .dark {
-    --background: 210 25% 8%;
-    --foreground: 210 10% 98%;
+    --background: 240 89% 8%;
+    --foreground: 225 100% 99%;
 
-    --card: 210 25% 12%;
-    --card-foreground: 210 10% 98%;
+    --card: 240 89% 8%;
+    --card-foreground: 225 100% 99%;
 
-    --popover: 210 25% 12%;
-    --popover-foreground: 210 10% 98%;
+    --popover: 240 89% 8%;
+    --popover-foreground: 225 100% 99%;
 
-    --primary: 210 90% 60%;
-    --primary-foreground: 210 50% 98%;
+    --primary: 225 100% 99%;
+    --primary-foreground: 240 89% 8%;
 
-    --secondary: 210 25% 16%;
-    --secondary-foreground: 210 10% 98%;
+    --secondary: 240 98% 67%;
+    --secondary-foreground: 225 100% 99%;
 
-    --muted: 210 25% 16%;
-    --muted-foreground: 210 10% 60%;
+    --muted: 240 89% 16%;
+    --muted-foreground: 220 9% 65%;
 
-    --accent: 48 96% 50%;
-    --accent-foreground: 48 10% 98%;
+    --accent: 43 100% 71%;
+    --accent-foreground: 240 89% 8%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 210 10% 98%;
+    --destructive-foreground: 225 100% 99%;
 
-    --border: 210 25% 22%;
-    --input: 210 25% 22%;
-    --ring: 210 90% 60%;
+    --border: 240 89% 16%;
+    --input: 240 89% 16%;
+    --ring: 240 98% 67%;
 
-    --sidebar-background: 210 25% 10%;
-    --sidebar-foreground: 210 10% 80%;
-    --sidebar-primary: 210 90% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 25% 16%;
-    --sidebar-accent-foreground: 210 10% 98%;
-    --sidebar-border: 210 25% 22%;
-    --sidebar-ring: 210 90% 60%;
+    --sidebar-background: 240 89% 8%;
+    --sidebar-foreground: 225 100% 99%;
+    --sidebar-primary: 225 100% 99%;
+    --sidebar-primary-foreground: 240 89% 8%;
+    --sidebar-accent: 43 100% 71%;
+    --sidebar-accent-foreground: 240 89% 8%;
+    --sidebar-border: 240 89% 16%;
+    --sidebar-ring: 240 98% 67%;
   }
 
   * {
@@ -105,15 +105,15 @@
   }
   
   .medical-gradient {
-    @apply bg-gradient-to-r from-blue-600 to-blue-800;
+    @apply bg-gradient-to-r from-secondary to-primary;
   }
   
   .sunshine-gradient {
-    @apply bg-gradient-to-r from-sunshine-400 to-sunshine-600;
+    @apply bg-gradient-to-r from-accent to-accent;
   }
   
   .tech-gradient-text {
-    @apply bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent;
   }
   
   .btn-premium {

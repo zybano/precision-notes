@@ -6,20 +6,56 @@ import { StorySection } from "@/components/about/StorySection";
 import { CallToAction } from "@/components/about/CallToAction";
 import { Footer } from "@/components/about/Footer";
 import { FadeIn } from "@/components/ui/motion";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
-      <HeroSection />
-      <StatsSection />
-      <StorySection />
-      
-      <div className="container mx-auto px-6 pb-16 max-w-4xl">
-        <FadeIn>
-          <div className="prose prose-lg max-w-none">
-            <CallToAction />
+      {/* Navigation Bar */}
+      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border">
+        <div className="container mx-auto max-w-[1200px] flex justify-between items-center">
+          <Link to="/" className="flex items-center">
+            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-background font-bold text-xl">D</span>
+            </div>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
+          </Link>
+          
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/about" className="text-secondary font-medium">About</Link>
+            <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
           </div>
-        </FadeIn>
+          
+          <div className="flex items-center space-x-3">
+            <Link to="/dashboard">
+              <Button variant="outline" className="hidden sm:inline-flex transition-all hover:shadow-sm">
+                Log in
+              </Button>
+            </Link>
+            <Link to="/dashboard">
+              <Button className="shadow-sm hover:shadow-md transition-all">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-6 max-w-[1200px]">
+        <HeroSection />
+        <StatsSection />
+        <StorySection />
+        
+        <div className="container mx-auto px-6 pb-16 max-w-4xl">
+          <FadeIn>
+            <div className="prose prose-lg max-w-none">
+              <CallToAction />
+            </div>
+          </FadeIn>
+        </div>
       </div>
       
       <Footer />

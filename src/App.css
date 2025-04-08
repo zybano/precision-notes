@@ -37,10 +37,10 @@ html, body {
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 2em rgba(250, 204, 21, 0.8));
+  filter: drop-shadow(0 0 2em rgba(255, 205, 106, 0.8));
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em rgba(97, 218, 251, 0.7));
+  filter: drop-shadow(0 0 2em rgba(87, 104, 253, 0.7));
 }
 
 @keyframes logo-spin {
@@ -71,7 +71,7 @@ html, body {
 
 /* Docs styling */
 .read-the-docs {
-  color: rgba(30, 64, 175, 0.6);
+  color: rgba(4, 5, 35, 0.6);
 }
 
 /* Responsive utilities */
@@ -180,7 +180,7 @@ html, body {
 
 /* Markdown content styling for clinical notes */
 .markdown-content h3 {
-  color: #2563eb;
+  color: #5768fd;
   font-weight: 600;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
@@ -194,17 +194,17 @@ html, body {
 }
 
 .dark .markdown-content h3 {
-  color: #5a65ff;
+  color: #5768fd;
   border-bottom-color: #374151;
 }
 
 /* Doctor-patient conversation styling */
 .doctor-text {
-  color: #1EAEDB;
+  color: #5768fd;
 }
 
 .patient-text {
-  color: #facc15; /* Yellow */
+  color: #ffcd6a;
 }
 
 /* Fix for horizontal scrolling */
