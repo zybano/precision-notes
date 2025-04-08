@@ -1,4 +1,3 @@
-
 import { useAudioRecording } from "@/hooks/useAudioRecording";
 import { useTranscription } from "@/hooks/useTranscription";
 import { TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
@@ -29,23 +28,39 @@ interface TranscriptionControllerReturn {
   resetTranscription: () => void;
 }
 
-// This is a custom hook, not a component
 export const useTranscriptionController = ({
   form,
   transcriptionProvider,
   useSpeechModelNano
-}: TranscriptionControllerProps): TranscriptionControllerReturn => {
+}: {
+  form: UseFormReturn<any>;
+  transcriptionProvider: TranscriptionProvider;
+  useSpeechModelNano: boolean;
+}) => {
   const {
     isRecording,
     isPaused,
     recordingTime,
     startRecording,
     pauseRecording,
-    stopRecording,
+    stopRecording: baseStopRecording,
     formatTime,
     audioChunks,
     resetRecording
   } = useAudioRecording();
+
+  const handleTranscriptionComplete = (result: TranscriptionResult, summary?: string) => {
+    form.setValue("transcriptResult", result);
+    form.setValue("transcript", result.text);
+    
+    if (summary) {
+      form.setValue("transcriptSummary", summary);
+    }
+    
+    if (recordingTime > 0) {
+      form.setValue("recordingTime", recordingTime);
+    }
+  };
 
   const {
     transcript,
@@ -55,63 +70,44 @@ export const useTranscriptionController = ({
     setShowSummary,
     transcriptResult,
     processRecording,
-    handleFileUpload,
+    handleFileUpload: baseHandleFileUpload,
     resetTranscription
-  } = useTranscription((result) => {
-    // When transcription is complete, update the form
-    form.setValue("notes", result.text);
-    form.setValue("transcript", result.text);
-    form.setValue("transcriptResult", result);
-    
-    // Ensure the transcriptSummary is set in the form
-    if (transcriptSummary) {
-      form.setValue("transcriptSummary", transcriptSummary);
-    }
-    
-    // Include the recording time in the form
-    form.setValue("recordingTime", recordingTime);
-  });
+  } = useTranscription(handleTranscriptionComplete);
 
-  // Handle processing audio when recording stops
-  const handleStopRecording = () => {
-    stopRecording();
+  const handleStopRecording = async () => {
+    baseStopRecording();
     if (audioChunks.length > 0) {
-      processRecording(audioChunks, {
+      await processRecording(audioChunks, {
         provider: transcriptionProvider,
         useSpeechModelNano
-      }).then(result => {
-        if (result && transcriptSummary) {
-          // Update the form with the latest summary
-          form.setValue("transcriptSummary", transcriptSummary);
-        }
       });
     }
   };
 
-  // Handle file upload
-  const onFileUpload = (file: File) => {
-    handleFileUpload(file, {
+  const onFileUpload = async (file: File) => {
+    const result = await baseHandleFileUpload(file, {
       provider: transcriptionProvider,
       useSpeechModelNano
-    }).then(result => {
-      if (result && transcriptSummary) {
-        // Update the form with the latest summary 
-        form.setValue("transcriptSummary", transcriptSummary);
-      }
     });
+    
+    if (result) {
+      form.setValue("recordingTime", 0);
+    }
+    
+    return result;
   };
 
   return {
     isRecording,
     isPaused,
     recordingTime,
+    isTranscribing,
     startRecording,
     pauseRecording,
     handleStopRecording,
     formatTime,
     transcript,
     transcriptSummary,
-    isTranscribing,
     showSummary,
     setShowSummary,
     transcriptResult,

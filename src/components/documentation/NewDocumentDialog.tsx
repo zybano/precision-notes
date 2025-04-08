@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,6 @@ import { Check, LayoutDashboard, FileText, Eye, FileCog, Copy, Download, Printer
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useReactToPrint } from "react-to-print";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import {
   TranscriptionResult,
   TranscriptionProvider,
@@ -51,6 +50,7 @@ interface UpdatedNewDocumentDialogProps {
   setDocumentFormat: (format: DocumentFormat) => void;
   onFileUpload: (file: File) => void;
   documentSaved?: boolean;
+  exportToPDF?: (contentRef: React.RefObject<HTMLDivElement>, title?: string) => Promise<void>;
 }
 
 const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
@@ -81,19 +81,19 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
   documentFormat,
   setDocumentFormat,
   onFileUpload,
-  documentSaved = false
+  documentSaved = false,
+  exportToPDF
 }) => {
   const [activeTab, setActiveTab] = useState("record");
   const [isEditMode, setIsEditMode] = useState(false);
   const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = form;
   const notesContent = watch("notes");
   const printRef = useRef<HTMLDivElement>(null);
+  const documentTitle = watch("title") || "Medical Report";
 
   const handleCopyToEMR = () => {
     navigator.clipboard.writeText(getValues().notes);
-    toast.success("Notes Copied", {
-      description: "Document copied to clipboard."
-    });
+    toast.success("Notes Copied");
   };
 
   // Handle PDF download with direct HTML to PDF conversion
@@ -105,64 +105,11 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
       return;
     }
 
-    toast.info("Preparing PDF", {
-      description: "Your document is being generated..."
-    });
-
-    try {
-      // Create a date string for the filename
-      const dateStr = new Date().toISOString().split('T')[0];
-      const filename = `medical_report_${dateStr}.pdf`;
-
-      // Create new jsPDF instance
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Get the content to be converted
-      const content = printRef.current;
-
-      // Convert HTML element to canvas
-      const canvas = await html2canvas(content, {
-        scale: 2, // Higher scale for better quality
-        useCORS: true,
-        logging: false,
-      });
-
-      // Get the image data from canvas
-      const imgData = canvas.toDataURL('image/png');
-
-      // Calculate proper dimensions to fit on A4
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Add image to PDF
-      doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-      // If content overflows the page, add new pages
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      while (heightLeft > pageHeight) {
-        position = heightLeft - pageHeight;
-        doc.addPage();
-        doc.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      // Save the PDF
-      doc.save(filename);
-
-      toast.success("PDF Downloaded", {
-        description: "Your document has been saved as PDF."
-      });
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      toast.error("PDF Generation Failed", {
-        description: "Unable to generate PDF document."
+    if (exportToPDF) {
+      await exportToPDF(printRef, documentTitle);
+    } else {
+      toast.error("PDF Export Unavailable", {
+        description: "PDF export function is not available."
       });
     }
   };
@@ -170,9 +117,7 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
   const handleDocumentGenerated = (document: string) => {
     setValue("notes", document);
     setActiveTab("notes");
-    toast.success("Document Generated", {
-      description: "Your notes have been created."
-    });
+    toast.success("Document Generated");
   };
 
   const toggleEditMode = () => {
@@ -285,7 +230,6 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                     ) : (
                       <div
                         className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
-                        ref={printRef}
                       >
                         <ReactMarkdown>{notesContent}</ReactMarkdown>
                       </div>
@@ -380,30 +324,40 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
           </div>
         </div>
 
+        {/* Hidden container for PDF export */}
         <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
           <div ref={printRef} className="p-6 bg-white" style={{ width: "800px" }}>
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold">Medical Consultation Report</h1>
-              <p className="text-sm text-gray-500">Generated by PrecisionNote on {new Date().toLocaleDateString()}</p>
+            <div className="pb-4 border-b border-[#ffcd6a]">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-2xl font-bold text-[#040523]">PrecisionNote</h1>
+                  <p className="text-sm text-[#5768fd]">Medical Documentation</p>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-xl font-medium text-[#040523]">{documentTitle || "Medical Report"}</h2>
+                  <p className="text-sm text-[#5768fd]">Generated on {new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
             </div>
 
             {transcriptSummary && (
-              <div className="mb-8">
-                <h2 className="text-xl font-bold border-b pb-2 mb-4">Consultation Summary</h2>
-                <div className="bg-gray-50 p-4 border rounded">
-                  <p>{transcriptSummary}</p>
+              <div className="my-6">
+                <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
+                <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
+                  <p className="text-[#040523]">{transcriptSummary}</p>
                 </div>
               </div>
             )}
 
-            <h2 className="text-xl font-bold border-b pb-2 mb-4">Detailed Clinical Notes</h2>
-            <div className="mt-4">
+            <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Clinical Notes</h2>
+            <div className="mt-4 text-[#040523]">
               <ReactMarkdown>{notesContent}</ReactMarkdown>
             </div>
 
-            <div className="mt-8 pt-4 border-t text-sm text-gray-500">
+            <div className="mt-8 pt-4 border-t border-[#ffcd6a] text-sm text-[#5768fd]">
               <p>Document Format: {DocumentFormat[documentFormat]}</p>
               <p>Generated using {LLMProvider[llmProvider]}</p>
+              <p className="mt-2 text-xs">© {new Date().getFullYear()} PrecisionNote - All rights reserved</p>
             </div>
           </div>
         </div>

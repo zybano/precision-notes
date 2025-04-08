@@ -23,6 +23,7 @@ const DocumentationPage = () => {
       transcript: "",
       transcriptSummary: "",
       transcriptResult: null,
+      recordingTime: 0,
     },
   });
 
@@ -55,7 +56,8 @@ const DocumentationPage = () => {
     documentSaved,
     setDocumentSaved,
     handleCreateNewDocument,
-    resetForm
+    resetForm,
+    exportToPDF
   } = useDocumentOperations({
     form,
     resetRecording: transcriptionControls.resetRecording,
@@ -129,6 +131,7 @@ const DocumentationPage = () => {
           setDocumentFormat={setDocumentFormat}
           onFileUpload={transcriptionControls.onFileUpload}
           documentSaved={documentSaved}
+          exportToPDF={exportToPDF}
         />
       </div>
     </DocumentationInitializer>

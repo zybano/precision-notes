@@ -13,7 +13,7 @@ interface TranscriptionOptions {
   useSpeechModelNano: boolean;
 }
 
-export const useTranscription = (onTranscriptionComplete?: (result: TranscriptionResult) => void) => {
+export const useTranscription = (onTranscriptionComplete?: (result: TranscriptionResult, summary?: string) => void) => {
   const [transcript, setTranscript] = useState("");
   const [transcriptSummary, setTranscriptSummary] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -42,25 +42,25 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       setTranscript(result.text);
       
       // Generate and set transcript summary
+      let summary = "";
       try {
-        const summary = await generatePatientSummary(result.text);
+        summary = await generatePatientSummary(result.text);
         setTranscriptSummary(summary);
       } catch (error) {
         console.error("Error generating summary:", error);
-        setTranscriptSummary("Unable to generate summary for this transcript.");
+        summary = "Unable to generate summary for this transcript.";
+        setTranscriptSummary(summary);
       }
       
       setShowSummary(true);
 
       if (result.text) {
-        toast.success("Transcription Complete", {
-          description: "Your audio has been successfully transcribed.",
-        });
+        toast.success("Transcription Complete");
       }
       
       if (onTranscriptionComplete) {
-        // Call the callback with the result
-        onTranscriptionComplete(result);
+        // Call the callback with the result and summary
+        onTranscriptionComplete(result, summary);
       }
 
       return result;
