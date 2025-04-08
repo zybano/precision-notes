@@ -44,11 +44,12 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
       if (error) throw error;
       
       if (data && Array.isArray(data) && data.length > 0) {
+        // Map the data to our expected format, with safeguards for missing properties
         const mappedDocuments: SharedDocument[] = data.map(item => ({
-          id: item.document_id || item.id || '',
+          id: item.id || '',
           title: item.title || 'Unnamed Document',
-          author: item.shared_by || 'Unknown',
-          date: item.shared_at ? new Date(item.shared_at).toLocaleDateString() : new Date().toLocaleDateString()
+          author: item.creator_id || 'Unknown', // Use creator_id as fallback
+          date: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : new Date().toLocaleDateString()
         }));
         
         setSharedDocuments(mappedDocuments);
@@ -67,9 +68,7 @@ const SharedDocuments: React.FC<SharedDocumentsProps> = ({ setNewDocumentOpen, f
   };
 
   const handleViewDocument = (doc: SharedDocument) => {
-    toast.success("Viewing Shared Document", {
-      description: `Opening ${doc.title}`
-    });
+    toast.info(`Opening document: ${doc.title}`);
     setNewDocumentOpen(true);
     form.setValue("type", "Shared Document");
     form.setValue("patientName", doc.title);

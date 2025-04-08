@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -37,12 +38,12 @@ export const useAudioRecording = () => {
 
       setRecordingTimer(timer);
 
-      toast.success("Recording Started", {
-        description: "Speak clearly into your microphone."
+      toast.info("Recording Started", {
+        description: "Your microphone is now active."
       });
     } catch (error) {
       console.error("Error starting recording:", error);
-      toast.error("Recording Error", {
+      toast.error("Microphone Error", {
         description: "Could not access microphone. Please check permissions."
       });
     }
@@ -58,8 +59,8 @@ export const useAudioRecording = () => {
         setRecordingTimer(null);
       }
 
-      toast.success("Recording Paused", {
-        description: "Click resume to continue recording."
+      toast.info("Recording Paused", {
+        description: "You can resume whenever you're ready."
       });
     } else if (mediaRecorder && isRecording && isPaused) {
       mediaRecorder.resume();
@@ -71,9 +72,7 @@ export const useAudioRecording = () => {
 
       setRecordingTimer(timer);
 
-      toast.success("Recording Resumed", {
-        description: "Recording has been resumed."
-      });
+      toast.info("Recording Resumed");
     }
   };
 
@@ -89,9 +88,7 @@ export const useAudioRecording = () => {
       }
       setRecordingTime(0);
 
-      toast.success("Recording Stopped", {
-        description: "Your recording will be processed shortly."
-      });
+      toast.info("Recording Stopped");
     }
   };
 

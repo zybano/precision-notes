@@ -27,8 +27,8 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
     const audioBlob = new Blob(chunks, { type: 'audio/webm' });
 
     setIsTranscribing(true);
-    toast.success("Processing Audio", {
-      description: `Your recording is being transcribed with ${TranscriptionProvider[options.provider]}...`,
+    toast.info("Processing Audio", {
+      description: `Transcribing with ${TranscriptionProvider[options.provider]}...`,
     });
 
     try {
@@ -53,17 +53,14 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       setShowSummary(true);
 
       if (result.text) {
-        toast.success("Transcription Completed Successfully", {
-          description: "Choose your document format to continue",
+        toast.success("Transcription Complete", {
+          description: "Your audio has been successfully transcribed.",
         });
       }
       
       if (onTranscriptionComplete) {
-        // Make sure to include the summary in the callback
-        onTranscriptionComplete({
-          ...result,
-          summary: transcriptSummary
-        });
+        // Call the callback with the result
+        onTranscriptionComplete(result);
       }
 
       return result;

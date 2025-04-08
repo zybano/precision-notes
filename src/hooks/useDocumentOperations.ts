@@ -54,7 +54,7 @@ export const useDocumentOperations = ({
       if (result.success) {
         setDocumentSaved(true);
         toast.success("Document Saved", {
-          description: "Your consultation has been saved successfully."
+          description: "Your document has been saved successfully."
         });
         
         // Only clear form after successful save
