@@ -41,8 +41,15 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       setTranscriptResult(result);
       setTranscript(result.text);
       
-      const summary = generatePatientSummary(result.text);
-      setTranscriptSummary(await summary);
+      // Generate and set transcript summary
+      try {
+        const summary = await generatePatientSummary(result.text);
+        setTranscriptSummary(summary);
+      } catch (error) {
+        console.error("Error generating summary:", error);
+        setTranscriptSummary("Unable to generate summary for this transcript.");
+      }
+      
       setShowSummary(true);
 
       if (result.text) {
@@ -52,7 +59,11 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       }
       
       if (onTranscriptionComplete) {
-        onTranscriptionComplete(result);
+        // Make sure to include the summary in the callback
+        onTranscriptionComplete({
+          ...result,
+          summary: transcriptSummary
+        });
       }
 
       return result;

@@ -77,9 +77,9 @@ const Features = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border">
-        <div className="container mx-auto max-w-7xl flex justify-between items-center">
+    <div className="min-h-screen bg-background w-full">
+      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border w-full">
+        <div className="container mx-auto flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-background font-bold text-xl">D</span>
@@ -108,45 +108,22 @@ const Features = () => {
         </div>
       </nav>
       
-      <section className="container mx-auto px-6 py-16 md:py-24 max-w-[1200px]">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <h1 className="text-4xl font-semibold mb-6">Features</h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              PrecisionNote is built specifically for healthcare professionals to streamline documentation
-              and improve patient care.
-            </p>
-          </div>
-        </FadeIn>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, i) => (
-            <FadeIn key={i} delay={0.1 + i * 0.1}>
-              <Card className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
-                <CardHeader>
-                  <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
-                    {feature.icon}
-                  </div>
-                  <CardTitle>{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </CardContent>
-              </Card>
-            </FadeIn>
-          ))}
-        </div>
-        
-        <FadeIn delay={0.3}>
-          <div className="mt-24 mb-16 text-center">
-            <h2 className="text-3xl font-semibold mb-6">Medical Specialty Support</h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-12">
-              PrecisionNote adapts to your specialty needs with custom templates and tools
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {specialtyFeatures.map((feature, i) => (
-                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
+      <section className="w-full bg-background px-6 py-16 md:py-24">
+        <div className="container mx-auto">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h1 className="text-4xl font-semibold mb-6">Features</h1>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                PrecisionNote is built specifically for healthcare professionals to streamline documentation
+                and improve patient care.
+              </p>
+            </div>
+          </FadeIn>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, i) => (
+              <FadeIn key={i} delay={0.1 + i * 0.1}>
+                <Card className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
                   <CardHeader>
                     <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
                       {feature.icon}
@@ -157,89 +134,114 @@ const Features = () => {
                     <p className="text-muted-foreground">{feature.description}</p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+              </FadeIn>
+            ))}
           </div>
-        </FadeIn>
-        
-        <FadeIn delay={0.4}>
-          <div className="mt-24 mb-16">
-            <h2 className="text-3xl font-semibold mb-6 text-center">Advanced AI Capabilities</h2>
-            <div className="bg-accent/10 rounded-2xl p-8 md:p-12 mt-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <h3 className="text-2xl font-medium mb-4">Natural Language Processing</h3>
-                  <p className="text-lg mb-6">Our advanced AI understands medical context and terminology, allowing for natural conversation-style documentation.</p>
-                  <ul className="space-y-2">
-                    {[
-                      "Context-aware medical term interpretation",
-                      "Medical specialty-specific vocabulary",
-                      "Automatic coding and classification",
-                      "Sentiment analysis for patient concerns"
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-start">
-                        <Check className="h-5 w-5 text-secondary mr-2 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="bg-background rounded-xl p-6 shadow-lg border border-border">
-                  <div className="h-64 w-full bg-muted rounded-lg flex items-center justify-center">
-                    <span className="text-muted-foreground">AI Processing Demo</span>
+          
+          <FadeIn delay={0.3}>
+            <div className="mt-24 mb-16 text-center">
+              <h2 className="text-3xl font-semibold mb-6">Medical Specialty Support</h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-12">
+                PrecisionNote adapts to your specialty needs with custom templates and tools
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {specialtyFeatures.map((feature, i) => (
+                  <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
+                    <CardHeader>
+                      <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
+                        {feature.icon}
+                      </div>
+                      <CardTitle>{feature.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">{feature.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </FadeIn>
+          
+          <FadeIn delay={0.4}>
+            <div className="mt-24 mb-16">
+              <h2 className="text-3xl font-semibold mb-6 text-center">Advanced AI Capabilities</h2>
+              <div className="bg-accent/10 rounded-2xl p-8 md:p-12 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div>
+                    <h3 className="text-2xl font-medium mb-4">Natural Language Processing</h3>
+                    <p className="text-lg mb-6">Our advanced AI understands medical context and terminology, allowing for natural conversation-style documentation.</p>
+                    <ul className="space-y-2">
+                      {[
+                        "Context-aware medical term interpretation",
+                        "Medical specialty-specific vocabulary",
+                        "Automatic coding and classification",
+                        "Sentiment analysis for patient concerns"
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-start">
+                          <Check className="h-5 w-5 text-secondary mr-2 mt-0.5" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-background rounded-xl p-6 shadow-lg border border-border">
+                    <div className="h-64 w-full bg-muted rounded-lg flex items-center justify-center">
+                      <span className="text-muted-foreground">AI Processing Demo</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </FadeIn>
-        
-        <FadeIn delay={0.5}>
-          <div className="mt-24 mb-16 text-center">
-            <h2 className="text-3xl font-semibold mb-6">Technical Features</h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-12">
-              Powerful tools for developers and technical integration
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {technicalFeatures.map((feature, i) => (
-                <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
-                  <CardHeader>
-                    <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
-                      {feature.icon}
-                    </div>
-                    <CardTitle>{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
+          </FadeIn>
+          
+          <FadeIn delay={0.5}>
+            <div className="mt-24 mb-16 text-center">
+              <h2 className="text-3xl font-semibold mb-6">Technical Features</h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-12">
+                Powerful tools for developers and technical integration
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {technicalFeatures.map((feature, i) => (
+                  <Card key={i} className="h-full shadow hover:shadow-md transition-shadow duration-300 border-border">
+                    <CardHeader>
+                      <div className="mb-4 rounded-full bg-secondary/10 w-14 h-14 flex items-center justify-center">
+                        {feature.icon}
+                      </div>
+                      <CardTitle>{feature.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">{feature.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-        </FadeIn>
-        
-        <FadeIn delay={0.6}>
-          <div className="mt-24 text-center">
-            <h2 className="text-3xl font-semibold mb-6">Ready to Transform Your Practice?</h2>
-            <div className="flex flex-col md:flex-row gap-4 justify-center">
-              <Link to="/dashboard">
-                <Button size="lg" className="shadow hover:shadow-md transition-all">
-                  Start Free Trial
-                </Button>
-              </Link>
-              <Link to="/pricing">
-                <Button size="lg" variant="outline" className="shadow-sm hover:shadow transition-all">
-                  View Pricing
-                </Button>
-              </Link>
+          </FadeIn>
+          
+          <FadeIn delay={0.6}>
+            <div className="mt-24 text-center">
+              <h2 className="text-3xl font-semibold mb-6">Ready to Transform Your Practice?</h2>
+              <div className="flex flex-col md:flex-row gap-4 justify-center">
+                <Link to="/dashboard">
+                  <Button size="lg" className="shadow hover:shadow-md transition-all">
+                    Start Free Trial
+                  </Button>
+                </Link>
+                <Link to="/pricing">
+                  <Button size="lg" variant="outline" className="shadow-sm hover:shadow transition-all">
+                    View Pricing
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
-        </FadeIn>
+          </FadeIn>
+        </div>
       </section>
       
-      <footer className="bg-background border-t border-border py-12">
-        <div className="container mx-auto px-6 max-w-[1200px]">
+      <footer className="bg-background border-t border-border py-12 w-full">
+        <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
               <Link to="/" className="flex items-center">

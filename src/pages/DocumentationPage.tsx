@@ -45,7 +45,12 @@ const DocumentationPage = () => {
     useSpeechModelNano
   });
 
-  // Use our document operations hook
+  // Handle document dialog close
+  const handleDialogClose = () => {
+    setNewDocumentOpen(false);
+  };
+
+  // Use our document operations hook with onSaveSuccess callback
   const {
     documentSaved,
     setDocumentSaved,
@@ -54,25 +59,32 @@ const DocumentationPage = () => {
   } = useDocumentOperations({
     form,
     resetRecording: transcriptionControls.resetRecording,
-    resetTranscription: transcriptionControls.resetTranscription
+    resetTranscription: transcriptionControls.resetTranscription,
+    onSaveSuccess: handleDialogClose
   });
 
-  // Handle dialog close with state preservation
+  // Handle document submission
+  const handleSubmitDocument = async (data: any) => {
+    const success = await handleCreateNewDocument(data);
+    if (success) {
+      setNewDocumentOpen(false);
+    }
+  };
+
+  // Handle dialog open change with state preservation
   const handleDialogOpenChange = (open: boolean) => {
     setNewDocumentOpen(open);
     if (!open && !documentSaved) {
-      // If dialog is closed without saving, don't reset recording state
-      // Just stop the recording if it's ongoing
+      // If dialog is closed without saving, just stop recording if it's ongoing
       if (transcriptionControls.isRecording) {
         transcriptionControls.handleStopRecording();
       }
-      // Don't reset form or transcription state here
     }
   };
   
   return (
     <DocumentationInitializer>
-      <div className={"container mx-auto py-6 space-y-8"}>
+      <div className={"container mx-auto py-6 space-y-8 w-full"}>
         <DocumentationHeader />
         
         <DocumentationSearch 
@@ -92,7 +104,7 @@ const DocumentationPage = () => {
           open={newDocumentOpen}
           onOpenChange={handleDialogOpenChange}
           form={form}
-          onSubmit={handleCreateNewDocument}
+          onSubmit={handleSubmitDocument}
           isRecording={transcriptionControls.isRecording}
           isPaused={transcriptionControls.isPaused}
           recordingTime={transcriptionControls.recordingTime}

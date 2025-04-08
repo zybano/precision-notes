@@ -1,5 +1,3 @@
-
-
 export interface Document {
   id: string;
   title: string;
@@ -38,6 +36,13 @@ export interface TranscriptData {
   isMock: boolean;
 }
 
+// Type for shared document data
+export interface SharedDocument extends Document {
+  document_id: string;
+  shared_by: string;
+  shared_at: string;
+}
+
 // Helper function to parse transcript_data
 export const parseTranscriptData = (data: string | null): TranscriptData | null => {
   if (!data) return null;
@@ -67,4 +72,3 @@ export const getFormattedTranscript = (transcriptData: TranscriptData | null): s
     .map(u => `${u.speaker}: ${u.text}`)
     .join('\n\n');
 };
-

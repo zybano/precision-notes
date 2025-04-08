@@ -10,12 +10,14 @@ interface UseDocumentOperationsProps {
   form: UseFormReturn<any>;
   resetRecording: () => void;
   resetTranscription: () => void;
+  onSaveSuccess?: () => void;
 }
 
 export const useDocumentOperations = ({
   form,
   resetRecording,
-  resetTranscription
+  resetTranscription,
+  onSaveSuccess
 }: UseDocumentOperationsProps) => {
   const { user } = useAuth();
   const [documentSaved, setDocumentSaved] = useState(false);
@@ -25,7 +27,7 @@ export const useDocumentOperations = ({
       toast.error("Authentication Required", {
         description: "Please sign in to save documents."
       });
-      return;
+      return false;
     }
     
     try {
@@ -59,6 +61,12 @@ export const useDocumentOperations = ({
         form.reset();
         resetRecording();
         resetTranscription();
+        
+        // Call onSaveSuccess callback if provided
+        if (onSaveSuccess) {
+          onSaveSuccess();
+        }
+        
         return true;
       } else {
         console.error("Error saving document:", result.error);
@@ -83,6 +91,7 @@ export const useDocumentOperations = ({
         type: "Consultation",
         notes: "",
         documentId: "",
+        transcriptSummary: "",
       });
       
       setDocumentSaved(false);

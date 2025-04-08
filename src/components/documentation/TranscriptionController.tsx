@@ -58,10 +58,18 @@ export const useTranscriptionController = ({
     handleFileUpload,
     resetTranscription
   } = useTranscription((result) => {
+    // When transcription is complete, update the form
     form.setValue("notes", result.text);
     form.setValue("transcript", result.text);
     form.setValue("transcriptResult", result);
-    form.setValue("transcriptSummary", transcriptSummary);
+    
+    // Ensure the transcriptSummary is set in the form
+    if (transcriptSummary) {
+      form.setValue("transcriptSummary", transcriptSummary);
+    }
+    
+    // Include the recording time in the form
+    form.setValue("recordingTime", recordingTime);
   });
 
   // Handle processing audio when recording stops
@@ -71,6 +79,11 @@ export const useTranscriptionController = ({
       processRecording(audioChunks, {
         provider: transcriptionProvider,
         useSpeechModelNano
+      }).then(result => {
+        if (result && transcriptSummary) {
+          // Update the form with the latest summary
+          form.setValue("transcriptSummary", transcriptSummary);
+        }
       });
     }
   };
@@ -80,6 +93,11 @@ export const useTranscriptionController = ({
     handleFileUpload(file, {
       provider: transcriptionProvider,
       useSpeechModelNano
+    }).then(result => {
+      if (result && transcriptSummary) {
+        // Update the form with the latest summary 
+        form.setValue("transcriptSummary", transcriptSummary);
+      }
     });
   };
 

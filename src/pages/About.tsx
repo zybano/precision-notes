@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full">
       {/* Navigation Bar */}
-      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border">
-        <div className="container mx-auto max-w-[1200px] flex justify-between items-center">
+      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border w-full">
+        <div className="container mx-auto flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-background font-bold text-xl">D</span>
@@ -44,17 +44,19 @@ const About = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 max-w-[1200px]">
-        <HeroSection />
-        <StatsSection />
-        <StorySection />
-        
-        <div className="container mx-auto px-6 pb-16 max-w-4xl">
-          <FadeIn>
-            <div className="prose prose-lg max-w-none">
-              <CallToAction />
-            </div>
-          </FadeIn>
+      <div className="w-full">
+        <div className="container mx-auto px-6">
+          <HeroSection />
+          <StatsSection />
+          <StorySection />
+          
+          <div className="container mx-auto px-6 pb-16 max-w-4xl">
+            <FadeIn>
+              <div className="prose prose-lg max-w-none">
+                <CallToAction />
+              </div>
+            </FadeIn>
+          </div>
         </div>
       </div>
       
