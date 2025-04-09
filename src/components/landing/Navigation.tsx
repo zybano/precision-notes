@@ -6,6 +6,8 @@ import { ContactDialog } from "@/components/ContactDialog";
 import { MobileNavigation } from "./MobileNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowLeft } from "lucide-react";
+import Logo from "@/components/Logo.tsx";
+import React from "react";
 
 export function Navigation() {
   const { user } = useAuth();
@@ -28,9 +30,7 @@ export function Navigation() {
             </Button>
           )}
           <Link to="/" className="flex items-center">
-            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">D</span>
-            </div>
+            <Logo/>
             <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
         </div>

@@ -30,7 +30,7 @@ export function Hero() {
                   Streamlined Clinical Documentation
                 </div>
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-tight">
-                  Clinical Documentation <span className="text-primary">Made Simple</span>
+                  Clinical Documentation <span className="text-secondary">Made Simple</span>
                 </h1>
                 <p className="text-base sm:text-lg text-muted-foreground">
                   Transform your medical documentation workflow with real-time transcription and AI-powered assistance.

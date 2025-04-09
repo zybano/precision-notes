@@ -24,9 +24,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         (event, currentSession) => {
           console.log("Auth state changed:", event, currentSession?.user?.id);
           
-          if (event === 'SIGNED_IN' && currentSession) {
-            toast.success("Signed in successfully!");
-          } else if (event === 'SIGNED_OUT') {
+          // if (event === 'SIGNED_IN' && currentSession) {
+          //   toast.success("Signed in successfully!");
+          // } else
+
+              if (event === 'SIGNED_OUT') {
             toast.info("Signed out successfully");
           }
 

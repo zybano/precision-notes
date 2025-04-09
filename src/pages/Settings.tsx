@@ -187,20 +187,15 @@ const Settings = () => {
         <Card className="medical-card">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-4 mb-2">
-              <Avatar className="h-16 w-16 border-2 border-primary/20">
-                <AvatarImage src="https://ui.shadcn.com/avatars/01.png" alt="Doctor" />
-                <AvatarFallback className="bg-primary text-primary-foreground">
+
                   <Stethoscope size={24} />
-                </AvatarFallback>
-              </Avatar>
+
+
               <div>
                 <CardTitle>Profile Information</CardTitle>
                 <CardDescription>Update your personal details</CardDescription>
               </div>
             </div>
-            <Badge variant="outline" className="w-fit gap-1 px-2 py-1 text-xs">
-              <Stethoscope size={14} /> Personal
-            </Badge>
           </CardHeader>
           <CardContent>
             <Form {...profileForm}>

@@ -3,6 +3,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Instagram } from "lucide-react";
+import precisionLogo from "*.jpeg";
+import Logo from "@/components/Logo.tsx";
 
 export function Footer() {
   return (
@@ -11,17 +13,13 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-6 md:mb-0">
             <Link to="/" className="flex items-center">
-              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">D</span>
-              </div>
+              <Logo/>
               <span className="ml-2 text-lg font-medium">PrecisionNote</span>
             </Link>
             <p className="text-muted-foreground mt-2 text-sm">
               Transforming clinical documentation
             </p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              A product of PrecisionNote Inc.
-            </p>
+
             <p className="text-muted-foreground mt-1 text-sm">
               Contact: <a href="mailto:hello@PrecisionNote.com" className="hover:text-primary">hello@PrecisionNote.com</a>
             </p>

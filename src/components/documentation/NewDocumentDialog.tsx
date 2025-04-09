@@ -1,3 +1,4 @@
+// UpdatedNewDocumentDialog.tsx - Modified version
 
 import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -54,36 +55,36 @@ interface UpdatedNewDocumentDialogProps {
 }
 
 const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
-  open,
-  onOpenChange,
-  form,
-  onSubmit,
-  isRecording,
-  isPaused,
-  recordingTime,
-  isTranscribing,
-  useSpeechModelNano,
-  setUseSpeechModelNano,
-  startRecording,
-  pauseRecording,
-  stopRecording,
-  formatTime,
-  transcript,
-  transcriptSummary,
-  showSummary,
-  setShowSummary,
-  transcriptResult,
-  documentTemplates,
-  transcriptionProvider,
-  setTranscriptionProvider,
-  llmProvider,
-  setLlmProvider,
-  documentFormat,
-  setDocumentFormat,
-  onFileUpload,
-  documentSaved = false,
-  exportToPDF
-}) => {
+                                                                             open,
+                                                                             onOpenChange,
+                                                                             form,
+                                                                             onSubmit,
+                                                                             isRecording,
+                                                                             isPaused,
+                                                                             recordingTime,
+                                                                             isTranscribing,
+                                                                             useSpeechModelNano,
+                                                                             setUseSpeechModelNano,
+                                                                             startRecording,
+                                                                             pauseRecording,
+                                                                             stopRecording,
+                                                                             formatTime,
+                                                                             transcript,
+                                                                             transcriptSummary,
+                                                                             showSummary,
+                                                                             setShowSummary,
+                                                                             transcriptResult,
+                                                                             documentTemplates,
+                                                                             transcriptionProvider,
+                                                                             setTranscriptionProvider,
+                                                                             llmProvider,
+                                                                             setLlmProvider,
+                                                                             documentFormat,
+                                                                             setDocumentFormat,
+                                                                             onFileUpload,
+                                                                             documentSaved = false,
+                                                                             exportToPDF
+                                                                           }) => {
   const [activeTab, setActiveTab] = useState("record");
   const [isEditMode, setIsEditMode] = useState(false);
   const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = form;
@@ -113,7 +114,7 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
       });
     }
   };
-  
+
   const handleDocumentGenerated = (document: string) => {
     setValue("notes", document);
     setActiveTab("notes");
@@ -124,245 +125,280 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
     setIsEditMode(!isEditMode);
   };
 
+  // New validation function to check required fields before submission
+  const validateDocument = (data: any) => {
+    // List of required fields for document submission
+    const requiredFields = [
+      { field: 'type', label: 'Document Type' },
+      { field: 'notes', label: 'Notes Content' },
+    ];
+
+    const missingFields = requiredFields
+        .filter(({ field }) => !data[field] || data[field].trim() === '')
+        .map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      toast.error(`Missing required fields: ${missingFields.join(', ')}`);
+      return false;
+    }
+
+    return true;
+  };
+
+  // Wrapped submit handler with validation
+  const handleValidatedSubmit = (data: any) => {
+    if (validateDocument(data)) {
+      onSubmit(data);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
 
-        <DialogHeader className="p-6 pb-2 text-center">
-          <DialogTitle className="text-2xl text-center ">Consultation Documentation</DialogTitle>
-          <DialogDescription className={"text-center"}>
-            Record your consultation, generate notes, and export to your EMR system
-          </DialogDescription>
-        </DialogHeader>
+          <DialogHeader className="p-6 pb-2 text-center">
+            <DialogTitle className="text-2xl text-center ">Consultation Documentation</DialogTitle>
+            <DialogDescription className={"text-center"}>
+              Record your consultation, generate notes, and export to your EMR system
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="flex flex-col lg:flex-row h-full">
-          <div className="lg:w-full p-6 pt-0 border-r">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-3 mb-8">
-                <TabsTrigger value="record" className="flex items-center">
-                  <FileText className="h-4 w-4 mr-2" /> Transcription
-                </TabsTrigger>
-                <TabsTrigger value="notes" className="flex items-center" disabled={!transcript}>
-                  <FileText className="h-4 w-4 mr-2" /> Notes
-                </TabsTrigger>
-                <TabsTrigger value="export" className="flex items-center" disabled={!transcript}>
-                  <FileCog className="h-4 w-4 mr-2" /> Export
-                </TabsTrigger>
-              </TabsList>
+          <div className="flex flex-col lg:flex-row h-full">
+            <div className="lg:w-full p-6 pt-0 border-r">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-3 mb-8">
+                  <TabsTrigger value="record" className="flex items-center">
+                    <FileText className="h-4 w-4 mr-2" /> Transcription
+                  </TabsTrigger>
+                  <TabsTrigger value="notes" className="flex items-center" disabled={!transcript}>
+                    <FileText className="h-4 w-4 mr-2" /> Notes
+                  </TabsTrigger>
+                  <TabsTrigger value="export" className="flex items-center" disabled={!transcript}>
+                    <FileCog className="h-4 w-4 mr-2" /> Export
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="record" className="mt-0">
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <TabsContent value="record" className="mt-0">
+                  {/* Removed the form tag from here - key fix! */}
                   <EnhancedRecordingInterface
-                    isRecording={isRecording}
-                    isPaused={isPaused}
-                    recordingTime={recordingTime}
-                    isTranscribing={isTranscribing}
-                    useSpeechModelNano={useSpeechModelNano}
-                    setUseSpeechModelNano={setUseSpeechModelNano}
-                    startRecording={startRecording}
-                    pauseRecording={pauseRecording}
-                    stopRecording={stopRecording}
-                    formatTime={formatTime}
-                    onDownloadPdf={handleDownloadPDF}
-                    onCopyToEMR={handleCopyToEMR}
-                    transcriptResult={transcriptResult}
-                    documentFormat={documentFormat}
-                    setDocumentFormat={setDocumentFormat}
-                    onDocumentGenerated={handleDocumentGenerated}
-                    onFileUpload={onFileUpload}
+                      isRecording={isRecording}
+                      isPaused={isPaused}
+                      recordingTime={recordingTime}
+                      isTranscribing={isTranscribing}
+                      useSpeechModelNano={useSpeechModelNano}
+                      setUseSpeechModelNano={setUseSpeechModelNano}
+                      startRecording={startRecording}
+                      pauseRecording={pauseRecording}
+                      stopRecording={stopRecording}
+                      formatTime={formatTime}
+                      onDownloadPdf={handleDownloadPDF}
+                      onCopyToEMR={handleCopyToEMR}
+                      transcriptResult={transcriptResult}
+                      documentFormat={documentFormat}
+                      setDocumentFormat={setDocumentFormat}
+                      onDocumentGenerated={handleDocumentGenerated}
+                      onFileUpload={onFileUpload}
                   />
-                </form>
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="notes" className="mt-0">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="notes" className="text-lg font-medium">Generated Notes</Label>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="showSummary"
-                            checked={showSummary}
-                            onCheckedChange={setShowSummary}
-                          />
-                          <Label htmlFor="showSummary" className="text-sm">Show Summary</Label>
+                <TabsContent value="notes" className="mt-0">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="notes" className="text-lg font-medium">Generated Notes</Label>
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                                id="showSummary"
+                                checked={showSummary}
+                                onCheckedChange={setShowSummary}
+                            />
+                            <Label htmlFor="showSummary" className="text-sm">Show Summary</Label>
+                          </div>
+                          <Button
+                              type="button" 
+                              onClick={toggleEditMode}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center"
+                          >
+                            {isEditMode ? (
+                                <>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Preview
+                                </>
+                            ) : (
+                                <>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </>
+                            )}
+                          </Button>
                         </div>
-                        <Button
-                          onClick={toggleEditMode}
+                      </div>
+
+                      {showSummary && transcriptSummary && (
+                          <div className="bg-muted p-3 rounded-md text-sm mb-4">
+                            <p className="font-medium mb-1">Summary:</p>
+                            <p>{transcriptSummary}</p>
+                          </div>
+                      )}
+
+                      <div className="bg-accent/10 p-3 rounded-md text-sm mb-4">
+                        <p className="font-medium mb-1">Document Format: <span className="text-primary">{DocumentFormat[documentFormat]}</span></p>
+                        <p className="font-medium">Generated by: <span className="text-primary">{LLMProvider[llmProvider]}</span></p>
+                      </div>
+
+                      {isEditMode ? (
+                          <Textarea
+                              id="notes"
+                              className="min-h-[350px] font-mono text-sm resize-y"
+                              {...register("notes")}
+                          />
+                      ) : (
+                          <div
+                              className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
+                          >
+                            <ReactMarkdown>{notesContent}</ReactMarkdown>
+                          </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button
+                          type="button" 
                           variant="outline"
-                          size="sm"
-                          className="flex items-center"
+                          onClick={() => setActiveTab("record")}
+                      >
+                        Back to Recording
+                      </Button>
+                      <div className="space-x-2">
+                        <Button
+                            type="button" 
+                            className="flex items-center"
+                            onClick={() => setActiveTab("export")}
                         >
-                          {isEditMode ? (
-                            <>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Preview
-                            </>
-                          ) : (
-                            <>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </>
-                          )}
+                          Export Options
+                          <FileCog className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
                     </div>
+                  </div>
+                </TabsContent>
 
-                    {showSummary && transcriptSummary && (
-                      <div className="bg-muted p-3 rounded-md text-sm mb-4">
-                        <p className="font-medium mb-1">Summary:</p>
-                        <p>{transcriptSummary}</p>
+                <TabsContent value="export" className="mt-0">
+                  <div className="space-y-6">
+                    <div className="rounded-lg border p-6">
+                      <h3 className="text-lg font-medium mb-4 flex items-center">
+                        <FileCog className="h-5 w-5 mr-2" />
+                        Export Options
+                      </h3>
+
+                      <div className="space-y-4">
+                        <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                          <div className="bg-accent rounded-full p-1 mt-0.5">
+                            <FileText className="h-5 w-5 text-accent-foreground" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Copy to EMR</h4>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Copy the formatted notes to paste directly into your EMR system
+                            </p>
+                            <Button
+                                type="button" 
+                                onClick={handleCopyToEMR}
+                                size="sm"
+                            >
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copy to Clipboard
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
+                          <div className="bg-accent rounded-full p-1 mt-0.5">
+                            <Download className="h-5 w-5 text-accent-foreground" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">Download PDF</h4>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Save the consultation notes as a PDF document
+                            </p>
+                            <Button
+                                type="button" 
+                                onClick={handleDownloadPDF}
+                                size="sm"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download PDF
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    )}
-
-                    <div className="bg-accent/10 p-3 rounded-md text-sm mb-4">
-                      <p className="font-medium mb-1">Document Format: <span className="text-primary">{DocumentFormat[documentFormat]}</span></p>
-                      <p className="font-medium">Generated by: <span className="text-primary">{LLMProvider[llmProvider]}</span></p>
                     </div>
 
-                    {isEditMode ? (
-                      <Textarea
-                        id="notes"
-                        className="min-h-[350px] font-mono text-sm resize-y"
-                        {...register("notes")}
-                      />
-                    ) : (
-                      <div
-                        className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
-                      >
-                        <ReactMarkdown>{notesContent}</ReactMarkdown>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setActiveTab("record")}
-                    >
-                      Back to Recording
-                    </Button>
-                    <div className="space-x-2">
+                    <div className="flex justify-between">
                       <Button
-                        type="button"
-                        className="flex items-center"
-                        onClick={() => setActiveTab("export")}
+                          type="button" 
+                          variant="outline"
+                          onClick={() => setActiveTab("notes")}
                       >
-                        Export Options
-                        <FileCog className="ml-2 h-4 w-4" />
+                        Back to Notes
+                      </Button>
+                      <Button
+                          type="submit"
+                          onClick={handleSubmit(handleValidatedSubmit)}
+                          className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Save Document
                       </Button>
                     </div>
                   </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+
+          {/* Hidden container for PDF export */}
+          <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+            <div ref={printRef} className="p-6 bg-white" style={{ width: "800px" }}>
+              <div className="pb-4 border-b border-[#ffcd6a]">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold text-[#040523]">PrecisionNote</h1>
+                    <p className="text-sm text-[#5768fd]">Medical Documentation</p>
+                  </div>
+                  <div className="text-right">
+                    <h2 className="text-xl font-medium text-[#040523]">{documentTitle || "Medical Report"}</h2>
+                    <p className="text-sm text-[#5768fd]">Generated on {new Date().toLocaleDateString()}</p>
+                  </div>
                 </div>
-              </TabsContent>
+              </div>
 
-              <TabsContent value="export" className="mt-0">
-                <div className="space-y-6">
-                  <div className="rounded-lg border p-6">
-                    <h3 className="text-lg font-medium mb-4 flex items-center">
-                      <FileCog className="h-5 w-5 mr-2" />
-                      Export Options
-                    </h3>
-
-                    <div className="space-y-4">
-                      <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
-                        <div className="bg-accent rounded-full p-1 mt-0.5">
-                          <FileText className="h-5 w-5 text-accent-foreground" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">Copy to EMR</h4>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            Copy the formatted notes to paste directly into your EMR system
-                          </p>
-                          <Button onClick={handleCopyToEMR} size="sm">
-                            <Copy className="h-4 w-4 mr-2" />
-                            Copy to Clipboard
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
-                        <div className="bg-accent rounded-full p-1 mt-0.5">
-                          <Download className="h-5 w-5 text-accent-foreground" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">Download PDF</h4>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            Save the consultation notes as a PDF document
-                          </p>
-                          <Button onClick={handleDownloadPDF} size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            Download PDF
-                          </Button>
-                        </div>
-                      </div>
+              {transcriptSummary && (
+                  <div className="my-6">
+                    <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
+                    <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
+                      <p className="text-[#040523]">{transcriptSummary}</p>
                     </div>
                   </div>
+              )}
 
-                  <div className="flex justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setActiveTab("notes")}
-                    >
-                      Back to Notes
-                    </Button>
-                    <Button
-                      type="submit"
-                      onClick={handleSubmit(onSubmit)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Save Document
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
+              <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Clinical Notes</h2>
+              <div className="mt-4 text-[#040523]">
+                <ReactMarkdown>{notesContent}</ReactMarkdown>
+              </div>
 
-        {/* Hidden container for PDF export */}
-        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          <div ref={printRef} className="p-6 bg-white" style={{ width: "800px" }}>
-            <div className="pb-4 border-b border-[#ffcd6a]">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-2xl font-bold text-[#040523]">PrecisionNote</h1>
-                  <p className="text-sm text-[#5768fd]">Medical Documentation</p>
-                </div>
-                <div className="text-right">
-                  <h2 className="text-xl font-medium text-[#040523]">{documentTitle || "Medical Report"}</h2>
-                  <p className="text-sm text-[#5768fd]">Generated on {new Date().toLocaleDateString()}</p>
-                </div>
+              <div className="mt-8 pt-4 border-t border-[#ffcd6a] text-sm text-[#5768fd]">
+                <p>Document Format: {DocumentFormat[documentFormat]}</p>
+                <p>Generated using {LLMProvider[llmProvider]}</p>
+                <p className="mt-2 text-xs">© {new Date().getFullYear()} PrecisionNote - All rights reserved</p>
               </div>
             </div>
-
-            {transcriptSummary && (
-              <div className="my-6">
-                <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
-                <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
-                  <p className="text-[#040523]">{transcriptSummary}</p>
-                </div>
-              </div>
-            )}
-
-            <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Clinical Notes</h2>
-            <div className="mt-4 text-[#040523]">
-              <ReactMarkdown>{notesContent}</ReactMarkdown>
-            </div>
-
-            <div className="mt-8 pt-4 border-t border-[#ffcd6a] text-sm text-[#5768fd]">
-              <p>Document Format: {DocumentFormat[documentFormat]}</p>
-              <p>Generated using {LLMProvider[llmProvider]}</p>
-              <p className="mt-2 text-xs">© {new Date().getFullYear()} PrecisionNote - All rights reserved</p>
-            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
   );
 };
 

@@ -93,28 +93,27 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
     };
 
     const formatOptions = [
-        { format: DocumentFormat.DICTATION, label: "Dictation" },
-        { format: DocumentFormat.SOAP, label: "SOAP Note" },
-        { format: DocumentFormat.HISTORY_AND_PHYSICAL, label: "History & Physical" },
-        { format: DocumentFormat.PROGRESS_NOTE, label: "Progress Note" },
-        { format: DocumentFormat.DISCHARGE_SUMMARY, label: "Discharge Summary" },
-        { format: DocumentFormat.CONSULTATION, label: "Consultation" },
-        { format: DocumentFormat.PROCEDURE_NOTE, label: "Procedure Note" },
-        { format: DocumentFormat.PEDIATRICS, label: "Pediatrics" },
-        { format: DocumentFormat.CARDIOLOGY, label: "Cardiology" },
-        { format: DocumentFormat.ORTHOPEDICS, label: "Orthopedics" },
-        { format: DocumentFormat.PSYCHIATRY, label: "Psychiatry" },
-        { format: DocumentFormat.GERIATRICS, label: "Geriatrics" },
-        { format: DocumentFormat.OBSTETRICS, label: "Obstetrics" },
-        { format: DocumentFormat.ENDOCRINOLOGY, label: "Endocrinology" },
-
+        {format: DocumentFormat.DICTATION, label: "Dictation"},
+        {format: DocumentFormat.SOAP, label: "SOAP Note"},
+        {format: DocumentFormat.HISTORY_AND_PHYSICAL, label: "History & Physical"},
+        {format: DocumentFormat.PROGRESS_NOTE, label: "Progress Note"},
+        {format: DocumentFormat.DISCHARGE_SUMMARY, label: "Discharge Summary"},
+        {format: DocumentFormat.CONSULTATION, label: "Consultation"},
+        {format: DocumentFormat.PROCEDURE_NOTE, label: "Procedure Note"},
+        {format: DocumentFormat.PEDIATRICS, label: "Pediatrics"},
+        {format: DocumentFormat.CARDIOLOGY, label: "Cardiology"},
+        {format: DocumentFormat.ORTHOPEDICS, label: "Orthopedics"},
+        {format: DocumentFormat.PSYCHIATRY, label: "Psychiatry"},
+        {format: DocumentFormat.GERIATRICS, label: "Geriatrics"},
+        {format: DocumentFormat.OBSTETRICS, label: "Obstetrics"},
+        {format: DocumentFormat.ENDOCRINOLOGY, label: "Endocrinology"},
     ];
 
     // Document format options component
     const DocumentFormatSelection = () => (
         <Card>
             <CardHeader>
-                  <CardDescription >
+                <CardDescription>
                     Configure how you want the consultation documents to be formatted
                 </CardDescription>
             </CardHeader>
@@ -124,6 +123,7 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {formatOptions.map(option => (
                             <Button
+                                type="button" 
                                 key={option.format}
                                 variant={documentFormat === option.format ? "default" : "outline"}
                                 className="justify-start"
@@ -146,17 +146,16 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                         <Mic className="h-4 w-4 mr-2"/> Record
                     </TabsTrigger>
                     <TabsTrigger value="document-config" className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2" /> Select Template
+                        <FileText className="h-4 w-4 mr-2"/> Select Template
                     </TabsTrigger>
                     <TabsTrigger value="generate" className="flex items-center" disabled={!transcriptResult}>
-                        <FileText className="h-4 w-4 mr-2" /> Generate
+                        <FileText className="h-4 w-4 mr-2"/> Generate
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="record" className="mt-0">
                     <Card>
                         <CardHeader>
-
                             <CardDescription className={"text-center"}>
                                 Record your consultation with the patient or upload an audio file
                             </CardDescription>
@@ -165,7 +164,7 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                             <div className="flex flex-col items-center justify-center space-y-4 py-10">
                                 {isTranscribing ? (
                                     <div className="flex flex-col items-center space-y-2">
-                                        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                                        <Loader2 className="h-12 w-12 text-primary animate-spin"/>
                                         <p className="text-xl font-semibold">Transcribing...</p>
                                         <p className="text-muted-foreground">
                                             Your recording is being processed
@@ -173,19 +172,20 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        <div className={`h-24 w-24 rounded-full flex items-center justify-center transition-colors ${
-                                            isRecording
-                                                ? (isPaused ? "bg-amber-100 text-amber-600" : "bg-red-100 text-red-600")
-                                                : "bg-muted text-muted-foreground"
-                                        }`}>
+                                        <div
+                                            className={`h-24 w-24 rounded-full flex items-center justify-center transition-colors ${
+                                                isRecording
+                                                    ? (isPaused ? "bg-amber-100 text-amber-600" : "bg-red-100 text-red-600")
+                                                    : "bg-muted text-muted-foreground"
+                                            }`}>
                                             {isRecording ? (
                                                 isPaused ? (
-                                                    <Play className="h-12 w-12" />
+                                                    <Play className="h-12 w-12"/>
                                                 ) : (
-                                                    <Pause className="h-12 w-12" />
+                                                    <Pause className="h-12 w-12"/>
                                                 )
                                             ) : (
-                                                <Mic className="h-12 w-12" />
+                                                <Mic className="h-12 w-12"/>
                                             )}
                                         </div>
 
@@ -204,18 +204,20 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                                             {!isRecording ? (
                                                 <>
                                                     <Button
+                                                        type="button" 
                                                         onClick={startRecording}
                                                         className="bg-primary hover:bg-primary/90"
                                                     >
-                                                        <Mic className="h-4 w-4 mr-2" />
+                                                        <Mic className="h-4 w-4 mr-2"/>
                                                         Start Recording
                                                     </Button>
                                                     <div className="flex flex-col items-center gap-2">
                                                         <Button
+                                                            type="button" 
                                                             variant="outline"
                                                             onClick={() => fileInputRef.current?.click()}
                                                         >
-                                                            <Upload className="h-4 w-4 mr-2" />
+                                                            <Upload className="h-4 w-4 mr-2"/>
                                                             Upload Audio File
                                                         </Button>
                                                         <input
@@ -239,26 +241,28 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                                             ) : (
                                                 <>
                                                     <Button
+                                                        type="button" 
                                                         onClick={pauseRecording}
                                                         variant="outline"
                                                     >
                                                         {isPaused ? (
                                                             <>
-                                                                <Play className="h-4 w-4 mr-2" />
+                                                                <Play className="h-4 w-4 mr-2"/>
                                                                 Resume
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <Pause className="h-4 w-4 mr-2" />
+                                                                <Pause className="h-4 w-4 mr-2"/>
                                                                 Pause
                                                             </>
                                                         )}
                                                     </Button>
                                                     <Button
+                                                        type="button" 
                                                         onClick={stopRecording}
                                                         variant="destructive"
                                                     >
-                                                        <StopCircle className="h-4 w-4 mr-2" />
+                                                        <StopCircle className="h-4 w-4 mr-2"/>
                                                         Stop
                                                     </Button>
                                                 </>
@@ -283,13 +287,13 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                 </TabsContent>
 
                 <TabsContent value="document-config" className="mt-0">
-                    <DocumentFormatSelection />
+                    <DocumentFormatSelection/>
                 </TabsContent>
 
                 <TabsContent value="generate" className="mt-0">
                     <DocumentGenerationPanel
                         transcriptResult={transcriptResult}
-                        llmProvider= {LLMProvider.OPENAI}
+                        llmProvider={LLMProvider.OPENAI}
                         documentFormat={documentFormat}
                         onDocumentGenerated={onDocumentGenerated}
                     />
@@ -303,9 +307,10 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                         {transcriptResult.utterances.length > 0 ? (
                             transcriptResult.utterances.map((utterance, idx) => (
                                 <div key={idx} className="mb-2">
-                  <span className={`font-bold ${utterance.speaker === "Doctor" ? "text-blue-600" : "text-emerald-600"}`}>
-                    {utterance.speaker}:
-                  </span>{" "}
+                                <span
+                                    className={`font-bold ${utterance.speaker === "Doctor" ? "text-blue-600" : "text-emerald-600"}`}>
+                                    {utterance.speaker}:
+                                </span>{" "}
                                     {utterance.text}
                                 </div>
                             ))
@@ -317,6 +322,5 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
             )}
         </div>
     );
-};
-
+}
 export default EnhancedRecordingInterface;

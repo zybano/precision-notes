@@ -8,6 +8,7 @@ import { Footer } from "@/components/about/Footer";
 import { FadeIn } from "@/components/ui/motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo.tsx";
 
 const About = () => {
   return (
@@ -16,9 +17,7 @@ const About = () => {
       <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border w-full">
         <div className="container mx-auto flex justify-between items-center">
           <Link to="/" className="flex items-center">
-            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-background font-bold text-xl">D</span>
-            </div>
+            <Logo/>
             <span className="ml-3 text-xl font-medium">PrecisionNote</span>
           </Link>
           

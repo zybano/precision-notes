@@ -1,12 +1,14 @@
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Lock } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
+import Logo from "@/components/Logo.tsx";
+import {Footer} from "@/components/about/Footer.tsx";
 
 const Pricing = () => {
   const { user } = useAuth();
@@ -23,7 +25,35 @@ const Pricing = () => {
         description="Choose the perfect plan for your healthcare practice. Simple, transparent pricing with flexible options for individual providers and large organizations."
         keywords="medical documentation pricing, healthcare software plans, clinical documentation costs"
       />
-      
+      {/* Navigation Bar */}
+      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border w-full">
+        <div className="container mx-auto flex justify-between items-center">
+          <Link to="/" className="flex items-center">
+            <Logo/>
+            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
+          </Link>
+
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/about" className="text-secondary font-medium">About</Link>
+            <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <Link to="/dashboard">
+              <Button variant="outline" className="hidden sm:inline-flex transition-all hover:shadow-sm">
+                Log in
+              </Button>
+            </Link>
+            <Link to="/dashboard">
+              <Button className="shadow-sm hover:shadow-md transition-all">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold tracking-tight mb-3">Simple, Transparent Pricing</h1>
         <div className="mt-4 text-xl px-8 py-6 bg-amber-100 text-amber-800 rounded-xl text-center mx-auto max-w-2xl">
@@ -63,6 +93,7 @@ const Pricing = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 };

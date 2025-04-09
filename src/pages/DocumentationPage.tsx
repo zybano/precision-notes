@@ -1,3 +1,4 @@
+// Fixed DocumentationPage.tsx
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -10,6 +11,7 @@ import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDial
 import DocumentationInitializer from "@/components/documentation/DocumentationInitializer";
 import { useDocumentOperations } from "@/hooks/useDocumentOperations";
 import { useTranscriptionController } from "@/components/documentation/TranscriptionController";
+import { toast } from "sonner";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("saved");
@@ -65,8 +67,34 @@ const DocumentationPage = () => {
     onSaveSuccess: handleDialogClose
   });
 
-  // Handle document submission
+  // Validate document before submission
+  const validateDocument = (data: any) => {
+    // List of required fields for document submission
+    const requiredFields = [
+      { field: 'type', label: 'Document Type' },
+      { field: 'notes', label: 'Notes Content' },
+    ];
+
+    const missingFields = requiredFields
+        .filter(({ field }) => !data[field] || data[field].trim() === '')
+        .map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      toast.error(`Missing required fields: ${missingFields.join(', ')}`);
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle document submission with validation
   const handleSubmitDocument = async (data: any) => {
+    // First, validate the document
+    if (!validateDocument(data)) {
+      return;
+    }
+
+    // If validation passes, proceed with submission
     const success = await handleCreateNewDocument(data);
     if (success) {
       setNewDocumentOpen(false);
@@ -83,58 +111,58 @@ const DocumentationPage = () => {
       }
     }
   };
-  
-  return (
-    <DocumentationInitializer>
-      <div className={"container mx-auto py-6 space-y-8 w-full"}>
-        <DocumentationHeader />
-        
-        <DocumentationSearch 
-          setNewDocumentOpen={setNewDocumentOpen} 
-          form={form}
-          resetForm={resetForm}
-        />
-        
-        <DocumentationTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          setNewDocumentOpen={setNewDocumentOpen}
-          form={form}
-        />
 
-        <UpdatedNewDocumentDialog
-          open={newDocumentOpen}
-          onOpenChange={handleDialogOpenChange}
-          form={form}
-          onSubmit={handleSubmitDocument}
-          isRecording={transcriptionControls.isRecording}
-          isPaused={transcriptionControls.isPaused}
-          recordingTime={transcriptionControls.recordingTime}
-          isTranscribing={transcriptionControls.isTranscribing}
-          useSpeechModelNano={useSpeechModelNano}
-          setUseSpeechModelNano={setUseSpeechModelNano}
-          startRecording={transcriptionControls.startRecording}
-          pauseRecording={transcriptionControls.pauseRecording}
-          stopRecording={transcriptionControls.handleStopRecording}
-          formatTime={transcriptionControls.formatTime}
-          transcript={transcriptionControls.transcript}
-          transcriptSummary={transcriptionControls.transcriptSummary}
-          showSummary={transcriptionControls.showSummary}
-          setShowSummary={transcriptionControls.setShowSummary}
-          transcriptResult={transcriptionControls.transcriptResult}
-          documentTemplates={documentTemplates}
-          transcriptionProvider={transcriptionProvider}
-          setTranscriptionProvider={setTranscriptionProvider}
-          llmProvider={llmProvider}
-          setLlmProvider={setLlmProvider}
-          documentFormat={documentFormat}
-          setDocumentFormat={setDocumentFormat}
-          onFileUpload={transcriptionControls.onFileUpload}
-          documentSaved={documentSaved}
-          exportToPDF={exportToPDF}
-        />
-      </div>
-    </DocumentationInitializer>
+  return (
+      <DocumentationInitializer>
+        <div className={"container mx-auto py-6 space-y-8 w-full"}>
+          <DocumentationHeader />
+
+          <DocumentationSearch
+              setNewDocumentOpen={setNewDocumentOpen}
+              form={form}
+              resetForm={resetForm}
+          />
+
+          <DocumentationTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              setNewDocumentOpen={setNewDocumentOpen}
+              form={form}
+          />
+
+          <UpdatedNewDocumentDialog
+              open={newDocumentOpen}
+              onOpenChange={handleDialogOpenChange}
+              form={form}
+              onSubmit={handleSubmitDocument}
+              isRecording={transcriptionControls.isRecording}
+              isPaused={transcriptionControls.isPaused}
+              recordingTime={transcriptionControls.recordingTime}
+              isTranscribing={transcriptionControls.isTranscribing}
+              useSpeechModelNano={useSpeechModelNano}
+              setUseSpeechModelNano={setUseSpeechModelNano}
+              startRecording={transcriptionControls.startRecording}
+              pauseRecording={transcriptionControls.pauseRecording}
+              stopRecording={transcriptionControls.handleStopRecording}
+              formatTime={transcriptionControls.formatTime}
+              transcript={transcriptionControls.transcript}
+              transcriptSummary={transcriptionControls.transcriptSummary}
+              showSummary={transcriptionControls.showSummary}
+              setShowSummary={transcriptionControls.setShowSummary}
+              transcriptResult={transcriptionControls.transcriptResult}
+              documentTemplates={documentTemplates}
+              transcriptionProvider={transcriptionProvider}
+              setTranscriptionProvider={setTranscriptionProvider}
+              llmProvider={llmProvider}
+              setLlmProvider={setLlmProvider}
+              documentFormat={documentFormat}
+              setDocumentFormat={setDocumentFormat}
+              onFileUpload={transcriptionControls.onFileUpload}
+              documentSaved={documentSaved}
+              exportToPDF={exportToPDF}
+          />
+        </div>
+      </DocumentationInitializer>
   );
 };
 
