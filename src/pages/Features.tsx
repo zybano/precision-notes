@@ -2,12 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FadeIn } from "@/components/ui/motion";
-import { Check, Zap, Shield, Clock, FileText, UserCheck, Code, Smartphone, Globe, HeartPulse, Stethoscope, Brain, Instagram } from "lucide-react";
+import { Check, Zap, Shield, Clock, FileText, UserCheck, Code, Smartphone, Globe, HeartPulse, Stethoscope, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
-import Logo from "@/components/Logo.tsx";
+import { LandingLayout } from "@/components/landing/LandingLayout";
 import React from "react";
-import {Footer} from "@/components/about/Footer.tsx";
 
 const Features = () => {
   const features = [
@@ -80,40 +78,16 @@ const Features = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background w-full">
-      <nav className="px-6 py-4 bg-background sticky top-0 z-10 border-b border-border w-full">
-        <div className="container mx-auto flex justify-between items-center">
-          <Link to="/" className="flex items-center">
-            <Logo/>
-            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
-          </Link>
-          
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-            <Link to="/features" className="text-secondary font-medium">Features</Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <Link to="/dashboard">
-              <Button variant="outline" className="hidden sm:inline-flex transition-all hover:shadow-sm">
-                Log in
-              </Button>
-            </Link>
-            <Link to="/dashboard">
-              <Button className="shadow-sm hover:shadow-md transition-all">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-      
+    <LandingLayout 
+      pageTitle="Features" 
+      pageSubtitle="Powerful Tools for Healthcare Professionals"
+      currentPage="features"
+      heroBackground="from-medical-100 to-medical-300"
+    >
       <section className="w-full bg-background px-6 py-16 md:py-24">
         <div className="container mx-auto">
           <FadeIn>
             <div className="text-center mb-16">
-              <h1 className="text-4xl font-semibold mb-6">Features</h1>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                 PrecisionNote is built specifically for healthcare professionals to streamline documentation
                 and improve patient care.
@@ -167,12 +141,12 @@ const Features = () => {
           <FadeIn delay={0.4}>
             <div className="mt-24 mb-16">
               <h2 className="text-3xl font-semibold mb-6 text-center">Advanced AI Capabilities</h2>
-              <div className="bg-accent/10 rounded-2xl p-8 md:p-12 mt-8">
+              <div className="bg-primary text-white rounded-2xl p-8 md:p-12 mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div>
                     <h3 className="text-2xl font-medium mb-4">Natural Language Processing</h3>
-                    <p className="text-lg mb-6">Our advanced AI understands medical context and terminology, allowing for natural conversation-style documentation.</p>
-                    <ul className="space-y-2">
+                    <p className="text-lg mb-6 text-white/80">Our advanced AI understands medical context and terminology, allowing for natural conversation-style documentation.</p>
+                    <ul className="space-y-2 text-white/80">
                       {[
                         "Context-aware medical term interpretation",
                         "Medical specialty-specific vocabulary",
@@ -180,15 +154,15 @@ const Features = () => {
                         "Sentiment analysis for patient concerns"
                       ].map((item, i) => (
                         <li key={i} className="flex items-start">
-                          <Check className="h-5 w-5 text-secondary mr-2 mt-0.5" />
+                          <Check className="h-5 w-5 text-accent mr-2 mt-0.5" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <div className="bg-background rounded-xl p-6 shadow-lg border border-border">
-                    <div className="h-64 w-full bg-muted rounded-lg flex items-center justify-center">
-                      <span className="text-muted-foreground">AI Processing Demo</span>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+                    <div className="h-64 w-full bg-white/5 rounded-lg flex items-center justify-center">
+                      <span className="text-white/60">AI Processing Demo</span>
                     </div>
                   </div>
                 </div>
@@ -222,11 +196,11 @@ const Features = () => {
           </FadeIn>
           
           <FadeIn delay={0.6}>
-            <div className="mt-24 text-center">
+            <div className="mt-24 text-center mb-12">
               <h2 className="text-3xl font-semibold mb-6">Ready to Transform Your Practice?</h2>
               <div className="flex flex-col md:flex-row gap-4 justify-center">
-                <Link to="/dashboard">
-                  <Button size="lg" className="shadow hover:shadow-md transition-all">
+                <Link to="/signup">
+                  <Button size="lg" className="shadow hover:shadow-md transition-all bg-secondary hover:bg-secondary/90">
                     Start Free Trial
                   </Button>
                 </Link>
@@ -240,9 +214,7 @@ const Features = () => {
           </FadeIn>
         </div>
       </section>
-      
-       <Footer/>
-    </div>
+    </LandingLayout>
   );
 };
 
