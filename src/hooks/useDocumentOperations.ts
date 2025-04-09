@@ -1,8 +1,9 @@
+
 import { useState, useCallback } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { supabase } from '@/integrations/supabase/client'; // Use direct supabase client instead of useSupabaseClient
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from "@/components/ui/use-toast"
-import {useNavigate} from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,7 +23,6 @@ type DocumentType = {
 
 const useDocumentOperations = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const supabaseClient = useSupabaseClient();
     const { toast } = useToast();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -34,7 +34,7 @@ const useDocumentOperations = () => {
         const filePath = `documents/${uuidv4()}.${fileExt}`;
 
         try {
-            const { error: uploadError } = await supabaseClient.storage
+            const { error: uploadError } = await supabase.storage
                 .from('document-files')
                 .upload(filePath, file, {
                     cacheControl: '3600',
@@ -78,7 +78,7 @@ const useDocumentOperations = () => {
         }
 
         try {
-            const { data, error } = await supabaseClient
+            const { data, error } = await supabase
                 .from('documents')
                 .insert([
                     {
@@ -140,7 +140,7 @@ const useDocumentOperations = () => {
                 updated_at: new Date().toISOString(),
             };
 
-            const { error } = await supabaseClient
+            const { error } = await supabase
                 .from('documents')
                 .update(updates)
                 .eq('id', id);
@@ -174,7 +174,7 @@ const useDocumentOperations = () => {
     const deleteDocument = async (id: string) => {
         setIsLoading(true);
         try {
-            const { error } = await supabaseClient
+            const { error } = await supabase
                 .from('documents')
                 .delete()
                 .eq('id', id);

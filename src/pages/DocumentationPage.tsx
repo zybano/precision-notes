@@ -9,7 +9,7 @@ import DocumentationSearch from "@/components/documentation/DocumentationSearch"
 import DocumentationTabs from "@/components/documentation/DocumentationTabs";
 import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
 import DocumentationInitializer from "@/components/documentation/DocumentationInitializer";
-import { useDocumentOperations } from "@/hooks/useDocumentOperations";
+import useDocumentOperations from "@/hooks/useDocumentOperations";
 import { useTranscriptionController } from "@/components/documentation/TranscriptionController";
 import { toast } from "sonner";
 
