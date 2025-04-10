@@ -2,92 +2,37 @@
 import { useState, useEffect } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { getActivityData } from "@/services/dashboardService";
+import { useAuth } from "@/contexts/AuthContext";
 
-type ActivityDataPoint = {
-  date: string;
-  count: number;
+type ActivityData = {
+  month: string;
+  notes: number;
+  transcripts: number;
 };
 
 export const ActivityChart = () => {
-  const [activityData, setActivityData] = useState<ActivityDataPoint[]>([]);
+  const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchActivityData = async () => {
       setIsLoading(true);
       try {
-        // Get the last 7 days of activity
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 7);
-        
-        const { data, error } = await supabase
-          .from('medical_documents')
-          .select('created_at, id')
-          .gte('created_at', startDate.toISOString())
-          .lte('created_at', endDate.toISOString());
-          
-        if (error) throw error;
-        
-        // Create a map to count docs by date
-        const dateMap = new Map<string, number>();
-        
-        // Initialize all days in the range with 0 counts
-        for (let i = 0; i < 7; i++) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dateString = date.toISOString().split('T')[0];
-          dateMap.set(dateString, 0);
-        }
-        
-        // Count documents by date
-        if (data) {
-          data.forEach(doc => {
-            const docDate = doc.created_at.split('T')[0];
-            const currentCount = dateMap.get(docDate) || 0;
-            dateMap.set(docDate, currentCount + 1);
-          });
-        }
-        
-        // Convert map to array and sort by date
-        const chartData = Array.from(dateMap.entries())
-          .map(([date, count]) => ({
-            date: formatDate(date),
-            count
-          }))
-          .sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            return dateA.getTime() - dateB.getTime();
-          });
-        
-        setActivityData(chartData);
+        const data = await getActivityData(user?.id);
+        setActivityData(data);
       } catch (error) {
         console.error("Error fetching activity data:", error);
-        // Provide fallback data for demo purposes
-        setActivityData([
-          { date: "Mon", count: 3 },
-          { date: "Tue", count: 5 },
-          { date: "Wed", count: 2 },
-          { date: "Thu", count: 7 },
-          { date: "Fri", count: 4 },
-          { date: "Sat", count: 1 },
-          { date: "Sun", count: 3 }
-        ]);
+        // Fallback data already provided by service
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchActivityData();
-  }, []);
-  
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
-  };
+  }, [user?.id]);
   
   return (
     <FadeIn delay={0.2} className="lg:col-span-1">
@@ -113,7 +58,7 @@ export const ActivityChart = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" stroke="#888888" />
+                <XAxis dataKey="month" stroke="#888888" />
                 <YAxis stroke="#888888" />
                 <Tooltip 
                   contentStyle={{ 
@@ -123,14 +68,24 @@ export const ActivityChart = () => {
                     border: '1px solid #e2e8f0'
                   }}
                 />
+                <Legend />
                 <Line
                   type="monotone"
-                  dataKey="count"
-                  name="Documents"
+                  dataKey="notes"
+                  name="Clinical Notes"
                   stroke="#4f46e5"
                   strokeWidth={2}
                   dot={{ stroke: '#4f46e5', strokeWidth: 2, r: 4, fill: 'white' }}
                   activeDot={{ r: 6, stroke: '#4f46e5', strokeWidth: 2, fill: '#4f46e5' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="transcripts" 
+                  name="Transcripts"
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  dot={{ stroke: '#10b981', strokeWidth: 2, r: 4, fill: 'white' }}
+                  activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2, fill: '#10b981' }}
                 />
               </LineChart>
             </ResponsiveContainer>

@@ -1,463 +1,157 @@
-import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client'; // Use direct supabase client instead of useSupabaseClient
-import { v4 as uuidv4 } from 'uuid';
-import { useToast } from "@/components/ui/use-toast";
+
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatDate } from '@/lib/utils';
 import { useQueryClient } from "@tanstack/react-query";
-import React from "react";
 
-type DocumentType = {
-    id: string;
-    created_at: string;
-    title: string;
-    content: string;
-    user_id: string;
-    file_path: string | null;
-    metadata: any;
-};
+interface DocumentOperationsProps {
+  form: any;
+  resetRecording?: () => void;
+  resetTranscription?: () => void;
+  onSaveSuccess?: () => void;
+}
 
-const useDocumentOperations = ({ form, resetRecording, resetTranscription, onSaveSuccess } = {} as any) => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [documentSaved, setDocumentSaved] = useState(false);
-    const { toast } = useToast();
-    const navigate = useNavigate();
-    const { user } = useAuth();
-    const queryClient = useQueryClient();
+const useDocumentOperations = ({
+  form,
+  resetRecording,
+  resetTranscription,
+  onSaveSuccess
+}: DocumentOperationsProps) => {
+  const [documentSaved, setDocumentSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-    const uploadFile = async (file: File): Promise<string | null> => {
-        setIsLoading(true);
-        const fileExt = file.name.split('.').pop();
-        const filePath = `documents/${uuidv4()}.${fileExt}`;
+  // Reset the form to its initial state
+  const resetForm = () => {
+    form.reset({
+      type: "Consultation",
+      notes: "",
+      documentId: "",
+      transcript: "",
+      transcriptSummary: "",
+      transcriptResult: null,
+      recordingTime: 0,
+    });
 
-        try {
-            const { error: uploadError } = await supabase.storage
-                .from('document-files')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+    if (resetRecording) resetRecording();
+    if (resetTranscription) resetTranscription();
+    setDocumentSaved(false);
+  };
 
-            if (uploadError) {
-                console.error("File upload error:", uploadError);
-                toast({
-                    title: "Upload failed",
-                    description: "There was an error uploading your file.",
-                    variant: "destructive",
-                });
-                return null;
-            }
+  // Create a new document
+  const handleCreateNewDocument = async (data: any) => {
+    try {
+      setIsLoading(true);
+      
+      const { notes, type, transcriptResult } = data;
+      
+      const documentData = {
+        type,
+        notes,
+        creator_id: user?.id,
+        patient_name: "Patient Name", // Add proper patient name field to your form
+        title: `${type} - ${new Date().toLocaleDateString()}`,
+        status: "Draft",
+        recording_duration: data.recordingTime || 0,
+        transcript_data: transcriptResult ? JSON.stringify(transcriptResult) : null,
+        summary: data.transcriptSummary || null
+      };
 
-            return filePath;
-        } catch (error) {
-            console.error("Unexpected error during file upload:", error);
-            toast({
-                title: "Unexpected error",
-                description: "An unexpected error occurred during file upload.",
-                variant: "destructive",
-            });
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      const { data: newDoc, error } = await supabase
+        .from('medical_documents')
+        .insert([documentData])
+        .select()
+        .single();
 
-    const handleCreateNewDocument = async (data: any) => {
-        const { type, notes, transcript, transcriptResult } = data;
-        
-        try {
-            // Prepare document data
-            const documentData = {
-                title: `${type} Notes`,
-                patient_name: "Sample Patient", // This should be dynamic in a real app
-                type: type,
-                notes: notes,
-                transcript_data: transcript || null,
-                summary: data.transcriptSummary || null,
-                recording_duration: data.recordingTime || 0,
-                document_format: "Standard",
-                creator_id: user?.id || null
-            };
-            
-            // Call the service to save the document
-            const response = await saveDocument(documentData);
-            
-            if (response.success) {
-                toast({
-                    title: "Document saved",
-                    description: "Your medical document has been saved successfully."
-                });
-                setDocumentSaved(true);
-                
-                // Reset form and recordings if provided
-                if (form) form.reset();
-                if (resetRecording) resetRecording();
-                if (resetTranscription) resetTranscription();
-                if (onSaveSuccess) onSaveSuccess();
-                
-                return true;
-            } else {
-                toast({
-                    title: "Error saving document",
-                    description: "There was a problem saving your document.",
-                    variant: "destructive"
-                });
-                return false;
-            }
-        } catch (error) {
-            console.error("Error creating document:", error);
-            toast({
-                title: "Error",
-                description: "An unexpected error occurred.",
-                variant: "destructive"
-            });
-            return false;
-        }
-    };
+      if (error) {
+        console.error("Error creating document:", error);
+        toast({
+          title: "Error",
+          description: "Failed to save document. Please try again.",
+          variant: "destructive"
+        });
+        return false;
+      }
 
-    const resetForm = () => {
-        if (form) {
-            form.reset();
-        }
-        setDocumentSaved(false);
-        if (resetRecording) resetRecording();
-        if (resetTranscription) resetTranscription();
-    };
+      // Show success message
+      toast({
+        title: "Success",
+        description: "Document saved successfully!",
+      });
 
-    const exportToPDF = async (contentRef: React.RefObject<HTMLDivElement>, title?: string) => {
-        if (!contentRef.current) {
-            toast({
-                title: "Error",
-                description: "Cannot generate PDF from empty content.",
-                variant: "destructive"
-            });
-            return;
-        }
-        
-        // Mock document for export
-        const document = {
-            id: "temp-id",
-            title: title || "Medical Document",
-            metadata: {}
-        };
-        
-        // Get formatted content from the ref
-        const formattedContent = contentRef.current.innerText;
-        
-        // Call the export function
-        await handleExportAsPDF(
-            document as any,
-            formattedContent,
-            () => toast({ title: "PDF generated successfully" }),
-            contentRef
-        );
-    };
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({
+        queryKey: ['documents']
+      });
 
-    // The rest of the function implementations from the original file
-    const createDocument = async (title: string, content: string, file: File | null, metadata: any = {}) => {
-        setIsLoading(true);
-        let filePath: string | null = null;
+      setDocumentSaved(true);
+      
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        if (file) {
-            filePath = await uploadFile(file);
-            if (!filePath) {
-                setIsLoading(false);
-                return;
-            }
-        }
+  // Export document to PDF
+  const exportToPDF = (title: string, content: string) => {
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(title, 20, 20);
+      
+      // Add content
+      doc.setFontSize(12);
+      
+      const splitText = doc.splitTextToSize(content, 170);
+      doc.text(splitText, 20, 30);
+      
+      // Save PDF
+      doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+      
+      toast({
+        title: "PDF Exported",
+        description: "Document has been exported as PDF successfully."
+      });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export document as PDF.",
+        variant: "destructive"
+      });
+    }
+  };
 
-        try {
-            const { data, error } = await supabase
-                .from('documents')
-                .insert([
-                    {
-                        title,
-                        content,
-                        user_id: user?.id,
-                        file_path: filePath,
-                        metadata: metadata,
-                    },
-                ])
-                .select()
-                .single();
-
-            if (error) {
-                console.error("Error creating document:", error);
-                toast({
-                    title: "Failed to create document",
-                    description: "There was an error creating the document.",
-                    variant: "destructive",
-                });
-            } else {
-                toast({
-                    title: "Document created",
-                    description: "Your document has been successfully created.",
-                });
-                queryClient.invalidateQueries({ queryKey: ['documents'] });
-                navigate(`/document/${data.id}`);
-            }
-        } catch (error) {
-            console.error("Unexpected error creating document:", error);
-            toast({
-                title: "Unexpected error",
-                description: "An unexpected error occurred while creating the document.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const updateDocument = async (id: string, title: string, content: string, file: File | null, existingFilePath: string | null, metadata: any = {}) => {
-        setIsLoading(true);
-        let filePath = existingFilePath;
-
-        if (file) {
-            filePath = await uploadFile(file);
-            if (!filePath) {
-                setIsLoading(false);
-                return;
-            }
-        }
-
-        try {
-            const updates = {
-                title,
-                content,
-                file_path: filePath,
-                metadata: metadata,
-                updated_at: new Date().toISOString(),
-            };
-
-            const { error } = await supabase
-                .from('documents')
-                .update(updates)
-                .eq('id', id);
-
-            if (error) {
-                console.error("Error updating document:", error);
-                toast({
-                    title: "Failed to update document",
-                    description: "There was an error updating the document.",
-                    variant: "destructive",
-                });
-            } else {
-                toast({
-                    title: "Document updated",
-                    description: "Your document has been successfully updated.",
-                });
-                queryClient.invalidateQueries({ queryKey: ['documents'] });
-            }
-        } catch (error) {
-            console.error("Unexpected error updating document:", error);
-            toast({
-                title: "Unexpected error",
-                description: "An unexpected error occurred while updating the document.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const deleteDocument = async (id: string) => {
-        setIsLoading(true);
-        try {
-            const { error } = await supabase
-                .from('documents')
-                .delete()
-                .eq('id', id);
-
-            if (error) {
-                console.error("Error deleting document:", error);
-                toast({
-                    title: "Failed to delete document",
-                    description: "There was an error deleting the document.",
-                    variant: "destructive",
-                });
-            } else {
-                toast({
-                    title: "Document deleted",
-                    description: "Your document has been successfully deleted.",
-                });
-                queryClient.invalidateQueries({ queryKey: ['documents'] });
-                navigate("/dashboard");
-            }
-        } catch (error) {
-            console.error("Unexpected error deleting document:", error);
-            toast({
-                title: "Unexpected error",
-                description: "An unexpected error occurred while deleting the document.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleExportAsPDF = async (
-        document: DocumentType,
-        formattedContent: string,
-        handleClose: () => void,
-        markdownRef: React.RefObject<HTMLDivElement>,
-        fileName: string = `${document.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-        includeHeader: boolean = true,
-        includeFooter: boolean = true,
-        includeTimestamp: boolean = true,
-        includePatientInfo: boolean = true
-    ) => {
-        setIsLoading(true);
-        try {
-            const doc = new jsPDF();
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const margin = 10;
-            let currentY = margin;
-
-            // Function to add header
-            const addHeader = () => {
-                if (!includeHeader) return;
-
-                doc.setFontSize(10);
-                doc.setTextColor(40);
-                const headerText = 'PrecisionNote - Clinical Documentation';
-                doc.text(headerText, margin, currentY);
-                currentY += 5;
-            };
-
-            // Function to add footer
-            const addFooter = () => {
-                if (!includeFooter) return;
-
-                doc.setFontSize(10);
-                doc.setTextColor(40);
-                const footerText = '© 2025 PrecisionNote Inc. All rights reserved.';
-                const textWidth = doc.getTextWidth(footerText);
-                const xPosition = (pageWidth - textWidth - margin);
-                doc.text(footerText, xPosition, doc.internal.pageSize.getHeight() - margin);
-            };
-
-            // Function to add timestamp
-            const addTimestamp = () => {
-                if (!includeTimestamp) return;
-
-                doc.setFontSize(8);
-                doc.setTextColor(80);
-                const timestamp = `Exported on: ${formatDate(new Date().toISOString())}`;
-                doc.text(timestamp, margin, doc.internal.pageSize.getHeight() - margin);
-            };
-
-            // Function to add patient information
-            const addPatientInformation = () => {
-                if (!includePatientInfo || !document.metadata?.patientInfo) return;
-
-                const patientInfo = document.metadata.patientInfo;
-                const col = ["Field", "Value"];
-                const rows = [
-                    ["Name", patientInfo.name || 'N/A'],
-                    ["Age", patientInfo.age || 'N/A'],
-                    ["Gender", patientInfo.gender || 'N/A'],
-                    ["Contact", patientInfo.contact || 'N/A'],
-                ];
-
-                autoTable(doc, {
-                    head: [col],
-                    body: rows,
-                    startY: currentY,
-                    margin: { horizontal: margin },
-                    columnStyles: {
-                        0: { fontStyle: 'bold' }
-                    },
-                    didParseCell: function(data) {
-                        if (data.section === 'head') {
-                            doc.setFontSize(9);
-                        } else {
-                            doc.setFontSize(8);
-                        }
-                    },
-                });
-
-                currentY = (doc as any).lastAutoTable.finalY + margin;
-            };
-
-            addHeader();
-            addPatientInformation();
-
-            // Add main content
-            doc.setFontSize(12);
-            doc.setTextColor(0);
-            const splitText = doc.splitTextToSize(formattedContent, pageWidth - 2 * margin);
-            splitText.forEach(line => {
-                if (currentY > doc.internal.pageSize.getHeight() - 2 * margin) {
-                    doc.addPage();
-                    currentY = margin;
-                    addHeader();
-                }
-                doc.text(line, margin, currentY);
-                currentY += 6;
-            });
-
-            addTimestamp();
-            addFooter();
-
-            doc.save(fileName);
-            toast({
-                title: "Exported as PDF",
-                description: "The document has been successfully exported as a PDF.",
-            });
-            handleClose();
-
-        } catch (error) {
-            console.error("Error exporting as PDF:", error);
-            toast({
-                title: "Failed to export as PDF",
-                description: "There was an error exporting the document as a PDF.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Helper function to save document to medical_documents table
-    const saveDocument = async (documentData: any) => {
-        try {
-            if (!documentData.creator_id && user) {
-                documentData.creator_id = user.id;
-            }
-            
-            const { data, error } = await supabase
-                .from('medical_documents')
-                .insert(documentData)
-                .select();
-                
-            if (error) {
-                console.error("Error saving document:", error);
-                return { success: false, error };
-            }
-            
-            return { success: true, data };
-        } catch (error) {
-            console.error("Unexpected error saving document:", error);
-            return { success: false, error };
-        }
-    };
-
-    return {
-        isLoading,
-        documentSaved,
-        setDocumentSaved,
-        handleCreateNewDocument,
-        resetForm,
-        createDocument,
-        updateDocument,
-        deleteDocument,
-        uploadFile,
-        handleExportAsPDF,
-        exportToPDF
-    };
+  return {
+    isLoading,
+    documentSaved,
+    setDocumentSaved,
+    resetForm,
+    handleCreateNewDocument,
+    exportToPDF
+  };
 };
 
 export default useDocumentOperations;
