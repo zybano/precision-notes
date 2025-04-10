@@ -9,7 +9,7 @@ import { DocumentTables } from "@/components/dashboard/DocumentTables";
 import { useEffect, useState } from "react";
 import { calculateUserMetrics, fetchUserDocuments, DocumentType, MetricType } from "@/services/dashboardService";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const [metrics, setMetrics] = useState<MetricType[]>([]);

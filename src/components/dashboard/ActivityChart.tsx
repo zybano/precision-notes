@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { getActivityData } from "@/services/dashboardService";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 type ActivityData = {
   month: string;
@@ -25,6 +26,11 @@ export const ActivityChart = () => {
         setActivityData(data);
       } catch (error) {
         console.error("Error fetching activity data:", error);
+        toast({
+          title: "Error fetching activity data",
+          description: "Could not load your activity chart. Using sample data instead.",
+          variant: "destructive"
+        });
         // Fallback data already provided by service
       } finally {
         setIsLoading(false);
