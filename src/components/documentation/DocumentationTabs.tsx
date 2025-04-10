@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect, MutableRefObject } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecentDocuments from "@/components/documentation/RecentDocuments";
@@ -12,16 +11,21 @@ interface DocumentationTabsProps {
   setActiveTab: (tab: string) => void;
   setNewDocumentOpen: (open: boolean) => void;
   form: UseFormReturn<any>;
+  refreshRef?: MutableRefObject<{
+    refreshSavedDocuments: () => void;
+    refreshSharedDocuments: () => void;
+  }>;
 }
 
-const DocumentationTabs: React.FC<DocumentationTabsProps> = ({ 
-  activeTab, 
-  setActiveTab, 
-  setNewDocumentOpen, 
-  form 
-}) => {
+const DocumentationTabs: React.FC<DocumentationTabsProps> = ({
+                                                               activeTab,
+                                                               setActiveTab,
+                                                               setNewDocumentOpen,
+                                                               form,
+                                                               refreshRef
+                                                             }) => {
   const isMobile = useIsMobile();
-  
+
   return (
       <FadeIn delay={0.2}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full flex flex-col items-center">
@@ -34,6 +38,7 @@ const DocumentationTabs: React.FC<DocumentationTabsProps> = ({
             <RecentDocuments
                 setNewDocumentOpen={setNewDocumentOpen}
                 form={form}
+                refreshRef={refreshRef}
             />
           </TabsContent>
 

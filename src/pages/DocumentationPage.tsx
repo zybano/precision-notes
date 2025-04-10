@@ -1,7 +1,6 @@
+// Updated DocumentationPage.tsx
 
-// Fixed DocumentationPage.tsx
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { documentTemplates } from "@/data/documentTemplates";
 import { useDocumentFormat } from "@/hooks/useDocumentFormat";
@@ -17,6 +16,11 @@ import { toast } from "sonner";
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("saved");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
+  // Create a ref to store the refresh function
+  const tabsRefreshRef = useRef({
+    refreshSavedDocuments: () => {},
+    refreshSharedDocuments: () => {}
+  });
 
   const form = useForm({
     defaultValues: {
@@ -52,6 +56,16 @@ const DocumentationPage = () => {
   // Handle document dialog close
   const handleDialogClose = () => {
     setNewDocumentOpen(false);
+  };
+
+  // Function to refresh data from tabs
+  const refetchDataFromTabs = () => {
+    // Check which tab is active and refresh accordingly
+    if (activeTab === "saved") {
+      tabsRefreshRef.current.refreshSavedDocuments();
+    } else if (activeTab === "shared") {
+      tabsRefreshRef.current.refreshSharedDocuments();
+    }
   };
 
   // Use our document operations hook with onSaveSuccess callback
@@ -99,6 +113,9 @@ const DocumentationPage = () => {
     const success = await handleCreateNewDocument(data);
     if (success) {
       setNewDocumentOpen(false);
+
+      // refresh the actual data in the tabs
+      refetchDataFromTabs();
     }
   };
 
@@ -129,6 +146,7 @@ const DocumentationPage = () => {
               setActiveTab={setActiveTab}
               setNewDocumentOpen={setNewDocumentOpen}
               form={form}
+              refreshRef={tabsRefreshRef}
           />
 
           <UpdatedNewDocumentDialog

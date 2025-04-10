@@ -325,16 +325,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               <option value="Procedure Note">Procedure Note</option>
             </select>
           </div>
-          
-          <Button 
-            size="sm" 
-            onClick={convertToStructuredNote}
-            disabled={isGeneratingNote || !transcript}
-            className="whitespace-nowrap"
-          >
-            <Wand2 className="h-4 w-4 mr-1" />
-            {isGeneratingNote ? "Converting..." : "Convert to Structured Note"}
-          </Button>
+
           
           {structuredNote && (
             <div className="flex items-center space-x-2">

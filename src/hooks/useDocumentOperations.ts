@@ -82,10 +82,10 @@ const useDocumentOperations = ({
       }
 
       // Show success message
-      toast({
-        title: "Success",
-        description: "Document saved successfully!",
-      });
+      // toast({
+      //   title: "Success",
+      //   description: "Document saved successfully!",
+      // });
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({
@@ -101,11 +101,11 @@ const useDocumentOperations = ({
       return true;
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "An unexpected error occurred. Please try again.",
+      //   variant: "destructive"
+      // });
       return false;
     } finally {
       setIsLoading(false);
