@@ -56,7 +56,7 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-const reducer = (state: State, action: Action): State => {
+const reducer = (state: State, action: Action, dispatchFn?: React.Dispatch<Action>): State => {
   switch (action.type) {
     case actionTypes.ADD_TOAST:
       return {
@@ -75,12 +75,12 @@ const reducer = (state: State, action: Action): State => {
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action
 
-      if (toastId) {
+      if (toastId && dispatchFn) {
         toastTimeouts.set(
           toastId,
           setTimeout(() => {
             toastTimeouts.delete(toastId)
-            dispatch({
+            dispatchFn({
               type: actionTypes.REMOVE_TOAST,
               toastId,
             })
@@ -136,9 +136,12 @@ interface ToastProviderProps {
 }
 
 function ToastProvider({ children }: ToastProviderProps) {
-  const [state, dispatch] = React.useReducer(reducer, {
-    toasts: [],
-  })
+  const [state, dispatch] = React.useReducer(
+    (state: State, action: Action) => reducer(state, action, dispatch),
+    {
+      toasts: [],
+    }
+  );
 
   React.useEffect(() => {
     toastTimeouts.forEach((timeout) => clearTimeout(timeout))

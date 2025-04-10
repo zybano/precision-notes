@@ -1,3 +1,4 @@
+
 import { ToastProvider } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,6 +9,28 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { HelmetProvider } from "react-helmet-async";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+
+// Import all page components
+import Index from "@/pages/Index";
+import Features from "@/pages/Features";
+import Integrations from "@/pages/Integrations";
+import Privacy from "@/pages/Privacy";
+import Terms from "@/pages/Terms";
+import Security from "@/pages/Security";
+import Blog from "@/pages/Blog";
+import Careers from "@/pages/Careers";
+import Pricing from "@/pages/Pricing";
+import About from "@/pages/About";
+import Login from "@/pages/Login";
+import SignUp from "@/pages/SignUp";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+import Dashboard from "@/pages/Dashboard";
+import Documentation from "@/pages/DocumentationPage";
+import Settings from "@/pages/Settings";
+import HospitalDashboard from "@/pages/hospital/HospitalDashboard";
+import NotFound from "@/pages/NotFound";
+import Layout from "@/components/Layout";
 
 const queryClient = new QueryClient();
 

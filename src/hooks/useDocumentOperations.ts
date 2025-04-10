@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, RefObject } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -112,28 +112,60 @@ const useDocumentOperations = ({
     }
   };
 
-  // Export document to PDF
-  const exportToPDF = (title: string, content: string) => {
+  // Export document to PDF - updated to match expected signature
+  const exportToPDF = async (contentRef: RefObject<HTMLDivElement>, title?: string): Promise<void> => {
     try {
-      const doc = new jsPDF();
-      
-      // Add title
-      doc.setFontSize(16);
-      doc.text(title, 20, 20);
-      
-      // Add content
-      doc.setFontSize(12);
-      
-      const splitText = doc.splitTextToSize(content, 170);
-      doc.text(splitText, 20, 30);
-      
-      // Save PDF
-      doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
-      
-      toast({
-        title: "PDF Exported",
-        description: "Document has been exported as PDF successfully."
-      });
+      // If we have a direct string content (for backward compatibility)
+      if (typeof contentRef === 'string' && typeof title === 'string') {
+        const doc = new jsPDF();
+        
+        // Add title
+        doc.setFontSize(16);
+        doc.text(title, 20, 20);
+        
+        // Add content
+        doc.setFontSize(12);
+        
+        const splitText = doc.splitTextToSize(contentRef, 170);
+        doc.text(splitText, 20, 30);
+        
+        // Save PDF
+        doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+        
+        toast({
+          title: "PDF Exported",
+          description: "Document has been exported as PDF successfully."
+        });
+        return;
+      }
+
+      // Modern implementation using contentRef
+      if (contentRef?.current) {
+        const doc = new jsPDF();
+        const elementTitle = title || 'Document';
+        
+        // Add title
+        doc.setFontSize(16);
+        doc.text(elementTitle, 20, 20);
+        
+        // Get text content from the element
+        const content = contentRef.current.innerText || '';
+        
+        // Add content
+        doc.setFontSize(12);
+        const splitText = doc.splitTextToSize(content, 170);
+        doc.text(splitText, 20, 30);
+        
+        // Save PDF
+        doc.save(`${elementTitle.replace(/\s+/g, '_')}.pdf`);
+        
+        toast({
+          title: "PDF Exported",
+          description: "Document has been exported as PDF successfully."
+        });
+      } else {
+        throw new Error("Content reference is not available");
+      }
     } catch (error) {
       console.error("Error exporting PDF:", error);
       toast({
