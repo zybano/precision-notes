@@ -180,9 +180,8 @@ const Sidebar = () => {
     <div className={`h-screen bg-white border-r border-border relative transition-all duration-300 ease-in-out hidden md:block ${expanded ? 'w-60' : 'w-20'}`}>
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className={`flex items-center transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 overflow-hidden w-0'}`}>
-          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-         <Logo/>
-          </div>
+           <Logo/>
+
           <span className="ml-2 font-semibold">PrecisionNote</span>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hover:bg-accent rounded-full">
