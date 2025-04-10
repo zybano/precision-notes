@@ -57,7 +57,7 @@ const useDocumentOperations = ({
         type,
         notes,
         creator_id: user?.id,
-        patient_name: "Patient Name", // Add proper patient name field to your form
+        patient_name: data.patientName || "Patient Name", // Use the patientName field if available
         title: `${type} - ${new Date().toLocaleDateString()}`,
         status: "Draft",
         recording_duration: data.recordingTime || 0,
@@ -112,8 +112,8 @@ const useDocumentOperations = ({
     }
   };
 
-  // Export document to PDF - updated to match expected signature
-  const exportToPDF = async (contentRef: RefObject<HTMLDivElement>, title?: string): Promise<void> => {
+  // Export document to PDF - supports both signatures for backward compatibility
+  const exportToPDF = async (contentRef: RefObject<HTMLDivElement> | string, title?: string): Promise<void> => {
     try {
       // If we have a direct string content (for backward compatibility)
       if (typeof contentRef === 'string' && typeof title === 'string') {
@@ -140,7 +140,7 @@ const useDocumentOperations = ({
       }
 
       // Modern implementation using contentRef
-      if (contentRef?.current) {
+      if (contentRef && typeof contentRef !== 'string' && contentRef.current) {
         const doc = new jsPDF();
         const elementTitle = title || 'Document';
         
