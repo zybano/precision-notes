@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import Logo from "@/components/Logo.tsx";
 
 const Sidebar = () => {
   const isMobile = useIsMobile();
@@ -143,12 +144,7 @@ const Sidebar = () => {
         <SheetContent side="left" className="p-0 max-w-[250px]">
           <div className="h-full flex flex-col">
             <div className="p-4 flex items-center justify-between border-b border-border">
-              <div className="flex items-center">
-                <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">D</span>
-                </div>
-                <span className="ml-2 font-semibold">PrecisionNote</span>
-              </div>
+              <Logo/>
               <Button variant="ghost" size="icon" onClick={() => setSheetOpen(false)} className="hover:bg-accent rounded-full">
                 <X size={18} />
               </Button>
@@ -185,7 +181,7 @@ const Sidebar = () => {
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className={`flex items-center transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 overflow-hidden w-0'}`}>
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">D</span>
+         <Logo/>
           </div>
           <span className="ml-2 font-semibold">PrecisionNote</span>
         </div>

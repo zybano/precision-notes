@@ -18,17 +18,6 @@ export function Navigation() {
     <nav className="px-4 sm:px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border w-full">
       <div className="container mx-auto max-w-7xl flex justify-between items-center">
         <div className="flex items-center">
-          {/* Add back button for pages other than home */}
-          {window.location.pathname !== "/" && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="mr-2" 
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
-            </Button>
-          )}
           <Link to="/" className="flex items-center">
             <Logo/>
             <span className="ml-3 text-xl font-medium">PrecisionNote</span>
@@ -36,9 +25,11 @@ export function Navigation() {
         </div>
         
         <div className="hidden md:flex items-center space-x-6">
+          <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
+
           <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
           <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-          <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+          <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
           <ContactDialog>
             <button className="text-muted-foreground hover:text-foreground transition-colors">Contact Us</button>
           </ContactDialog>

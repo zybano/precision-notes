@@ -2,18 +2,14 @@
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { Link } from "react-router-dom";
+import Logo from "@/components/Logo.tsx";
 
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
       <nav className="px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border">
         <div className="container mx-auto max-w-7xl flex justify-between items-center">
-          <Link to="/" className="flex items-center">
-            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">D</span>
-            </div>
-            <span className="ml-3 text-xl font-medium">PrecisionNote</span>
-          </Link>
+          <Logo/>
           
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
