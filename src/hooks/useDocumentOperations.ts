@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client'; // Use direct supabase client instead of useSupabaseClient
 import { v4 as uuidv4 } from 'uuid';
@@ -21,8 +20,9 @@ type DocumentType = {
     metadata: any;
 };
 
-const useDocumentOperations = () => {
+const useDocumentOperations = ({ form, resetRecording, resetTranscription, onSaveSuccess } = {} as any) => {
     const [isLoading, setIsLoading] = useState(false);
+    const [documentSaved, setDocumentSaved] = useState(false);
     const { toast } = useToast();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -65,6 +65,98 @@ const useDocumentOperations = () => {
         }
     };
 
+    const handleCreateNewDocument = async (data: any) => {
+        const { type, notes, transcript, transcriptResult } = data;
+        
+        try {
+            // Prepare document data
+            const documentData = {
+                title: `${type} Notes`,
+                patient_name: "Sample Patient", // This should be dynamic in a real app
+                type: type,
+                notes: notes,
+                transcript_data: transcript || null,
+                summary: data.transcriptSummary || null,
+                recording_duration: data.recordingTime || 0,
+                document_format: "Standard",
+                creator_id: user?.id || null
+            };
+            
+            // Call the service to save the document
+            const response = await saveDocument(documentData);
+            
+            if (response.success) {
+                toast({
+                    title: "Document saved",
+                    description: "Your medical document has been saved successfully."
+                });
+                setDocumentSaved(true);
+                
+                // Reset form and recordings if provided
+                if (form) form.reset();
+                if (resetRecording) resetRecording();
+                if (resetTranscription) resetTranscription();
+                if (onSaveSuccess) onSaveSuccess();
+                
+                return true;
+            } else {
+                toast({
+                    title: "Error saving document",
+                    description: "There was a problem saving your document.",
+                    variant: "destructive"
+                });
+                return false;
+            }
+        } catch (error) {
+            console.error("Error creating document:", error);
+            toast({
+                title: "Error",
+                description: "An unexpected error occurred.",
+                variant: "destructive"
+            });
+            return false;
+        }
+    };
+
+    const resetForm = () => {
+        if (form) {
+            form.reset();
+        }
+        setDocumentSaved(false);
+        if (resetRecording) resetRecording();
+        if (resetTranscription) resetTranscription();
+    };
+
+    const exportToPDF = async (contentRef: React.RefObject<HTMLDivElement>, title?: string) => {
+        if (!contentRef.current) {
+            toast({
+                title: "Error",
+                description: "Cannot generate PDF from empty content.",
+                variant: "destructive"
+            });
+            return;
+        }
+        
+        // Mock document for export
+        const document = {
+            id: "temp-id",
+            title: title || "Medical Document",
+            metadata: {}
+        };
+        
+        // Get formatted content from the ref
+        const formattedContent = contentRef.current.innerText;
+        
+        // Call the export function
+        await handleExportAsPDF(
+            document as any,
+            formattedContent,
+            () => toast({ title: "PDF generated successfully" }),
+            contentRef
+        );
+    };
+
+    // The rest of the function implementations from the original file
     const createDocument = async (title: string, content: string, file: File | null, metadata: any = {}) => {
         setIsLoading(true);
         let filePath: string | null = null;
@@ -329,13 +421,42 @@ const useDocumentOperations = () => {
         }
     };
 
+    // Helper function to save document to medical_documents table
+    const saveDocument = async (documentData: any) => {
+        try {
+            if (!documentData.creator_id && user) {
+                documentData.creator_id = user.id;
+            }
+            
+            const { data, error } = await supabase
+                .from('medical_documents')
+                .insert(documentData)
+                .select();
+                
+            if (error) {
+                console.error("Error saving document:", error);
+                return { success: false, error };
+            }
+            
+            return { success: true, data };
+        } catch (error) {
+            console.error("Unexpected error saving document:", error);
+            return { success: false, error };
+        }
+    };
+
     return {
         isLoading,
+        documentSaved,
+        setDocumentSaved,
+        handleCreateNewDocument,
+        resetForm,
         createDocument,
         updateDocument,
         deleteDocument,
         uploadFile,
-        handleExportAsPDF
+        handleExportAsPDF,
+        exportToPDF
     };
 };
 
