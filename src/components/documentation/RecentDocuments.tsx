@@ -1,20 +1,94 @@
-import React, { useEffect, useState, MutableRefObject } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { UseFormReturn } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
-import { Document, RawDocumentData } from "./DocumentTypes";
-import DocumentTable from "./DocumentTable";
-import SimplifiedTranscriptDialog from "./SimplifiedTranscriptDialog";
+import { MoreVertical, Edit, FileText, Share2, Trash2, User, Calendar, Clock } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { formatDate } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ResizablePanel,
+  ResizablePanelGroup,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import { Document } from "./DocumentTypes";
+import { SimplifiedTranscriptDisplay } from "./SimplifiedTranscriptDisplay";
+import { EnhancedTranscriptDisplay } from "./EnhancedTranscriptDisplay";
 import { TranscriptionResult } from "@/services/transcription";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchUserDocuments } from "@/services/supabaseSetup";
-import EnhancedTranscriptDialog from "@/components/documentation/EnhancedTranscriptDialog.tsx";
+import {
+  fetchUserDocuments,
+  fetchSharedDocuments,
+  saveDocument
+} from "@/services/supabaseSetup";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { generateMockTranscriptionResult } from "@/data/mockTranscript";
 
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
-  form: UseFormReturn<any>;
-  refreshRef?: MutableRefObject<{
+  form: any;
+  refreshRef: React.MutableRefObject<{
     refreshSavedDocuments: () => void;
     refreshSharedDocuments: () => void;
   }>;
@@ -25,288 +99,673 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
   form,
   refreshRef
 }) => {
+  const { toast } = useToast();
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [documentToShare, setDocumentToShare] = useState<Document | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [sharedEmail, setSharedEmail] = useState("");
+  const [documentToView, setDocumentToView] = useState<Document | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [isSimplifiedView, setIsSimplifiedView] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const { user } = useAuth();
-  const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [transcriptDialogOpen, setTranscriptDialogOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const [parsedTranscript, setParsedTranscript] = useState<TranscriptionResult | null>(null);
-  const [transcriptText, setTranscriptText] = useState("");
-  const [transcriptSummary, setTranscriptSummary] = useState("");
-  const [showSummary, setShowSummary] = useState(true);
-  const [formattedNotes, setFormattedNotes] = useState("");
+  const queryClient = useQueryClient();
 
-  const fetchRecentDocuments = async () => {
-    if (!user?.id) return;
+  const PAGE_SIZE = 5;
 
-    setIsLoading(true);
+  // Mock transcription result for testing
+  const mockResult = generateMockTranscriptionResult();
+
+  // Define a schema for document sharing form
+  const shareFormSchema = z.object({
+    email: z.string().email({ message: "Please enter a valid email address." }),
+  });
+
+  // Initialize the form for sharing documents
+  const shareForm = useForm<z.infer<typeof shareFormSchema>>({
+    resolver: zodResolver(shareFormSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  // Function to handle document sharing
+  const handleShareDocument = async (document: Document) => {
+    setDocumentToShare(document);
+    setShareDialogOpen(true);
+  };
+
+  // Function to execute the sharing action
+  const executeShareDocument = async (values: z.infer<typeof shareFormSchema>) => {
+    shareForm.reset();
+    setShareDialogOpen(false);
+
+    if (!documentToShare) {
+      toast({
+        title: "Error",
+        description: "No document selected to share.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      console.log("Fetching documents for user:", user.id);
-      const { success, data, error } = await fetchUserDocuments(user.id);
+      // Check if the user exists in Supabase
+      const { data: existingUser, error: userError } = await queryClient.fetchQuery({
+        queryKey: ['checkUser', values.email],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', values.email)
+            .single();
 
-      if (!success || error) {
-        throw error || new Error("Failed to fetch documents");
+          if (error) {
+            console.error("Error checking user:", error);
+            throw new Error("Failed to check user existence.");
+          }
+
+          return data;
+        }
+      });
+
+      if (!existingUser) {
+        toast({
+          title: "User Not Found",
+          description: "The specified user does not exist.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (data && Array.isArray(data)) {
-        console.log("Fetched documents:", data.length);
-        const mappedDocuments: Document[] = data.map((doc: any) => ({
-          id: doc.id,
-          title: doc.title,
-          type: doc.type,
-          patient_name: doc.patient_name,
-          status: doc.status,
-          created_at: doc.created_at,
-          updated_at: doc.updated_at,
-          notes: doc.notes,
-          transcript_data: doc.transcript_data || null,
-          document_format: doc.document_format || null,
-          recording_duration: doc.recording_duration || null,
-          generated_title: doc.generated_title || null
-        }));
-        setRecentDocuments(mappedDocuments);
-      } else {
-        console.log("No documents found or data is not an array:", data);
-        setRecentDocuments([]);
-      }
+      // Create a share record in the database
+      const { data, error } = await queryClient.fetchQuery({
+        queryKey: ['shareDocument', documentToShare.id, existingUser.id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('shared_documents')
+            .insert([
+              {
+                document_id: documentToShare.id,
+                shared_with: existingUser.id,
+                shared_by: user?.id,
+              },
+            ])
+            .select();
+
+          if (error) {
+            console.error("Error sharing document:", error);
+            throw new Error("Failed to share document.");
+          }
+
+          return data;
+        }
+      });
+
+      toast({
+        title: "Document Shared",
+        description: `Document has been successfully shared with ${values.email}.`,
+      });
     } catch (error) {
-      console.error("Error fetching documents:", error);
-      toast.error("Failed to fetch recent documents");
-      setRecentDocuments([]);
+      toast({
+        title: "Sharing Failed",
+        description: "There was an error sharing the document. Please try again.",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setDocumentToShare(null);
     }
   };
 
-  // Register the fetchRecentDocuments function with the parent component
-  useEffect(() => {
-    if (refreshRef) {
-      refreshRef.current = {
-        ...refreshRef.current,
-        refreshSavedDocuments: fetchRecentDocuments
-      };
+  // Function to handle document deletion
+  const handleDeleteDocument = (document: Document) => {
+    setDocumentToDelete(document);
+  };
+
+  // Function to execute the deletion action
+  const executeDeleteDocument = async () => {
+    if (!documentToDelete) return;
+
+    try {
+      // Delete the document from the database
+      const { data, error } = await queryClient.fetchQuery({
+        queryKey: ['deleteDocument', documentToDelete.id],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('medical_documents')
+            .delete()
+            .eq('id', documentToDelete.id);
+
+          if (error) {
+            console.error("Error deleting document:", error);
+            throw new Error("Failed to delete document.");
+          }
+
+          return data;
+        }
+      });
+
+      // Update the local state to remove the deleted document
+      setDocuments((prevDocuments) =>
+        prevDocuments.filter((doc) => doc.id !== documentToDelete.id)
+      );
+
+      toast({
+        title: "Document Deleted",
+        description: "The document has been successfully deleted.",
+      });
+    } catch (error) {
+      toast({
+        title: "Deletion Failed",
+        description: "There was an error deleting the document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDocumentToDelete(null);
     }
-  }, [refreshRef, user?.id]);
+  };
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchRecentDocuments();
-    } else {
-      setIsLoading(false);
-      setRecentDocuments([]);
-    }
-  }, [user?.id]);
+  // Function to handle viewing a document
+  const handleViewDocument = (document: Document) => {
+    setDocumentToView(document);
+    setViewDialogOpen(true);
 
-  const handleOpenDocument = (doc: Document) => {
-    toast.success("Continuing Document", {
-      description: `Opening ${doc.title} for editing`
-    });
-
-    // Reset the form first
-    form.reset();
-
-    // Set document ID and basic info
-    form.setValue("documentId", doc.id);
-    form.setValue("type", doc.type);
-    form.setValue("patientName", doc.patient_name);
-    form.setValue("notes", doc.notes || "");
-    
-    // Set document format if available
-    if (doc.document_format) {
-      form.setValue("documentFormat", doc.document_format);
-    }
-    
-    // Set recording duration if available
-    if (doc.recording_duration) {
-      form.setValue("recordingTime", doc.recording_duration);
-    }
-
-    // Set summary if available
-    if (doc.summary) {
-      form.setValue("transcriptSummary", doc.summary);
-    }
-
-    // Parse and set transcript data if available
-    if (doc.transcript_data) {
+    // Load transcript data into the form
+    if (document.transcript_data) {
       try {
-        const parsedData = JSON.parse(doc.transcript_data);
-        
-        // Create transcript result object
-        const transcriptResult: TranscriptionResult = {
-          text: parsedData.text || "",
-          utterances: parsedData.utterances || [],
-          isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default"
-        };
+        const transcriptResult = JSON.parse(document.transcript_data);
 
-        // Set transcript-related form values
+        // Check if patientInfo exists, if not, create it
+        let extractedInfo = transcriptResult.patientInfo;
+        if (!extractedInfo) {
+          extractedInfo = { name: "Unknown" };
+        }
+
+        // Set the transcript result and patient info in the form
         form.setValue("transcriptResult", transcriptResult);
-        form.setValue("transcript", parsedData.text || "");
-        
-        // Set transcript summary if not already set but available in parsed data
-        if (!doc.summary && parsedData.summary) {
-          form.setValue("transcriptSummary", parsedData.summary);
-        }
-        
-        // If there's patient info in the transcript data, set it
-        if (parsedData.patientInfo) {
-          form.setValue("patientInfo", parsedData.patientInfo);
-        }
-      } catch (e) {
-        console.error("Error parsing transcript data:", e);
-        toast.error("Error parsing transcript data", {
-          description: "The transcript data could not be loaded properly"
+
+        // Also set the mock result for testing purposes
+        setTranscriptResult({
+          ...mockResult,
+          patientInfo: extractedInfo // Use a type assertion if needed
+        } as TranscriptionResult);
+      } catch (error) {
+        console.error("Error parsing transcript data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load transcript data.",
+          variant: "destructive",
         });
-      }
-    }
-
-    setNewDocumentOpen(true);
-  };
-
-  const handleViewTranscript = (doc: Document) => {
-    setSelectedDocument(doc);
-
-    if (doc.transcript_data) {
-      try {
-        const parsedData = JSON.parse(doc.transcript_data);
-
-        setParsedTranscript({
-          text: parsedData.text || "",
-          utterances: parsedData.utterances || [],
-          isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default",
-          patientInfo: parsedData.patientInfo || undefined
-        });
-
-        setTranscriptText(parsedData.text || "");
-        setFormattedNotes(doc.notes || "");
-        
-        // Get summary from document first, if not available use the one from transcript data
-        setTranscriptSummary(doc.summary || parsedData.summary || "");
-        
-        setTranscriptDialogOpen(true);
-      } catch (e) {
-        console.error("Error parsing transcript data:", e);
-        toast.error("Failed to parse transcript data");
       }
     } else {
-      toast.error("No Transcript", {
-        description: "This document does not have any saved transcript data"
-      });
+      // Reset transcript result if no data
+      form.setValue("transcriptResult", null);
     }
+
+    // Load notes into the form
+    form.setValue("notes", document.notes || "");
+
+    // Load document format into the form
+    form.setValue("documentFormat", document.document_format || "");
   };
 
-  const handleDeleteDocument = async (doc: Document) => {
+  const [transcriptResult, setTranscriptResult] = useState<TranscriptionResult | null>(null);
+
+  // Function to handle closing the view dialog
+  const handleViewDialogClose = () => {
+    setViewDialogOpen(false);
+    setIsEditingTitle(false);
+  };
+
+  // Function to handle title editing
+  const handleTitleEdit = (document: Document) => {
+    setIsEditingTitle(true);
+    setEditedTitle(document.title);
+  };
+
+  // Function to handle title saving
+  const handleTitleSave = async (document: Document) => {
+    if (!editedTitle.trim()) {
+      toast({
+        title: "Error",
+        description: "Title cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const { error } = await supabase
-          .from('medical_documents')
-          .delete()
-          .eq('id', doc.id);
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Document Deleted", {
-        description: `${doc.title} has been deleted`
+      // Update the document title in the database
+      const { data, error } = await saveDocument({
+        ...document,
+        title: editedTitle,
+        creator_id: user?.id,
+        notes: document.notes || null,
+        transcript_data: document.transcript_data || null,
+        summary: document.summary || null,
+        recording_duration: document.recording_duration || null,
+        document_format: document.document_format || null,
+        generated_title: document.generated_title || null,
+        id: document.id
       });
 
-      fetchRecentDocuments();
+      if (error) {
+        console.error("Error updating document title:", error);
+        throw new Error("Failed to update document title.");
+      }
+
+      // Update the local state to reflect the title change
+      setDocuments((prevDocuments) =>
+        prevDocuments.map((doc) =>
+          doc.id === document.id ? { ...doc, title: editedTitle } : doc
+        )
+      );
+
+      toast({
+        title: "Title Updated",
+        description: "The document title has been successfully updated.",
+      });
     } catch (error) {
-      console.error("Error deleting document:", error);
-      toast.error("Failed to delete document");
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating the title. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEditingTitle(false);
     }
   };
 
-  const loadMoreDocuments = async () => {
-    if (!user?.id) return;
+  // Function to handle loading more documents
+  const onLoadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
 
     try {
-      // For load more, we'll still use the direct table approach since our RPC doesn't support pagination yet
-      const { data, error } = await supabase
-          .from('medical_documents')
-          .select('*')
-          .eq('creator_id', user.id)
-          .order('updated_at', { ascending: false })
-          .range(recentDocuments.length, recentDocuments.length + 10);
+      const { data, error } = await queryClient.fetchQuery({
+        queryKey: ['documents', page + 1],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('medical_documents')
+            .select('*')
+            .eq('creator_id', user?.id)
+            .order('created_at', { ascending: false })
+            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+          if (error) {
+            console.error("Error fetching documents:", error);
+            throw new Error("Failed to fetch documents.");
+          }
+
+          return data;
+        }
+      });
 
       if (error) {
-        throw error;
+        toast({
+          title: "Error",
+          description: "Failed to load more documents.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (data && data.length > 0) {
-        const newDocs = data.map((doc: any) => ({
-          id: doc.id,
-          title: doc.title,
-          type: doc.type,
-          patient_name: doc.patient_name,
-          status: doc.status,
-          created_at: doc.created_at,
-          updated_at: doc.updated_at,
-          notes: doc.notes,
-          transcript_data: doc.transcript_data || null,
-          document_format: doc.document_format || null,
-          recording_duration: doc.recording_duration || null,
-          generated_title: doc.generated_title || null
-        }));
-
-        setRecentDocuments(prev => [...prev, ...newDocs]);
-
-        toast.success("Documents Loaded", {
-          description: `Loaded ${data.length} more documents`
-        });
+      if (!data || data.length === 0) {
+        setHasMore(false);
       } else {
-        toast.info("No More Documents", {
-          description: "You've reached the end of your document list"
-        });
+        setDocuments((prevDocuments) => [...prevDocuments, ...data]);
+        setPage((prevPage) => prevPage + 1);
       }
     } catch (error) {
-      console.error("Error loading more documents:", error);
-      toast.error("Failed to load more documents");
+      toast({
+        title: "Error",
+        description: "Failed to load more documents.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingMore(false);
     }
-  };
+  }, [isLoadingMore, hasMore, page, user, toast, queryClient]);
 
-  if (isLoading) {
-    return (
-        <div className="flex justify-center items-center py-10">
-          <div className="animate-pulse">Loading recent documents...</div>
-        </div>
-    );
-  }
+  // Initial data loading
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const { data, error } = await queryClient.fetchQuery({
+          queryKey: ['documents', 0],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('medical_documents')
+              .select('*')
+              .eq('creator_id', user?.id)
+              .order('created_at', { ascending: false })
+              .range(0, PAGE_SIZE - 1);
 
-  if (recentDocuments.length === 0) {
-    return (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <p className="text-muted-foreground mb-4">You haven't created any documents yet</p>
-          <Button onClick={() => setNewDocumentOpen(true)}>Create Your First Document</Button>
-        </div>
-    );
-  }
+            if (error) {
+              console.error("Error fetching documents:", error);
+              throw new Error("Failed to fetch documents.");
+            }
+
+            return data;
+          }
+        });
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to load documents.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setHasMore(false);
+        } else {
+          setDocuments(data);
+          setPage(1);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load documents.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (user) {
+      loadInitialData();
+    }
+  }, [user, toast, queryClient]);
+
+  // Refresh function for saved documents
+  const refreshSavedDocuments = useCallback(() => {
+    setDocuments([]);
+    setPage(0);
+    setHasMore(true);
+    setIsLoadingMore(false);
+
+    const loadInitialData = async () => {
+      try {
+        const { data, error } = await queryClient.fetchQuery({
+          queryKey: ['documents', 0],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('medical_documents')
+              .select('*')
+              .eq('creator_id', user?.id)
+              .order('created_at', { ascending: false })
+              .range(0, PAGE_SIZE - 1);
+
+            if (error) {
+              console.error("Error fetching documents:", error);
+              throw new Error("Failed to fetch documents.");
+            }
+
+            return data;
+          }
+        });
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to load documents.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setHasMore(false);
+        } else {
+          setDocuments(data);
+          setPage(1);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load documents.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (user) {
+      loadInitialData();
+    }
+  }, [user, toast, queryClient]);
+
+  // Provide the refresh function to the parent component
+  useEffect(() => {
+    refreshRef.current = { refreshSavedDocuments, refreshSharedDocuments: () => {} };
+  }, [refreshSavedDocuments]);
 
   return (
-      <div>
-        <DocumentTable
-            documents={recentDocuments}
-            onViewTranscript={handleViewTranscript}
-            onDeleteDocument={handleDeleteDocument}
-            onLoadMore={loadMoreDocuments}
-        />
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Documents</CardTitle>
+          <CardDescription>
+            Your recently created and edited documents.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ScrollArea className="h-[500px] w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[30%]">Title</TableHead>
+                  <TableHead className="w-[20%]">Type</TableHead>
+                  <TableHead className="w-[20%]">Last Modified</TableHead>
+                  <TableHead className="w-[15%]">Created By</TableHead>
+                  <TableHead className="text-right w-[15%]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {documents.map((document) => (
+                  <TableRow key={document.id}>
+                    <TableCell className="font-medium">
+                      {isEditingTitle && documentToView?.id === document.id ? (
+                        <Input
+                          value={editedTitle}
+                          onChange={(e) => setEditedTitle(e.target.value)}
+                          onBlur={() => handleTitleSave(document)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleTitleSave(document);
+                            }
+                          }}
+                        />
+                      ) : (
+                        document.title
+                      )}
+                    </TableCell>
+                    <TableCell>{document.type}</TableCell>
+                    <TableCell>{formatDate(document.updated_at)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-2" />
+                        {user?.email}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => handleViewDocument(document)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            View & Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleTitleEdit(document)}
+                            disabled={isEditingTitle}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleShareDocument(document)}
+                          >
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Share
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteDocument(document)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {documents.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      No documents found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </CardContent>
+      </Card>
 
-        <EnhancedTranscriptDialog
-            open={transcriptDialogOpen}
-            onOpenChange={setTranscriptDialogOpen}
-            selectedDocument={selectedDocument}
-            parsedTranscript={parsedTranscript}
-            transcriptText={transcriptText}
-            transcriptSummary={transcriptSummary}
-            formattedNotes={formattedNotes}
-            showSummary={showSummary}
-            setShowSummary={setShowSummary}
-            form={form}
-            onEditDocument={handleOpenDocument}
-        />
-      </div>
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="flex justify-center mt-4">
+          <Button variant="outline" onClick={onLoadMore} disabled={isLoadingMore}>
+            {isLoadingMore ? "Loading..." : "Load More"}
+          </Button>
+        </div>
+      )}
+
+      {/* Share Document Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Share Document</DialogTitle>
+            <DialogDescription>
+              Enter the email address of the user you want to share this document
+              with.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...shareForm}>
+            <form
+              onSubmit={shareForm.handleSubmit(executeShareDocument)}
+              className="space-y-4"
+            >
+              <FormField
+                control={shareForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="example@email.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end">
+                <Button type="submit">Share Document</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Document Alert Dialog */}
+      <AlertDialog open={documentToDelete !== null} onOpenChange={setDocumentToDelete ? (open) => !open ? setDocumentToDelete(null) : null : undefined}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              document from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDocumentToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={executeDeleteDocument}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* View Document Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={handleViewDialogClose}>
+        <DialogContent className="max-w-[90vw] h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditingTitle && documentToView ? (
+                <Input
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onBlur={() => handleTitleSave(documentToView)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleTitleSave(documentToView);
+                    }
+                  }}
+                />
+              ) : (
+                documentToView?.title
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4" />
+                <span>{documentToView?.type}</span>
+                <Clock className="h-4 w-4" />
+                <span>{formatDate(documentToView?.updated_at)}</span>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          {documentToView && (
+            <EnhancedTranscriptDisplay
+              transcriptResult={transcriptResult}
+              transcript={documentToView?.notes || ""}
+              transcriptSummary={documentToView?.summary || ""}
+              showSummary={form.watch("showSummary")}
+              setShowSummary={(show: boolean) => form.setValue("showSummary", show)}
+              form={form}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
+
+  function refreshSharedDocuments() {
+    throw new Error("Function not implemented.");
+  }
 };
 
 export default RecentDocuments;

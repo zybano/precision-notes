@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, Save } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, Save, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
+import jsPDF from 'jspdf';
 import {
   TranscriptionResult,
   LLMProvider,

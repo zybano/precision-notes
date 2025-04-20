@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
     Dialog,
@@ -58,7 +57,10 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                         <h3 className="text-sm font-medium">Transcription Provider</h3>
                         <RadioGroup
                             value={String(transcriptionProvider)}
-                            onValueChange={(value) => setTranscriptionProvider(Number(value) as TranscriptionProvider)}
+                            onValueChange={(e) => {
+                                const selectedValue = Number(e.target.value);
+                                setTranscriptionProvider(selectedValue as unknown as TranscriptionProvider);
+                            }}
                             className="space-y-2"
                         >
                             <div className="flex items-center space-x-2">
@@ -102,7 +104,10 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                         <h3 className="text-sm font-medium">Document Generation</h3>
                         <RadioGroup
                             value={String(llmProvider)}
-                            onValueChange={(value) => setLLMProvider(Number(value) as LLMProvider)}
+                            onValueChange={(e) => {
+                                const selectedValue = Number(e.target.value);
+                                setLLMProvider(selectedValue as unknown as LLMProvider);
+                            }}
                             className="space-y-2"
                         >
                             <div className="flex items-center space-x-2">
@@ -130,7 +135,10 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                         <h3 className="text-sm font-medium">Document Format</h3>
                         <RadioGroup
                             value={String(documentFormat)}
-                            onValueChange={(value) => setDocumentFormat(Number(value) as DocumentFormat)}
+                            onValueChange={(e) => {
+                                const selectedValue = Number(e.target.value);
+                                setDocumentFormat(selectedValue as unknown as DocumentFormat);
+                            }}
                             className="space-y-2"
                         >
                             <div className="flex items-center space-x-2">

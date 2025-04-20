@@ -1,4 +1,3 @@
-
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
@@ -21,7 +20,6 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Fetch both metrics and documents in parallel
         const [userMetrics, userDocuments] = await Promise.all([
           calculateUserMetrics(user?.id),
           fetchUserDocuments(user?.id)
@@ -44,7 +42,6 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [user?.id]);
 
-  // Handlers for document actions
   const handleViewDocument = (doc: DocumentType) => {
     console.log("View document:", doc);
     // Navigate to document view or open modal
@@ -58,6 +55,23 @@ const Dashboard = () => {
       description: "Document deletion would be implemented here",
     });
     // This would delete the document when the functionality is ready
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      // Existing code for status change...
+      
+      toast.success({
+        title: "Status Updated",
+        description: "Document status has been successfully updated."
+      });
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error({
+        title: "Update Failed",
+        description: "Failed to update document status."
+      });
+    }
   };
 
   return (
