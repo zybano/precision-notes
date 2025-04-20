@@ -1,15 +1,13 @@
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, Save, Edit, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
-import jsPDF from 'jspdf';
 import {
   TranscriptionResult,
   LLMProvider,
@@ -29,37 +27,22 @@ interface TranscriptDisplayProps {
 }
 
 const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
-  transcriptResult,
-  transcript,
-  transcriptSummary,
-  showSummary,
-  setShowSummary,
-  form,
-  showSummarySection = true
-}) => {
-  const transcriptRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-  
-  const [selectedFormat, setSelectedFormat] = useState(DocumentFormat.SOAP);
-  const [llmProvider, setLlmProvider] = useState(LLMProvider.OPENAI);
-  const [structuredNote, setStructuredNote] = useState("");
-  const [convertedNoteType, setConvertedNoteType] = useState("");
-  const [isGeneratingNote, setIsGeneratingNote] = useState(false);
-  const [extractedResults, setExtractedResults] = useState<Record<string, string>>({});
-  const [showExtractedResults, setShowExtractedResults] = useState(false);
-  const [interactiveMode, setInteractiveMode] = useState(false);
-  const [highlightedText, setHighlightedText] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [editedTranscript, setEditedTranscript] = useState(transcript);
-  const [editedSummary, setEditedSummary] = useState(transcriptSummary);
-
+                                                                       transcriptResult,
+                                                                       transcript,
+                                                                       transcriptSummary,
+                                                                       showSummary,
+                                                                       setShowSummary,
+                                                                       form,
+                                                                       showSummarySection = true // Default to true for backward compatibility
+                                                                     }) => {
+  // Comprehensive debugging for transcript result
   useEffect(() => {
     console.group('EnhancedTranscriptDisplay Debug');
     console.log('Transcript Result (Full):', JSON.stringify(transcriptResult, null, 2));
     console.log('Raw Transcript:', transcript);
     console.log('Transcript Summary:', transcriptSummary);
 
+    // Validate required fields
     const requiredFields = ['text', 'utterances'];
     const missingFields = requiredFields.filter(field =>
         !transcriptResult[field] ||
@@ -73,20 +56,33 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
     console.groupEnd();
   }, [transcriptResult, transcript, transcriptSummary]);
+  const { toast } = useToast();
+  const [selectedFormat, setSelectedFormat] = useState(DocumentFormat.SOAP);
+  const [llmProvider, setLlmProvider] = useState(LLMProvider.OPENAI);
+  const [structuredNote, setStructuredNote] = useState("");
+  const [convertedNoteType, setConvertedNoteType] = useState("");
+  const [isGeneratingNote, setIsGeneratingNote] = useState(false);
+  const [extractedResults, setExtractedResults] = useState<Record<string, string>>({});
+  const [showExtractedResults, setShowExtractedResults] = useState(false);
+  const [interactiveMode, setInteractiveMode] = useState(false);
+  const [highlightedText, setHighlightedText] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
+  // Sync transcript data with form when loaded
   useEffect(() => {
+    // When a transcript is loaded into this component, make sure the form also has access to it
     if (form && transcriptResult) {
+      // Set transcript result for document generation
       form.setValue("transcriptResult", transcriptResult);
+
+      // Set transcript text
       form.setValue("transcript", transcript);
 
+      // Set transcript summary if available
       if (transcriptSummary) {
         form.setValue("transcriptSummary", transcriptSummary);
       }
     }
-    
-    // Initialize edited transcript and summary
-    setEditedTranscript(transcript);
-    setEditedSummary(transcriptSummary);
   }, [form, transcriptResult, transcript, transcriptSummary]);
 
   const formatUtterances = (utterances: any[]) => {
@@ -164,14 +160,19 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     setStructuredNote("");
 
     try {
+      // Setup document generation options
       const options: DocumentGenerationOptions = {
         provider: llmProvider,
         format: selectedFormat,
-        apiKey: undefined
+        apiKey: undefined // Using environment variables from config
       };
 
+      // Generate the medical document using the transcription service
       const result = await generateMedicalDocument(transcriptResult, options);
+      
+      // Get the formatted name for display
       const formatName = getFormatName(selectedFormat);
+      
       setStructuredNote(result);
       setConvertedNoteType(formatName);
 
@@ -181,6 +182,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         form.setValue("llmProvider", llmProvider);
       }
 
+      // Auto-extract clinical results from the note
       extractClinicalResults(result);
 
       toast({
@@ -200,7 +202,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       setIsGeneratingNote(false);
     }
   };
-
+  
   const getFormatName = (format: DocumentFormat) => {
     switch (format) {
       case DocumentFormat.SOAP: return "SOAP Note";
@@ -222,6 +224,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   };
 
   const extractClinicalResults = (note: string) => {
+    // Simple pattern-based extraction for common clinical metrics
     const patterns = [
       { name: "Blood Pressure", regex: /(?:BP|blood pressure)[:\s]+(\d{2,3}\/\d{2,3})(?:\s*mmHg)?/i },
       { name: "Heart Rate", regex: /(?:HR|heart rate|pulse)[:\s]+(\d{2,3})(?:\s*bpm)?/i },
@@ -241,6 +244,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       }
     });
 
+    // Extract diagnoses with a more complex pattern
     const diagnosisPattern = /(?:assessment|impression|diagnosis)[:\s]+(.*?)(?:\s*(?:plan|treatment|recommendations|follow-up|followup)|\n\n)/is;
     const diagnosisMatch = note.match(diagnosisPattern);
     if (diagnosisMatch && diagnosisMatch[1]) {
@@ -291,6 +295,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     e.preventDefault();
     const text = e.dataTransfer.getData("text/plain");
 
+    // Update the structured note by adding the dragged text to the appropriate section
     if (text && sectionId) {
       const sectionPattern = new RegExp(`(${sectionId}[:\\s]+)(.*?)(?=\\n\\n|$)`, 'is');
       const updatedNote = structuredNote.replace(sectionPattern, (match, p1, p2) => {
@@ -309,6 +314,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   useEffect(() => {
     if (interactiveMode && structuredNote) {
+      // Ensure the structured note is in a format suitable for interactive editing
       const updatedNote = ensureStructuredFormat(structuredNote);
       if (updatedNote !== structuredNote) {
         setStructuredNote(updatedNote);
@@ -317,6 +323,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   }, [interactiveMode, structuredNote]);
 
   const ensureStructuredFormat = (note: string): string => {
+    // Helper function to add bullet points to sections and ensure proper formatting
     const sections = ["SUBJECTIVE", "OBJECTIVE", "ASSESSMENT", "PLAN",
       "CHIEF COMPLAINT", "INTERVAL HISTORY", "CURRENT STATUS",
       "REASON FOR CONSULTATION", "HISTORY OF PRESENT ILLNESS",
@@ -327,6 +334,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     sections.forEach(section => {
       const sectionPattern = new RegExp(`(${section}[:\\s]+)(.*?)(?=\\n\\n|$)`, 'is');
       updatedNote = updatedNote.replace(sectionPattern, (match, p1, p2) => {
+        // If content doesn't already have bullet points, add them
         if (!p2.includes('•') && p2.includes('\n')) {
           const lines = p2.split('\n').filter(l => l.trim().length > 0);
           const bulletedLines = lines.map(l => l.startsWith('•') ? l : `• ${l}`).join('\n');
@@ -339,309 +347,226 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     return updatedNote;
   };
 
-  // Add the PDF export function
-  const exportToPDF = async () => {
-    if (!transcriptRef.current) return;
-    
-    const doc = new jsPDF();
-    const title = form?.getValues("title") || "Medical Transcript";
-    
-    // Add title
-    doc.setFontSize(16);
-    doc.text(title, 15, 15);
-    
-    // Add date
-    doc.setFontSize(10);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 25);
-    
-    // Set regular text font
-    doc.setFontSize(12);
-    
-    // Add transcript and structured note
-    let yPos = 35;
-    
-    // Add transcript section
-    doc.setFontSize(14);
-    doc.text("Transcript", 15, yPos);
-    yPos += 10;
-    
-    doc.setFontSize(10);
-    const transcriptLines = doc.splitTextToSize(transcript, 180);
-    doc.text(transcriptLines, 15, yPos);
-    yPos += transcriptLines.length * 5 + 15;
-    
-    // Add structured note if available
-    if (structuredNote) {
-      // Add a new page if we're too far down
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
-      
-      doc.setFontSize(14);
-      doc.text(convertedNoteType || "Structured Note", 15, yPos);
-      yPos += 10;
-      
-      doc.setFontSize(10);
-      const noteLines = doc.splitTextToSize(structuredNote, 180);
-      doc.text(noteLines, 15, yPos);
-    }
-    
-    // Save PDF
-    doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
-    
-    toast({
-      title: "PDF Exported",
-      description: "Your document has been exported as a PDF.",
-      duration: 3000,
-    });
-  };
-
-  const handleUpdateDocument = () => {
-    if (form && structuredNote && convertedNoteType) {
-      form.setValue("notes", structuredNote);
-      form.setValue("documentFormat", selectedFormat);
-      
-      // If in edit mode, update transcript and summary
-      if (editMode) {
-        form.setValue("transcript", editedTranscript);
-        form.setValue("transcriptSummary", editedSummary);
-        
-        // Update transcript result
-        const updatedTranscriptResult = {
-          ...transcriptResult,
-          text: editedTranscript
-        };
-        form.setValue("transcriptResult", updatedTranscriptResult);
-      }
-      
-      toast({
-        title: "Document Updated",
-        description: "Your document has been saved successfully.",
-        duration: 3000,
-      });
-    }
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col space-y-2">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <h3 className="text-lg font-medium">Transcript</h3>
-            {transcriptResult.isMock && (
-              <Badge variant="outline" className="text-xs">Sample Data</Badge>
-            )}
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={handleCopyTranscript}>
-              <Copy className="h-4 w-4 mr-1" />
-              Copy
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportToPDF}>
-              <FileText className="h-4 w-4 mr-1" />
-              Export to PDF
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row justify-start space-y-2 sm:space-y-0 sm:space-x-4 sm:items-center">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="note-format" className="whitespace-nowrap">Convert to:</Label>
-            <select
-              id="note-format"
-              className="text-sm rounded-md border border-input bg-transparent px-3 py-1"
-              value={selectedFormat}
-              onChange={(e) => setSelectedFormat(Number(e.target.value) as DocumentFormat)}
-            >
-              <option value={DocumentFormat.SOAP}>SOAP Note</option>
-              <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
-              <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
-              <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
-              <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
-              <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
-              <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
-              <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
-              <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
-              <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
-              <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
-              <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
-              <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
-              <option value={DocumentFormat.DICTATION}>Dictation</option>
-            </select>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={convertToStructuredNote}
-              disabled={isGeneratingNote || !transcript}
-              className="ml-2"
-            >
-              {isGeneratingNote ? (
-                <>
-                  <Wand2 className="h-4 w-4 mr-1 animate-spin" />
-                  Converting...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="h-4 w-4 mr-1" />
-                  Convert to {getFormatName(selectedFormat)}
-                </>
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-2">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <h3 className="text-lg font-medium">Transcript</h3>
+              {transcriptResult.isMock && (
+                  <Badge variant="outline" className="text-xs">Sample Data</Badge>
               )}
-            </Button>
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" onClick={handleCopyTranscript}>
+                <Copy className="h-4 w-4 mr-1" />
+                Copy
+              </Button>
+              <Button variant="outline" size="sm">
+                <Copy className="h-4 w-4 mr-1" />
+                Export to PDF
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-start space-y-2 sm:space-y-0 sm:space-x-4 sm:items-center">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="note-format" className="whitespace-nowrap">Convert to:</Label>
+              <select
+                  id="note-format"
+                  className="text-sm rounded-md border border-input bg-transparent px-3 py-1"
+                  value={selectedFormat}
+                  onChange={(e) => setSelectedFormat(e.target.value as DocumentFormat)}
+              >
+                <option value={DocumentFormat.SOAP}>SOAP Note</option>
+                <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
+                <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
+                <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
+                <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
+                <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
+                <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
+                <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
+                <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
+                <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
+                <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
+                <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
+                <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
+                <option value={DocumentFormat.DICTATION}>Dictation</option>
+              </select>
+
+              <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={convertToStructuredNote}
+                  disabled={isGeneratingNote || !transcript}
+                  className="ml-2"
+              >
+                {isGeneratingNote ? (
+                    <>
+                      <Wand2 className="h-4 w-4 mr-1 animate-spin" />
+                      Converting...
+                    </>
+                ) : (
+                    <>
+                      <Wand2 className="h-4 w-4 mr-1" />
+                      Convert to {selectedFormat}
+                    </>
+                )}
+              </Button>
+            </div>
+
+
           </div>
         </div>
-      </div>
 
-      <Tabs defaultValue="transcript" className="w-full">
-        <TabsList>
-          <TabsTrigger value="transcript" className="flex items-center gap-1">
-            <FileText className="h-4 w-4" />
-            Raw Transcript
-          </TabsTrigger>
-          {structuredNote && <TabsTrigger value="structured" className="flex items-center gap-1">
-            <List className="h-4 w-4" />
-            {convertedNoteType}
-          </TabsTrigger>}
-        </TabsList>
+        <Tabs defaultValue="transcript" className="w-full">
+          <TabsList>
+            <TabsTrigger value="transcript" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" />
+              Raw Transcript
+            </TabsTrigger>
+            {structuredNote && <TabsTrigger value="structured" className="flex items-center gap-1">
+              <List className="h-4 w-4" />
+              {convertedNoteType}
+            </TabsTrigger>}
+          </TabsList>
 
-        <TabsContent value="transcript">
-          <ResizablePanelGroup direction="vertical" className="min-h-[300px] max-h-[600px] border rounded-md">
-            <ResizablePanel defaultSize={70}>
-              <div
-                ref={transcriptRef}
-                className="p-4 h-full overflow-y-auto space-y-4"
-                onMouseUp={handleTextSelection}
-              >
-                {formattedUtterances.length > 0 ? (
-                  formattedUtterances.map((utterance, index) => (
-                    <div
-                      key={index}
-                      className="space-y-1"
-                      draggable={interactiveMode}
-                      onDragStart={(e) => handleDragStart(e, utterance.text)}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <div className={`font-medium ${getSpeakerColor(utterance.speaker)}`}>
-                        {utterance.speaker}
-                      </div>
-                      <div className="text-sm">
-                        {utterance.text.split('. ').map((sentence: string, sentIdx: number) => (
-                          sentence.trim() && (
-                            <div
-                              key={`${index}-${sentIdx}`}
-                              className={`mb-1 ${interactiveMode ? 'cursor-pointer hover:bg-muted/50 rounded' : ''}`}
+          <TabsContent value="transcript">
+            <ResizablePanelGroup direction="vertical" className="min-h-[300px] max-h-[600px] border rounded-md">
+              <ResizablePanel defaultSize={70}>
+                <div
+                    className="p-4 h-full overflow-y-auto space-y-4"
+                    onMouseUp={handleTextSelection}
+                >
+                  {formattedUtterances.length > 0 ? (
+                      formattedUtterances.map((utterance, index) => (
+                          <div
+                              key={index}
+                              className="space-y-1"
                               draggable={interactiveMode}
-                              onDragStart={(e) => handleDragStart(e, sentence)}
+                              onDragStart={(e) => handleDragStart(e, utterance.text)}
                               onDragEnd={handleDragEnd}
-                            >
-                              {sentence.trim()}{sentence.endsWith('.') ? '' : '.'}
+                          >
+                            <div className={`font-medium ${getSpeakerColor(utterance.speaker)}`}>
+                              {utterance.speaker}
                             </div>
-                          )
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-muted-foreground italic">No transcript data available</div>
-                )}
-              </div>
-            </ResizablePanel>
+                            <div className="text-sm">
+                              {utterance.text.split('. ').map((sentence: string, sentIdx: number) => (
+                                  sentence.trim() && (
+                                      <div
+                                          key={`${index}-${sentIdx}`}
+                                          className={`mb-1 ${interactiveMode ? 'cursor-pointer hover:bg-muted/50 rounded' : ''}`}
+                                          draggable={interactiveMode}
+                                          onDragStart={(e) => handleDragStart(e, sentence)}
+                                          onDragEnd={handleDragEnd}
+                                      >
+                                        {sentence.trim()}{sentence.endsWith('.') ? '' : '.'}
+                                      </div>
+                                  )
+                              ))}
+                            </div>
+                          </div>
+                      ))
+                  ) : (
+                      <div className="text-muted-foreground italic">No transcript data available</div>
+                  )}
+                </div>
+              </ResizablePanel>
 
-            {showSummarySection && transcriptSummary && (
-              <>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={30}>
-                  <div className="p-4 border-t h-full overflow-y-auto">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-sm font-medium">AI Summary</h4>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="summary-toggle"
-                          checked={showSummary}
-                          onCheckedChange={setShowSummary}
-                        />
-                        <Label htmlFor="summary-toggle" className="text-xs">Show Summary</Label>
+              {showSummarySection && transcriptSummary && (
+                  <>
+                    <ResizableHandle />
+                    <ResizablePanel defaultSize={30}>
+                      <div className="p-4 border-t h-full overflow-y-auto">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="text-sm font-medium">AI Summary</h4>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                                id="summary-toggle"
+                                checked={showSummary}
+                                onCheckedChange={setShowSummary}
+                            />
+                            <Label htmlFor="summary-toggle" className="text-xs">Show Summary</Label>
+                          </div>
+                        </div>
+                        {showSummary ? (
+                            <div className="text-sm">{transcriptSummary}</div>
+                        ) : (
+                            <div className="text-sm text-muted-foreground italic">Summary hidden</div>
+                        )}
                       </div>
-                    </div>
-                    {showSummary ? (
-                      <div className="text-sm">{transcriptSummary}</div>
+                    </ResizablePanel>
+                  </>
+              )}
+            </ResizablePanelGroup>
+          </TabsContent>
+
+          {structuredNote && (
+              <TabsContent value="structured">
+                <div className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto relative">
+                  <div className="absolute top-2 right-2 flex space-x-2">
+                    {interactiveMode && (
+                        <Badge className="bg-primary/20 text-primary">Interactive Mode: Drag content between panels</Badge>
+                    )}
+                    <Button variant="outline" size="sm" onClick={handleCopyStructuredNote}>
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
+                    </Button>
+                  </div>
+                  <div
+                      className={`mt-8 whitespace-pre-wrap font-mono text-sm ${interactiveMode ? 'cursor-pointer' : ''}`}
+                      onDragOver={interactiveMode ? handleDragOver : undefined}
+                  >
+                    {interactiveMode ? (
+                        // Render with interactive sections when in interactive mode
+                        structuredNote.split('\n\n').map((section, idx) => {
+                          const sectionMatch = section.match(/^([A-Z\s&]+):/);
+                          const sectionName = sectionMatch ? sectionMatch[1] : "";
+
+                          return (
+                              <div
+                                  key={idx}
+                                  className={`mb-4 p-2 ${isDragging ? 'border-2 border-dashed border-primary/50 rounded' : ''}`}
+                                  onDragOver={handleDragOver}
+                                  onDrop={(e) => handleDrop(e, sectionName)}
+                              >
+                                {section}
+                              </div>
+                          );
+                        })
                     ) : (
-                      <div className="text-sm text-muted-foreground italic">Summary hidden</div>
+                        // Regular render when not in interactive mode
+                        structuredNote
                     )}
                   </div>
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
-        </TabsContent>
-
-        {structuredNote && (
-          <TabsContent value="structured">
-            <div className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto relative">
-              <div className="absolute top-2 right-2 flex space-x-2">
-                {interactiveMode && (
-                  <Badge className="bg-primary/20 text-primary">Interactive Mode: Drag content between panels</Badge>
-                )}
-                <Button variant="outline" size="sm" onClick={handleCopyStructuredNote}>
-                  <Copy className="h-4 w-4 mr-1" />
-                  Copy
-                </Button>
-                <Button variant="default" size="sm" onClick={handleUpdateDocument}>
-                  <Save className="h-4 w-4 mr-1" />
-                  Update Document
-                </Button>
-              </div>
-              <div
-                className={`mt-8 whitespace-pre-wrap font-mono text-sm ${interactiveMode ? 'cursor-pointer' : ''}`}
-                onDragOver={interactiveMode ? handleDragOver : undefined}
-              >
-                {interactiveMode ? (
-                  structuredNote.split('\n\n').map((section, idx) => {
-                    const sectionMatch = section.match(/^([A-Z\s&]+):/);
-                    const sectionName = sectionMatch ? sectionMatch[1] : "";
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`mb-4 p-2 ${isDragging ? 'border-2 border-dashed border-primary/50 rounded' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, sectionName)}
-                      >
-                        {section}
-                      </div>
-                    );
-                  })
-                ) : (
-                  structuredNote
-                )}
-              </div>
-            </div>
-          </TabsContent>
-        )}
-      </Tabs>
-
-      {showSummarySection && transcript && (
-        <div className="border-t mt-3 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-medium">Transcript Summary</h4>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="summary-toggle-bottom"
-                checked={showSummary}
-                onCheckedChange={setShowSummary}
-              />
-              <Label htmlFor="summary-toggle-bottom" className="text-xs">Show</Label>
-            </div>
-          </div>
-          {showSummary && (
-            <div className="p-3 bg-muted rounded-md text-sm">
-              {transcriptSummary}
-            </div>
+                </div>
+              </TabsContent>
           )}
-        </div>
-      )}
-    </div>
+
+        </Tabs>
+
+
+        {showSummarySection && transcript && (
+            <div className="border-t mt-3 pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium">Transcript Summary</h4>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                      id="summary-toggle-bottom"
+                      checked={showSummary}
+                      onCheckedChange={setShowSummary}
+                  />
+                  <Label htmlFor="summary-toggle-bottom" className="text-xs">Show</Label>
+                </div>
+              </div>
+              {showSummary && (
+                  <div className="p-3 bg-muted rounded-md text-sm">
+                    {transcriptSummary}
+                  </div>
+              )}
+            </div>
+        )}
+      </div>
   );
 };
 

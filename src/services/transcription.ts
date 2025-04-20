@@ -34,6 +34,7 @@ export enum DocumentFormat {
   OBSTETRICS = 'obstetrics',
   ENDOCRINOLOGY = 'endocrinology',
   DICTATION = 'dictation',
+
 }
 
 // Define the speaker utterance type
@@ -486,24 +487,253 @@ const generateWithGemini = async (
  * Get prompt template for specified document format
  */
 const getPromptForFormat = (format: DocumentFormat, conversationText: string): string => {
-  const formatTemplates: Record<DocumentFormat, string> = {
-    [DocumentFormat.SOAP]: 'soap',
-    [DocumentFormat.HISTORY_AND_PHYSICAL]: 'h&p',
-    [DocumentFormat.PROGRESS_NOTE]: 'progress',
-    [DocumentFormat.DISCHARGE_SUMMARY]: 'discharge',
-    [DocumentFormat.CONSULTATION]: 'consultation',
-    [DocumentFormat.PROCEDURE_NOTE]: 'procedure',
-    [DocumentFormat.PEDIATRICS]: 'pediatrics',
-    [DocumentFormat.CARDIOLOGY]: 'cardiology',
-    [DocumentFormat.PSYCHIATRY]: 'psychiatry',
-    [DocumentFormat.GERIATRICS]: 'geriatrics',
-    [DocumentFormat.OBSTETRICS]: 'obstetrics',
-    [DocumentFormat.ORTHOPEDICS]: 'orthopedics',
-    [DocumentFormat.ENDOCRINOLOGY]: 'endocrinology',
-    [DocumentFormat.DICTATION]: 'dictation'
+  const promptTemplates: Record<DocumentFormat, string> = {
+    [DocumentFormat.SOAP]: `
+I need you to analyze this medical conversation transcript and convert it into properly formatted SOAP notes. 
+Please act as an expert medical professional with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive SOAP notes from this conversation, including:
+- Subjective: Patient's history, complaints, and self-reported symptoms
+- Objective: Clinical observations, vital signs, test results mentioned
+- Assessment: The provider's diagnostic impressions and conclusions
+- Plan: Treatment plans, medications, follow-ups, and referrals
+
+Format it professionally as would appear in an Electronic Health Record.`,
+
+    [DocumentFormat.HISTORY_AND_PHYSICAL]: `
+I need you to analyze this medical conversation transcript and convert it into a comprehensive History & Physical (H&P) report.
+Please act as an expert medical professional with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create a detailed H&P report from this conversation, including:
+- Chief Complaint
+- History of Present Illness
+- Past Medical History
+- Past Surgical History
+- Drug History
+- Allergy History 
+- Social History
+- Family History
+- Review of Systems
+- Physical Examination
+- Laboratory/Diagnostic Findings
+- Differential Diagnosis
+- Diagnosis
+- Plan
+
+Format it professionally as would appear in an Electronic Health Record. The differential diagnosis should be listed in order of likelihood., while the diagnosis should be the final conclusion.`,
+
+    [DocumentFormat.PROGRESS_NOTE]: `
+I need you to analyze this medical conversation transcript and convert it into a concise Progress Note.
+Please act as an expert medical professional with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create a professional Progress Note from this conversation, including:
+- Subjective update
+- Objective findings
+- Assessment of current status
+- Plan for continuing care
+
+The note should be concise but complete, capturing the key elements of the patient's current status and care plan.`,
+
+    [DocumentFormat.DISCHARGE_SUMMARY]: `
+I need you to analyze this medical conversation transcript and convert it into a Discharge Summary.
+Please act as an expert medical professional with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create a comprehensive Discharge Summary from this conversation, including:
+- Admission Date and Discharge Date
+- Admitting Diagnosis
+- Discharge Diagnosis
+- Brief History and Hospital Course
+- Significant Findings
+- Procedures Performed
+- Discharge Condition
+- Discharge Instructions
+- Medications on Discharge
+- Follow-up Instructions
+
+Format it professionally as would appear in an Electronic Health Record.`,
+
+    [DocumentFormat.CONSULTATION]: `
+I need you to analyze this medical conversation transcript and convert it into a Consultation Note.
+Please act as an expert medical professional with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create a detailed Consultation Note from this conversation, including:
+- Reason for Consultation
+- History of Present Illness
+- Pertinent Past Medical History
+- Examination Findings
+- Results of Any Studies/Tests
+- Assessment/Impression
+- Recommendations
+- Plan of Action
+
+Format it professionally as would appear in an Electronic Health Record.`,
+
+    [DocumentFormat.PROCEDURE_NOTE]: `
+I need you to analyze this medical conversation transcript and convert it into a Procedure Note.
+Please act as an expert medical professional with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create a detailed Procedure Note from this conversation, including:
+- Procedure Performed
+- Date and Time
+- Indication
+- Pre-procedure Diagnosis
+- Post-procedure Diagnosis
+- Anesthesia Used
+- Description of Procedure
+- Findings
+- Specimens Collected
+- Complications
+- Estimated Blood Loss
+- Patient Tolerance
+- Post-procedure Plan
+
+Format it professionally as would appear in an Electronic Health Record.`,
+
+    [DocumentFormat.PEDIATRICS]: `
+I need you to analyze this pediatric medical conversation transcript and convert it into properly formatted notes.
+Please act as an expert pediatrician with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive pediatric notes from this conversation, addressing these key areas:
+- Growth & Development: Details on height, weight, developmental milestones
+- Immunizations: Current vaccine status and recommended schedule
+- Nutritional Status: Feeding patterns and nutritional assessment
+- Behavioral Concerns: Information about sleep, behavior, social interaction
+- Parental Guidance: Advice and education provided to caregivers
+
+Format it professionally as would appear in a pediatric Electronic Health Record.`,
+
+    [DocumentFormat.CARDIOLOGY]: `
+I need you to analyze this cardiology medical conversation transcript and convert it into properly formatted cardiac notes.
+Please act as an expert cardiologist with experience in medical documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive cardiology notes from this conversation, addressing these key areas:
+- Cardiovascular History: Cardiac symptoms and relevant history
+- ECG Findings: Detailed electrocardiogram interpretation if mentioned
+- Cardiac Imaging: Results from echocardiogram, stress tests, or other imaging
+- Risk Factors: Assessment of hypertension, dyslipidemia, diabetes, and other factors
+- Cardiac Management Plan: Details on medications, interventions, and lifestyle modifications
+
+Format it professionally as would appear in a cardiology Electronic Health Record.`,
+
+    [DocumentFormat.PSYCHIATRY]: `
+I need you to analyze this psychiatric medical conversation transcript and convert it into properly formatted mental health notes.
+Please act as an expert psychiatrist with experience in mental health documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive psychiatric notes from this conversation, addressing these key areas:
+- Mental Status Examination: Observations on appearance, behavior, and cognitive function
+- Mood & Anxiety: Assessment of depression, anxiety, and affect
+- Thought Process: Evaluation of thought content, perceptions, and insight
+- Risk Assessment: Analysis of suicidal/homicidal ideation and self-harm risk
+- Psychiatric Plan: Details on medications, therapy recommendations, and follow-up
+
+Format it professionally as would appear in a psychiatric Electronic Health Record.`,
+
+    [DocumentFormat.GERIATRICS]: `
+I need you to analyze this geriatric medical conversation transcript and convert it into properly formatted elderly care notes.
+Please act as an expert geriatrician with experience in elder care documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive geriatric notes from this conversation, addressing these key areas:
+- Functional Status: Assessment of ADLs, mobility, and fall risk
+- Cognitive Assessment: Evaluation of memory, orientation, and dementia screening
+- Medication Review: Analysis of polypharmacy, adverse effects, and medication interactions
+- Social Support: Details on living situation and available caregiver resources
+- Advance Directives: Information on end-of-life planning and healthcare proxy arrangements
+
+Format it professionally as would appear in a geriatric Electronic Health Record.`,
+
+    [DocumentFormat.OBSTETRICS]: `
+I need you to analyze this obstetric medical conversation transcript and convert it into properly formatted prenatal care notes.
+Please act as an expert obstetrician with experience in pregnancy documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive obstetric notes from this conversation, addressing these key areas:
+- Gestational Age: Information on LMP, EDD, and current weeks of pregnancy
+- Prenatal Screening: Results from genetic testing and anomaly scans
+- Maternal Vitals: Data on blood pressure, weight, and urine analysis
+- Fetal Assessment: Details on heart rate, movement, and growth
+- Birth Plan: Information on delivery preferences and postpartum care plans
+
+Format it professionally as would appear in an obstetric Electronic Health Record.`,
+
+    [DocumentFormat.ORTHOPEDICS]: `
+I need you to analyze this orthopedic medical conversation transcript and convert it into properly formatted musculoskeletal notes.
+Please act as an expert orthopedic specialist with experience in musculoskeletal documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive orthopedic notes from this conversation, addressing these key areas:
+- Musculoskeletal Exam: Details on joint examination and range of motion
+- Imaging Findings: Results from X-ray, MRI, CT scans or other relevant imaging
+- Pain Assessment: Evaluation of pain scale, quality, and aggravating factors
+- Functional Limitations: Analysis of impact on daily activities and work
+- Treatment Options: Information on physical therapy, surgical interventions, and medications
+
+Format it professionally as would appear in an orthopedic Electronic Health Record.`,
+
+    [DocumentFormat.ENDOCRINOLOGY]: `
+I need you to analyze this endocrinology medical conversation transcript and convert it into properly formatted hormonal disorder notes.
+Please act as an expert endocrinologist with experience in metabolic documentation.
+
+Here's the transcript:
+
+${conversationText}
+
+Please create comprehensive endocrinology notes from this conversation, addressing these key areas:
+- Metabolic Control: Data on blood glucose, A1C, thyroid function, and other relevant metrics
+- Endocrine History: Details on diabetes, thyroid disorders, adrenal issues, and other conditions
+- Medication Management: Information on insulin, hormone therapy, and oral agents
+- Metabolic Complications: Assessment of micro/macrovascular complications and neuropathy
+- Lifestyle Modifications: Recommendations for diet, exercise, and monitoring
+
+Format it professionally as would appear in an endocrinology Electronic Health Record.`
   };
 
-  return formatTemplates[format] || formatTemplates[DocumentFormat.SOAP];
+  return promptTemplates[format] || promptTemplates[DocumentFormat.SOAP];
 };
 
 /**

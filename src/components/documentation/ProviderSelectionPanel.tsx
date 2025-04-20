@@ -1,147 +1,153 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
+import { TranscriptionProvider, LLMProvider, DocumentFormat } from "@/services/transcription";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import {
-  TranscriptionProvider,
-  LLMProvider,
-  DocumentFormat,
-} from "@/services/transcription";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Laptop, Mic, FileText } from "lucide-react";
 
 interface ProviderSelectionPanelProps {
-  transcriptionProvider: TranscriptionProvider;
-  setTranscriptionProvider: (provider: TranscriptionProvider) => void;
-  llmProvider: LLMProvider;
-  setLlmProvider: (provider: LLMProvider) => void;
-  documentFormat: DocumentFormat;
-  setDocumentFormat: (format: DocumentFormat) => void;
-  useSpeechModelNano: boolean;
-  setUseSpeechModelNano: (value: boolean) => void;
+    transcriptionProvider: TranscriptionProvider;
+    setTranscriptionProvider: (provider: TranscriptionProvider) => void;
+    llmProvider: LLMProvider;
+    setLlmProvider: (provider: LLMProvider) => void;
+    documentFormat: DocumentFormat;
+    setDocumentFormat: (format: DocumentFormat) => void;
 }
 
 interface FormatDisplayInfo {
-  name: string;
-  description: string;
+    id: string;
+    label: string;
 }
 
 const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
-  transcriptionProvider,
-  setTranscriptionProvider,
-  llmProvider,
-  setLlmProvider,
-  documentFormat,
-  setDocumentFormat,
-  useSpeechModelNano,
-  setUseSpeechModelNano
+    transcriptionProvider,
+    setTranscriptionProvider,
+    llmProvider,
+    setLlmProvider,
+    documentFormat,
+    setDocumentFormat
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+    // Create a complete map of all document format options
+    const formatDisplayMap: Record<number, FormatDisplayInfo> = {
+        [DocumentFormat.SOAP]: { id: 'soap', label: 'SOAP Note' },
+        [DocumentFormat.HP]: { id: 'hp', label: 'H&P (Legacy)' },
+        [DocumentFormat.PROGRESS]: { id: 'progress-legacy', label: 'Progress (Legacy)' },
+        [DocumentFormat.DISCHARGE]: { id: 'discharge-legacy', label: 'Discharge (Legacy)' },
+        [DocumentFormat.PROCEDURE]: { id: 'procedure-legacy', label: 'Procedure (Legacy)' },
+        [DocumentFormat.HISTORY_AND_PHYSICAL]: { id: 'hnp', label: 'H&P' },
+        [DocumentFormat.PROGRESS_NOTE]: { id: 'progress', label: 'Progress Note' },
+        [DocumentFormat.DISCHARGE_SUMMARY]: { id: 'discharge', label: 'Discharge Summary' },
+        [DocumentFormat.CONSULTATION]: { id: 'consultation', label: 'Consultation' },
+        [DocumentFormat.PROCEDURE_NOTE]: { id: 'procedure', label: 'Procedure Note' },
+        [DocumentFormat.CARDIOLOGY]: { id: 'cardiology', label: 'Cardiology' },
+        [DocumentFormat.DICTATION]: { id: 'dictation', label: 'Dictation' },
+        [DocumentFormat.ENDOCRINOLOGY]: { id: 'endocrinology', label: 'Endocrinology' },
+        [DocumentFormat.GERIATRICS]: { id: 'geriatrics', label: 'Geriatrics' },
+        [DocumentFormat.OBSTETRICS]: { id: 'obstetrics', label: 'Obstetrics' },
+        [DocumentFormat.PSYCHIATRY]: { id: 'psychiatry', label: 'Psychiatry' },
+        [DocumentFormat.ORTHOPEDICS]: { id: 'orthopedics', label: 'Orthopedics' },
+        [DocumentFormat.PEDIATRICS]: { id: 'pediatrics', label: 'Pediatrics' }
+    };
 
-  const formatInfoMap: Record<string, FormatDisplayInfo> = {
-    [DocumentFormat.SOAP.toString()]: { 
-      name: "SOAP Note", 
-      description: "Subjective, Objective, Assessment, Plan format" 
-    },
-    [DocumentFormat.HISTORY_AND_PHYSICAL.toString()]: { 
-      name: "History & Physical", 
-      description: "Comprehensive patient evaluation" 
-    },
-    [DocumentFormat.PROGRESS_NOTE.toString()]: { 
-      name: "Progress Note", 
-      description: "Ongoing patient care documentation" 
-    },
-    [DocumentFormat.DISCHARGE_SUMMARY.toString()]: { 
-      name: "Discharge Summary", 
-      description: "Hospital stay & follow-up plans" 
-    },
-    [DocumentFormat.PROCEDURE_NOTE.toString()]: { 
-      name: "Procedure Note", 
-      description: "Surgical/medical procedure documentation" 
-    }
-  };
+    const formatValues = [
+        DocumentFormat.SOAP,
+        DocumentFormat.HISTORY_AND_PHYSICAL,
+        DocumentFormat.PROGRESS_NOTE,
+        DocumentFormat.DISCHARGE_SUMMARY,
+        DocumentFormat.CONSULTATION,
+        DocumentFormat.PROCEDURE_NOTE
+    ];
 
-  return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle>Provider Selection</CardTitle>
-        <CardDescription>Configure transcription and LLM providers</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="transcription-provider">Transcription Provider</Label>
-              <Select
-                value={transcriptionProvider.toString()}
-                onValueChange={(value) => {
-                  setTranscriptionProvider(Number(value) as TranscriptionProvider);
-                }}
-              >
-                <SelectTrigger className="w-full" id="transcription-provider">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TranscriptionProvider.WHISPER_API.toString()}>Whisper API</SelectItem>
-                  <SelectItem value={TranscriptionProvider.GOOGLE_API.toString()}>Google API</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    return (
+        <Card className="mb-6">
+            <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Provider Settings</CardTitle>
+                <CardDescription>
+                    Choose which AI services to use for transcription and documentation
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+                {/* Transcription Provider Selection */}
+                <div className="space-y-3">
+                    <div className="flex items-center">
+                        <Mic className="h-4 w-4 mr-2 text-secondary" />
+                        <Label className="font-medium">Transcription Provider</Label>
+                    </div>
+                    <RadioGroup
+                        value={String(transcriptionProvider)}
+                        onValueChange={(value) => setTranscriptionProvider(Number(value) as TranscriptionProvider)}
+                        className="flex flex-col space-y-2"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={String(TranscriptionProvider.ASSEMBLYAI)} id="assemblyai" />
+                            <Label htmlFor="assemblyai" className="cursor-pointer">AssemblyAI</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={String(TranscriptionProvider.GOOGLE_SPEECH)} id="google_speech" />
+                            <Label htmlFor="google_speech" className="cursor-pointer">Google Speech</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
 
-            <div>
-              <Label htmlFor="llm-provider">LLM Provider</Label>
-              <Select
-                value={llmProvider.toString()}
-                onValueChange={(value) => {
-                  setLlmProvider(Number(value) as LLMProvider);
-                }}
-              >
-                <SelectTrigger className="w-full" id="llm-provider">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={LLMProvider.OPENAI.toString()}>OpenAI</SelectItem>
-                  <SelectItem value={LLMProvider.CLAUDE.toString()}>Claude</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                <Separator />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="document-format">Document Format</Label>
-              <Select
-                value={documentFormat.toString()}
-                onValueChange={(value) => {
-                  setDocumentFormat(Number(value) as DocumentFormat);
-                }}
-              >
-                <SelectTrigger className="w-full" id="document-format">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(formatInfoMap).map(([format, info]) => (
-                    <SelectItem key={format} value={format}>
-                      {info.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                {/* LLM Provider Selection */}
+                <div className="space-y-3">
+                    <div className="flex items-center">
+                        <Laptop className="h-4 w-4 mr-2 text-secondary" />
+                        <Label className="font-medium">LLM Provider</Label>
+                    </div>
+                    <RadioGroup
+                        value={String(llmProvider)}
+                        onValueChange={(value) => setLlmProvider(Number(value) as LLMProvider)}
+                        className="flex flex-col space-y-2"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={String(LLMProvider.CLAUDE)} id="claude" />
+                            <Label htmlFor="claude" className="cursor-pointer">Claude</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={String(LLMProvider.OPENAI)} id="openai" />
+                            <Label htmlFor="openai" className="cursor-pointer">OpenAI</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={String(LLMProvider.GEMINI)} id="gemini" />
+                            <Label htmlFor="gemini" className="cursor-pointer">Gemini</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
 
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="speech-model-nano">Use Speech Model Nano</Label>
-              <Switch
-                id="speech-model-nano"
-                checked={useSpeechModelNano}
-                onCheckedChange={setUseSpeechModelNano}
-              />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+                <Separator />
+
+                {/* Document Format Selection */}
+                <div className="space-y-3">
+                    <div className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-secondary" />
+                        <Label className="font-medium">Document Format</Label>
+                    </div>
+                    <RadioGroup
+                        value={String(documentFormat)}
+                        onValueChange={(value) => setDocumentFormat(Number(value) as DocumentFormat)}
+                        className="grid grid-cols-2 gap-2"
+                    >
+                        {formatValues.map(format => {
+                            const displayInfo = formatDisplayMap[format];
+                            return (
+                                <div key={format} className="flex items-center space-x-2">
+                                    <RadioGroupItem value={String(format)} id={displayInfo.id} />
+                                    <Label htmlFor={displayInfo.id} className="cursor-pointer">
+                                        {displayInfo.label}
+                                    </Label>
+                                </div>
+                            );
+                        })}
+                    </RadioGroup>
+                </div>
+            </CardContent>
+        </Card>
+    );
 };
 
 export default ProviderSelectionPanel;

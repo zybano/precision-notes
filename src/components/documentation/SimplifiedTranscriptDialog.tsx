@@ -50,6 +50,7 @@ const SimplifiedTranscriptDialog: React.FC<SimplifiedTranscriptDialogProps> = ({
   const [documentData, setDocumentData] = useState<Document | null>(null);
   const [parsedTranscriptData, setParsedTranscriptData] = useState<any>(null);
 
+  // Debug effect to log props and set initial state
   useEffect(() => {
     console.group('SimplifiedTranscriptDialog Debug');
     console.log('Props:', {
@@ -61,8 +62,10 @@ const SimplifiedTranscriptDialog: React.FC<SimplifiedTranscriptDialogProps> = ({
       transcriptSummary
     });
 
+    // Set initial document data
     setDocumentData(selectedDocument);
 
+    // Parse transcript data if available
     if (selectedDocument?.transcript_data) {
       try {
         const parsed = JSON.parse(selectedDocument.transcript_data);
@@ -75,6 +78,7 @@ const SimplifiedTranscriptDialog: React.FC<SimplifiedTranscriptDialogProps> = ({
     console.groupEnd();
   }, [selectedDocument, parsedTranscript]);
 
+  // Handler for saving document format
   const handleSaveFormat = async (formatName: string, content: string) => {
     if (!documentData) return;
 
@@ -94,6 +98,7 @@ const SimplifiedTranscriptDialog: React.FC<SimplifiedTranscriptDialogProps> = ({
         description: `Document converted to ${formatName}`
       });
 
+      // Optional: Refresh documents or update local state
       refreshDocuments();
     } catch (error) {
       console.error("Error saving document format:", error);
@@ -166,6 +171,7 @@ const SimplifiedTranscriptDialog: React.FC<SimplifiedTranscriptDialogProps> = ({
                     setShowSummary={setShowSummary}
                     form={form}
                     onSaveFormat={handleSaveFormat}
+                    // Pass additional context if needed
                     documentContext={{
                       formattedNotes,
                       documentData
