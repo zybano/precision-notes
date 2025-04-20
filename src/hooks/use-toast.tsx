@@ -107,48 +107,11 @@ export function useToast() {
   }, [state]);
 
   return {
-    toast: {
-      default: (props: { title?: string; description?: string; action?: React.ReactNode }) =>
-        dispatch({
-          type: "ADD_TOAST",
-          toast: {
-            ...props,
-            variant: "default",
-          },
-        }),
-      success: (props: { title?: string; description?: string; action?: React.ReactNode }) =>
-        dispatch({
-          type: "ADD_TOAST",
-          toast: {
-            ...props,
-            variant: "success",
-          },
-        }),
-      error: (props: { title?: string; description?: string; action?: React.ReactNode }) =>
-        dispatch({
-          type: "ADD_TOAST",
-          toast: {
-            ...props,
-            variant: "destructive",
-          },
-        }),
-      warning: (props: { title?: string; description?: string; action?: React.ReactNode }) =>
-        dispatch({
-          type: "ADD_TOAST",
-          toast: {
-            ...props,
-            variant: "warning",
-          },
-        }),
-      info: (props: { title?: string; description?: string; action?: React.ReactNode }) =>
-        dispatch({
-          type: "ADD_TOAST",
-          toast: {
-            ...props,
-            variant: "info",
-          },
-        }),
-    },
+    toast: (props: ToasterToast) =>
+      dispatch({
+        type: "ADD_TOAST",
+        toast: props,
+      }),
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
     remove: (toastId?: string) => dispatch({ type: "REMOVE_TOAST", toastId }),
   };
@@ -176,7 +139,7 @@ export function Toaster() {
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant }) {
         return (
-          <Toast key={id} variant={variant}>
+          <Toast key={id} variant={variant === "destructive" ? "destructive" : "default"}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -195,6 +158,11 @@ export function Toaster() {
 
 // Also export as a simple function for convenience
 export const toast = {
+  custom: (props: ToasterToast) =>
+    dispatch({
+      type: "ADD_TOAST",
+      toast: props,
+    }),
   default: (props: { title?: string; description?: string; action?: React.ReactNode }) =>
     dispatch({
       type: "ADD_TOAST",

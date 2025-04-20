@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, Save, Edit } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, Save, Edit, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,11 +35,11 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   showSummary,
   setShowSummary,
   form,
-  showSummarySection = true // Default to true for backward compatibility
+  showSummarySection = true
 }) => {
   const transcriptRef = useRef<HTMLDivElement>(null);
-
   const { toast } = useToast();
+  
   const [selectedFormat, setSelectedFormat] = useState(DocumentFormat.SOAP);
   const [llmProvider, setLlmProvider] = useState(LLMProvider.OPENAI);
   const [structuredNote, setStructuredNote] = useState("");
@@ -50,6 +50,9 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [highlightedText, setHighlightedText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedTranscript, setEditedTranscript] = useState(transcript);
+  const [editedSummary, setEditedSummary] = useState(transcriptSummary);
 
   useEffect(() => {
     console.group('EnhancedTranscriptDisplay Debug');
@@ -80,6 +83,10 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         form.setValue("transcriptSummary", transcriptSummary);
       }
     }
+    
+    // Initialize edited transcript and summary
+    setEditedTranscript(transcript);
+    setEditedSummary(transcriptSummary);
   }, [form, transcriptResult, transcript, transcriptSummary]);
 
   const formatUtterances = (utterances: any[]) => {
@@ -332,32 +339,86 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     return updatedNote;
   };
 
-  const handleExportToPDF = async () => {
-    if (form && transcriptRef.current) {
-      const documentTitle = form.getValues("title") || "Transcript";
-      await exportToPDF(transcriptRef, documentTitle);
+  // Add the PDF export function
+  const exportToPDF = async () => {
+    if (!transcriptRef.current) return;
+    
+    const doc = new jsPDF();
+    const title = form?.getValues("title") || "Medical Transcript";
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text(title, 15, 15);
+    
+    // Add date
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 25);
+    
+    // Set regular text font
+    doc.setFontSize(12);
+    
+    // Add transcript and structured note
+    let yPos = 35;
+    
+    // Add transcript section
+    doc.setFontSize(14);
+    doc.text("Transcript", 15, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(10);
+    const transcriptLines = doc.splitTextToSize(transcript, 180);
+    doc.text(transcriptLines, 15, yPos);
+    yPos += transcriptLines.length * 5 + 15;
+    
+    // Add structured note if available
+    if (structuredNote) {
+      // Add a new page if we're too far down
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      
+      doc.setFontSize(14);
+      doc.text(convertedNoteType || "Structured Note", 15, yPos);
+      yPos += 10;
+      
+      doc.setFontSize(10);
+      const noteLines = doc.splitTextToSize(structuredNote, 180);
+      doc.text(noteLines, 15, yPos);
     }
+    
+    // Save PDF
+    doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+    
+    toast({
+      title: "PDF Exported",
+      description: "Your document has been exported as a PDF.",
+      duration: 3000,
+    });
   };
 
-  const handleUpdateDocument = async () => {
+  const handleUpdateDocument = () => {
     if (form && structuredNote && convertedNoteType) {
       form.setValue("notes", structuredNote);
-      form.setValue("documentFormat", convertedNoteType);
-
+      form.setValue("documentFormat", selectedFormat);
+      
+      // If in edit mode, update transcript and summary
       if (editMode) {
         form.setValue("transcript", editedTranscript);
         form.setValue("transcriptSummary", editedSummary);
-
+        
+        // Update transcript result
         const updatedTranscriptResult = {
           ...transcriptResult,
           text: editedTranscript
         };
         form.setValue("transcriptResult", updatedTranscriptResult);
       }
-
+      
       toast({
         title: "Document Updated",
-        description: "Your document has been saved successfully."
+        description: "Your document has been saved successfully.",
+        duration: 3000,
       });
     }
   };
@@ -377,7 +438,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               <Copy className="h-4 w-4 mr-1" />
               Copy
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportToPDF}>
+            <Button variant="outline" size="sm" onClick={exportToPDF}>
               <FileText className="h-4 w-4 mr-1" />
               Export to PDF
             </Button>
@@ -391,7 +452,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               id="note-format"
               className="text-sm rounded-md border border-input bg-transparent px-3 py-1"
               value={selectedFormat}
-              onChange={(e) => setSelectedFormat(e.target.value as DocumentFormat)}
+              onChange={(e) => setSelectedFormat(Number(e.target.value) as DocumentFormat)}
             >
               <option value={DocumentFormat.SOAP}>SOAP Note</option>
               <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
@@ -424,7 +485,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               ) : (
                 <>
                   <Wand2 className="h-4 w-4 mr-1" />
-                  Convert to {selectedFormat}
+                  Convert to {getFormatName(selectedFormat)}
                 </>
               )}
             </Button>

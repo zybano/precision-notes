@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -72,14 +73,12 @@ const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
             <div>
               <Label htmlFor="transcription-provider">Transcription Provider</Label>
               <Select
-                id="transcription-provider"
                 value={transcriptionProvider.toString()}
                 onValueChange={(value) => {
-                  const parsedValue = parseInt(value, 10);
-                  setTranscriptionProvider(parsedValue as unknown as TranscriptionProvider);
+                  setTranscriptionProvider(Number(value) as TranscriptionProvider);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" id="transcription-provider">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -92,14 +91,12 @@ const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
             <div>
               <Label htmlFor="llm-provider">LLM Provider</Label>
               <Select
-                id="llm-provider"
                 value={llmProvider.toString()}
                 onValueChange={(value) => {
-                  const parsedValue = parseInt(value, 10);
-                  setLlmProvider(parsedValue as unknown as LLMProvider);
+                  setLlmProvider(Number(value) as LLMProvider);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" id="llm-provider">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,14 +111,12 @@ const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
             <div>
               <Label htmlFor="document-format">Document Format</Label>
               <Select
-                id="document-format"
                 value={documentFormat.toString()}
                 onValueChange={(value) => {
-                  const parsedValue = parseInt(value, 10);
-                  setDocumentFormat(parsedValue as unknown as DocumentFormat);
+                  setDocumentFormat(Number(value) as DocumentFormat);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" id="document-format">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>

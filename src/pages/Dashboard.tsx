@@ -8,13 +8,14 @@ import { DocumentTables } from "@/components/dashboard/DocumentTables";
 import { useEffect, useState } from "react";
 import { calculateUserMetrics, fetchUserDocuments, DocumentType, MetricType } from "@/services/dashboardService";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const [metrics, setMetrics] = useState<MetricType[]>([]);
   const [documents, setDocuments] = useState<DocumentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -40,7 +41,7 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   const handleViewDocument = (doc: DocumentType) => {
     console.log("View document:", doc);
@@ -61,13 +62,13 @@ const Dashboard = () => {
     try {
       // Existing code for status change...
       
-      toast.success({
+      toast({
         title: "Status Updated",
         description: "Document status has been successfully updated."
       });
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error({
+      toast({
         title: "Update Failed",
         description: "Failed to update document status."
       });

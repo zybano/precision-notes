@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, TooltipProps } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon, InfoIcon } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ActivityData {
   name: string;
@@ -31,9 +32,10 @@ const generateMockData = (): ActivityData[] => {
 export function ActivityChart({ data }: ActivityChartProps) {
   const [chartData, setChartData] = useState<ActivityData[]>(data || generateMockData());
   const [period, setPeriod] = useState<string>("7d");
+  const { toast } = useToast();
 
   const handleExport = () => {
-    toast.info({
+    toast({
       title: "Export Initiated",
       description: "Your chart data is being prepared for download."
     });
@@ -47,7 +49,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
       
-      toast.success({
+      toast({
         title: "Export Complete",
         description: "Chart data has been downloaded successfully."
       });
