@@ -1,3 +1,12 @@
+// Patient information extracted from transcripts
+export interface PatientInfo {
+  name: string;
+  age?: string;
+  gender?: string;
+  otherIdentifiers?: string[];
+  conditions?: string[];
+}
+
 export interface Document {
   id: string;
   title: string;
@@ -8,6 +17,10 @@ export interface Document {
   updated_at: string;
   notes: string | null;
   transcript_data: string | null;
+  document_format?: string | null;
+  recording_duration?: number | null;
+  generated_title?: string | null;
+  summary?: string | null;
 }
 
 // Type for the raw data coming from Supabase
@@ -20,7 +33,11 @@ export interface RawDocumentData {
   created_at: string;
   updated_at: string;
   notes: string | null;
-  transcript_data?: string | null;  // Make this optional since it's not in the TypeScript definition
+  transcript_data?: string | null;
+  document_format?: string | null;
+  recording_duration?: number | null;
+  generated_title?: string | null;
+  summary?: string | null;
 }
 
 // Structured transcript data interface
@@ -30,10 +47,13 @@ export interface TranscriptData {
   utterances: Array<{
     speaker: string;
     text: string;
-    start: number;
-    end: number;
+    start?: number;
+    end?: number;
   }>;
   isMock: boolean;
+  provider?: string;
+  recording_duration?: number;
+  patientInfo?: PatientInfo;
 }
 
 // Type for shared document data

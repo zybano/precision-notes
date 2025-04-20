@@ -31,6 +31,10 @@ const DocumentationPage = () => {
       transcriptSummary: "",
       transcriptResult: null,
       recordingTime: 0,
+      patientName: "",
+      patientInfo: null,
+      documentFormat: "",
+      infoVerified: false,
     },
   });
 
@@ -72,6 +76,8 @@ const DocumentationPage = () => {
   const {
     documentSaved,
     setDocumentSaved,
+    verificationNeeded,
+    setVerificationNeeded,
     handleCreateNewDocument,
     resetForm,
     exportToPDF
@@ -82,38 +88,11 @@ const DocumentationPage = () => {
     onSaveSuccess: handleDialogClose
   });
 
-  // Validate document before submission
-  const validateDocument = (data: any) => {
-    // List of required fields for document submission
-    const requiredFields = [
-      { field: 'type', label: 'Document Type' },
-      { field: 'notes', label: 'Notes Content' },
-    ];
-
-    const missingFields = requiredFields
-        .filter(({ field }) => !data[field] || data[field].trim() === '')
-        .map(({ label }) => label);
-
-    if (missingFields.length > 0) {
-      toast.error(`Missing required fields: ${missingFields.join(', ')}`);
-      return false;
-    }
-
-    return true;
-  };
-
-  // Handle document submission with validation
+  // Handle document submission with verification
   const handleSubmitDocument = async (data: any) => {
-    // First, validate the document
-    if (!validateDocument(data)) {
-      return;
-    }
-
-    // If validation passes, proceed with submission
     const success = await handleCreateNewDocument(data);
     if (success) {
       setNewDocumentOpen(false);
-
       // refresh the actual data in the tabs
       refetchDataFromTabs();
     }
@@ -166,6 +145,7 @@ const DocumentationPage = () => {
               formatTime={transcriptionControls.formatTime}
               transcript={transcriptionControls.transcript}
               transcriptSummary={transcriptionControls.transcriptSummary}
+              patientInfo={transcriptionControls.patientInfo}
               showSummary={transcriptionControls.showSummary}
               setShowSummary={transcriptionControls.setShowSummary}
               transcriptResult={transcriptionControls.transcriptResult}

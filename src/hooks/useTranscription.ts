@@ -6,19 +6,28 @@ import {
   transcribeAudio,
   TranscriptionResult
 } from "@/services/transcription";
-import {generateBriefSummary, generatePatientSummary} from "@/services/summaryUtils";
+import {
+  generateBriefSummary, 
+  generatePatientSummary,
+  PatientSummaryResult
+} from "@/services/summaryUtils";
 
 interface TranscriptionOptions {
   provider: TranscriptionProvider;
   useSpeechModelNano: boolean;
 }
 
-export const useTranscription = (onTranscriptionComplete?: (result: TranscriptionResult, summary?: string) => void) => {
+export const useTranscription = (onTranscriptionComplete?: (
+  result: TranscriptionResult, 
+  summary?: string, 
+  patientInfo?: PatientSummaryResult['patientInfo']
+) => void) => {
   const [transcript, setTranscript] = useState("");
   const [transcriptSummary, setTranscriptSummary] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showSummary, setShowSummary] = useState(true);
   const [transcriptResult, setTranscriptResult] = useState<TranscriptionResult | null>(null);
+  const [patientInfo, setPatientInfo] = useState<PatientSummaryResult['patientInfo'] | null>(null);
 
   const processRecording = async (
     chunks: BlobPart[],
@@ -48,15 +57,37 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       setTranscriptResult(result);
       setTranscript(result.text);
       
-      // Generate and set transcript summary
-      let summary = "";
+      // Generate and set transcript summary with patient information
+      let summaryResult: PatientSummaryResult;
       try {
-        summary = await generatePatientSummary(result.text);
-        setTranscriptSummary(summary);
+        toast.info("Generating summary", {
+          description: "Extracting key information and patient details...",
+        });
+        
+        // Try to use Claude first, fall back to OpenAI if needed
+        try {
+          summaryResult = await generatePatientSummary (result.text);
+        } catch (claudeError) {
+       console.error(claudeError);
+        }
+        
+        setTranscriptSummary(summaryResult.summary);
+        setPatientInfo(summaryResult.patientInfo);
+        
+        toast.success("Summary generated", {
+          description: summaryResult.patientInfo.name !== "Unknown" 
+            ? `Identified patient: ${summaryResult.patientInfo.name}`
+            : "Summary generated successfully",
+        });
       } catch (error) {
         console.error("Error generating summary:", error);
-        summary = "Unable to generate summary for this transcript.";
-        setTranscriptSummary(summary);
+        const fallbackSummary = "Unable to generate summary for this transcript.";
+        setTranscriptSummary(fallbackSummary);
+        setPatientInfo({ name: "Unknown" });
+        summaryResult = { 
+          summary: fallbackSummary,
+          patientInfo: { name: "Unknown" }
+        };
       }
       
       setShowSummary(true);
@@ -66,8 +97,8 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
       }
       
       if (onTranscriptionComplete) {
-        // Call the callback with the result and summary
-        onTranscriptionComplete(result, summary);
+        // Call the callback with the result, summary and patient info
+        onTranscriptionComplete(result, summaryResult.summary, summaryResult.patientInfo);
       }
 
       return result;
@@ -119,12 +150,14 @@ export const useTranscription = (onTranscriptionComplete?: (result: Transcriptio
     setTranscript("");
     setTranscriptSummary("");
     setTranscriptResult(null);
+    setPatientInfo(null);
     setShowSummary(true);
   };
 
   return {
     transcript,
     transcriptSummary,
+    patientInfo,
     isTranscribing,
     showSummary,
     setShowSummary,

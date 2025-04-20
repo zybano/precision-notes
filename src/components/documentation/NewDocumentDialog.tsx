@@ -1,6 +1,6 @@
 // UpdatedNewDocumentDialog.tsx - Modified version
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +21,8 @@ import {
 import EnhancedRecordingInterface from "@/components/documentation/EnhancedRecordingInterface";
 import DrugMonograph from "@/components/documentation/DrugMonograph";
 import EnhancedContextPanel from "@/components/documentation/EnhancedContextPanel";
+import DocumentVerificationDialog from "@/components/documentation/DocumentVerificationDialog";
+import { PatientSummaryResult } from "@/services/summaryUtils";
 
 interface UpdatedNewDocumentDialogProps {
   open: boolean;
@@ -39,6 +41,7 @@ interface UpdatedNewDocumentDialogProps {
   formatTime: (seconds: number) => string;
   transcript: string;
   transcriptSummary: string;
+  patientInfo?: PatientSummaryResult['patientInfo'] | null;
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
   transcriptResult: TranscriptionResult | null;
@@ -55,42 +58,53 @@ interface UpdatedNewDocumentDialogProps {
 }
 
 const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
-                                                                             open,
-                                                                             onOpenChange,
-                                                                             form,
-                                                                             onSubmit,
-                                                                             isRecording,
-                                                                             isPaused,
-                                                                             recordingTime,
-                                                                             isTranscribing,
-                                                                             useSpeechModelNano,
-                                                                             setUseSpeechModelNano,
-                                                                             startRecording,
-                                                                             pauseRecording,
-                                                                             stopRecording,
-                                                                             formatTime,
-                                                                             transcript,
-                                                                             transcriptSummary,
-                                                                             showSummary,
-                                                                             setShowSummary,
-                                                                             transcriptResult,
-                                                                             documentTemplates,
-                                                                             transcriptionProvider,
-                                                                             setTranscriptionProvider,
-                                                                             llmProvider,
-                                                                             setLlmProvider,
-                                                                             documentFormat,
-                                                                             setDocumentFormat,
-                                                                             onFileUpload,
-                                                                             documentSaved = false,
-                                                                             exportToPDF
-                                                                           }) => {
+  open,
+  onOpenChange,
+  form,
+  onSubmit,
+  isRecording,
+  isPaused,
+  recordingTime,
+  isTranscribing,
+  useSpeechModelNano,
+  setUseSpeechModelNano,
+  startRecording,
+  pauseRecording,
+  stopRecording,
+  formatTime,
+  transcript,
+  transcriptSummary,
+  patientInfo,
+  showSummary,
+  setShowSummary,
+  transcriptResult,
+  documentTemplates,
+  transcriptionProvider,
+  setTranscriptionProvider,
+  llmProvider,
+  setLlmProvider,
+  documentFormat,
+  setDocumentFormat,
+  onFileUpload,
+  documentSaved = false,
+  exportToPDF
+}) => {
   const [activeTab, setActiveTab] = useState("record");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [tempFormData, setTempFormData] = useState<any>(null);
+  
   const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = form;
   const notesContent = watch("notes");
   const printRef = useRef<HTMLDivElement>(null);
   const documentTitle = watch("title") || "Medical Report";
+
+  // Extract patient name from AI if available
+  useEffect(() => {
+    if (patientInfo && patientInfo.name !== "Unknown" && open) {
+      setValue("patientName", patientInfo.name);
+    }
+  }, [patientInfo, open, setValue]);
 
   const handleCopyToEMR = () => {
     navigator.clipboard.writeText(getValues().notes);
@@ -115,8 +129,14 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
     }
   };
 
-  const handleDocumentGenerated = (document: string) => {
+  const handleDocumentGenerated = (document: string, formatName?: string) => {
     setValue("notes", document);
+    
+    // Set the document format in the form if available
+    if (formatName) {
+      setValue("documentFormat", formatName);
+    }
+    
     setActiveTab("notes");
     toast.success("Document Generated");
   };
@@ -134,8 +154,8 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
     ];
 
     const missingFields = requiredFields
-        .filter(({ field }) => !data[field] || data[field].trim() === '')
-        .map(({ label }) => label);
+      .filter(({ field }) => !data[field] || data[field].trim() === '')
+      .map(({ label }) => label);
 
     if (missingFields.length > 0) {
       toast.error(`Missing required fields: ${missingFields.join(', ')}`);
@@ -148,14 +168,40 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
   // Wrapped submit handler with validation
   const handleValidatedSubmit = (data: any) => {
     if (validateDocument(data)) {
+      // Store form data temporarily
+      setTempFormData(data);
+      
+      // Open the verification dialog before final submission
+      if (transcript && !data.infoVerified) {
+        setVerificationDialogOpen(true);
+        return;
+      }
+      
+      // If no transcript or already verified, submit directly
       onSubmit(data);
     }
   };
+  
+  // Handle verification confirmation
+  const handleVerificationConfirm = () => {
+    if (tempFormData) {
+      // Set the verified flag
+      tempFormData.infoVerified = true;
+      
+      // Submit the form with verified data
+      onSubmit(tempFormData);
+    }
+  };
+  
+  // Display patient name if extracted
+  const extractedPatientName = patientInfo && patientInfo.name !== "Unknown" 
+    ? patientInfo.name 
+    : null;
 
   return (
+    <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
-
           <DialogHeader className="p-6 pb-2 text-center">
             <DialogTitle className="text-2xl text-center ">Consultation Documentation</DialogTitle>
             <DialogDescription className={"text-center"}>
@@ -181,23 +227,23 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                 <TabsContent value="record" className="mt-0">
                   {/* Removed the form tag from here - key fix! */}
                   <EnhancedRecordingInterface
-                      isRecording={isRecording}
-                      isPaused={isPaused}
-                      recordingTime={recordingTime}
-                      isTranscribing={isTranscribing}
-                      useSpeechModelNano={useSpeechModelNano}
-                      setUseSpeechModelNano={setUseSpeechModelNano}
-                      startRecording={startRecording}
-                      pauseRecording={pauseRecording}
-                      stopRecording={stopRecording}
-                      formatTime={formatTime}
-                      onDownloadPdf={handleDownloadPDF}
-                      onCopyToEMR={handleCopyToEMR}
-                      transcriptResult={transcriptResult}
-                      documentFormat={documentFormat}
-                      setDocumentFormat={setDocumentFormat}
-                      onDocumentGenerated={handleDocumentGenerated}
-                      onFileUpload={onFileUpload}
+                    isRecording={isRecording}
+                    isPaused={isPaused}
+                    recordingTime={recordingTime}
+                    isTranscribing={isTranscribing}
+                    useSpeechModelNano={useSpeechModelNano}
+                    setUseSpeechModelNano={setUseSpeechModelNano}
+                    startRecording={startRecording}
+                    pauseRecording={pauseRecording}
+                    stopRecording={stopRecording}
+                    formatTime={formatTime}
+                    onDownloadPdf={handleDownloadPDF}
+                    onCopyToEMR={handleCopyToEMR}
+                    transcriptResult={transcriptResult}
+                    documentFormat={documentFormat}
+                    setDocumentFormat={setDocumentFormat}
+                    onDocumentGenerated={handleDocumentGenerated}
+                    onFileUpload={onFileUpload}
                   />
                 </TabsContent>
 
@@ -209,74 +255,78 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center space-x-2">
                             <Switch
-                                id="showSummary"
-                                checked={showSummary}
-                                onCheckedChange={setShowSummary}
+                              id="showSummary"
+                              checked={showSummary}
+                              onCheckedChange={setShowSummary}
                             />
                             <Label htmlFor="showSummary" className="text-sm">Show Summary</Label>
                           </div>
                           <Button
-                              type="button" 
-                              onClick={toggleEditMode}
-                              variant="outline"
-                              size="sm"
-                              className="flex items-center"
+                            type="button" 
+                            onClick={toggleEditMode}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center"
                           >
                             {isEditMode ? (
-                                <>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Preview
-                                </>
+                              <>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Preview
+                              </>
                             ) : (
-                                <>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit
-                                </>
+                              <>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </>
                             )}
                           </Button>
                         </div>
                       </div>
 
                       {showSummary && transcriptSummary && (
-                          <div className="bg-muted p-3 rounded-md text-sm mb-4">
-                            <p className="font-medium mb-1">Summary:</p>
-                            <p>{transcriptSummary}</p>
-                          </div>
+                        <div className="bg-muted p-3 rounded-md text-sm mb-4">
+                          <p className="font-medium mb-1">Summary:</p>
+                          <p>{transcriptSummary}</p>
+                          
+                          {/* Display patient info if available */}
+                          {patientInfo && patientInfo.name !== "Unknown" && (
+                            <div className="mt-2 pt-2 border-t border-muted-foreground/20">
+                              <p className="font-medium">Patient: {patientInfo.name}</p>
+                              {patientInfo.age && <p className="text-xs">Age: {patientInfo.age}</p>}
+                              {patientInfo.gender && <p className="text-xs">Gender: {patientInfo.gender}</p>}
+                            </div>
+                          )}
+                        </div>
                       )}
 
-                      {/*<div className="bg-accent/10 p-3 rounded-md text-sm mb-4">*/}
-                      {/*  <p className="font-medium mb-1">Document Format: <span className="text-primary">{DocumentFormat[documentFormat]}</span></p>*/}
-                      {/*  <p className="font-medium">Generated by: <span className="text-primary">{LLMProvider[llmProvider]}</span></p>*/}
-                      {/*</div>*/}
-
                       {isEditMode ? (
-                          <Textarea
-                              id="notes"
-                              className="min-h-[350px] font-mono text-sm resize-y"
-                              {...register("notes")}
-                          />
+                        <Textarea
+                          id="notes"
+                          className="min-h-[350px] font-mono text-sm resize-y"
+                          {...register("notes")}
+                        />
                       ) : (
-                          <div
-                              className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
-                          >
-                            <ReactMarkdown>{notesContent}</ReactMarkdown>
-                          </div>
+                        <div
+                          className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
+                        >
+                          <ReactMarkdown>{notesContent}</ReactMarkdown>
+                        </div>
                       )}
                     </div>
 
                     <div className="flex justify-between">
                       <Button
-                          type="button" 
-                          variant="outline"
-                          onClick={() => setActiveTab("record")}
+                        type="button" 
+                        variant="outline"
+                        onClick={() => setActiveTab("record")}
                       >
                         Back to Recording
                       </Button>
                       <div className="space-x-2">
                         <Button
-                            type="button" 
-                            className="flex items-center"
-                            onClick={() => setActiveTab("export")}
+                          type="button" 
+                          className="flex items-center"
+                          onClick={() => setActiveTab("export")}
                         >
                           Export Options
                           <FileCog className="ml-2 h-4 w-4" />
@@ -305,9 +355,9 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                               Copy the formatted notes to paste directly into your EMR system
                             </p>
                             <Button
-                                type="button" 
-                                onClick={handleCopyToEMR}
-                                size="sm"
+                              type="button" 
+                              onClick={handleCopyToEMR}
+                              size="sm"
                             >
                               <Copy className="h-4 w-4 mr-2" />
                               Copy to Clipboard
@@ -325,9 +375,9 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                               Save the consultation notes as a PDF document
                             </p>
                             <Button
-                                type="button" 
-                                onClick={handleDownloadPDF}
-                                size="sm"
+                              type="button" 
+                              onClick={handleDownloadPDF}
+                              size="sm"
                             >
                               <Download className="h-4 w-4 mr-2" />
                               Download PDF
@@ -339,16 +389,16 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
 
                     <div className="flex justify-between">
                       <Button
-                          type="button" 
-                          variant="outline"
-                          onClick={() => setActiveTab("notes")}
+                        type="button" 
+                        variant="outline"
+                        onClick={() => setActiveTab("notes")}
                       >
                         Back to Notes
                       </Button>
                       <Button
-                          type="submit"
-                          onClick={handleSubmit(handleValidatedSubmit)}
-                          className="bg-green-600 hover:bg-green-700"
+                        type="submit"
+                        onClick={handleSubmit(handleValidatedSubmit)}
+                        className="bg-green-600 hover:bg-green-700"
                       >
                         <Check className="h-4 w-4 mr-2" />
                         Save Document
@@ -376,24 +426,44 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
                 </div>
               </div>
 
+              {/* Patient information if available */}
+              {patientInfo && patientInfo.name !== "Unknown" && (
+                <div className="my-4 p-4 border-l-4 border-[#5768fd]">
+                  <h3 className="font-bold">Patient Information</h3>
+                  <p>Name: {patientInfo.name}</p>
+                  {patientInfo.age && <p>Age: {patientInfo.age}</p>}
+                  {patientInfo.gender && <p>Gender: {patientInfo.gender}</p>}
+                </div>
+              )}
+
               {transcriptSummary && (
-                  <div className="my-6">
-                    <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
-                    <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
-                      <p className="text-[#040523]">{transcriptSummary}</p>
-                    </div>
+                <div className="my-6">
+                  <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
+                  <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
+                    <p className="text-[#040523]">{transcriptSummary}</p>
                   </div>
+                </div>
               )}
 
               <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Clinical Notes</h2>
               <div className="mt-4 text-[#040523]">
                 <ReactMarkdown>{notesContent}</ReactMarkdown>
               </div>
-
             </div>
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Document Verification Dialog */}
+      <DocumentVerificationDialog
+        open={verificationDialogOpen}
+        onOpenChange={setVerificationDialogOpen}
+        form={form}
+        patientInfo={patientInfo}
+        documentFormat={documentFormat}
+        onConfirm={handleVerificationConfirm}
+      />
+    </>
   );
 };
 

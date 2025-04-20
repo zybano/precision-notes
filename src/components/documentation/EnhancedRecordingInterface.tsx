@@ -27,7 +27,7 @@ interface EnhancedRecordingInterfaceProps {
     transcriptResult: TranscriptionResult | null;
     documentFormat: DocumentFormat;
     setDocumentFormat: (format: DocumentFormat) => void;
-    onDocumentGenerated: (document: string) => void;
+    onDocumentGenerated: (document: string, formatName?: string) => void;
     onFileUpload: (file: File) => void;
 }
 
@@ -295,7 +295,10 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                         transcriptResult={transcriptResult}
                         llmProvider={LLMProvider.OPENAI}
                         documentFormat={documentFormat}
-                        onDocumentGenerated={onDocumentGenerated}
+                        onDocumentGenerated={(document, formatName) => {
+                            // Pass the document format if available
+                            onDocumentGenerated(document, formatName);
+                        }}
                     />
                 </TabsContent>
             </Tabs>

@@ -17,7 +17,7 @@ interface DocumentGenerationPanelProps {
     transcriptResult: TranscriptionResult | null;
     llmProvider: LLMProvider;
     documentFormat: DocumentFormat;
-    onDocumentGenerated: (document: string) => void;
+    onDocumentGenerated: (document: string, formatName?: string) => void;
 }
 
 const DocumentGenerationPanel: React.FC<DocumentGenerationPanelProps> = ({
@@ -46,7 +46,12 @@ const DocumentGenerationPanel: React.FC<DocumentGenerationPanelProps> = ({
             };
 
             const document = await generateMedicalDocument(transcriptResult, options);
-            onDocumentGenerated(document);
+            
+            // Get the formatted document format name
+            const formatName = getFormatName(documentFormat);
+            
+            // Pass both the document and format name to the handler
+            onDocumentGenerated(document, formatName);
 
             toast.success("Document generated successfully", {
                 description: `${DocumentFormat[documentFormat]} format created with ${LLMProvider[llmProvider]}.`

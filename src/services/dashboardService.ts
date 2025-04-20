@@ -276,7 +276,7 @@ export const fetchUserDocuments = async (userId: string | undefined): Promise<Do
   try {
     const { data, error } = await supabase
       .from('medical_documents')
-      .select('id, patient_name, type, created_at, status, notes')
+      .select('id, patient_name, type, document_format, created_at, status, notes')
       .eq('creator_id', userId)
       .order('created_at', { ascending: false })
       .limit(10);
@@ -286,7 +286,7 @@ export const fetchUserDocuments = async (userId: string | undefined): Promise<Do
     return data.map(doc => ({
       id: doc.id,
       patient: doc.patient_name,
-      type: doc.type,
+      type: doc.document_format || doc.type, // Use document_format if available, fall back to type
       date: new Date(doc.created_at).toISOString().split('T')[0],
       status: doc.status,
       preview: doc.notes ? doc.notes.substring(0, 50) + '...' : 'No content'
@@ -303,7 +303,7 @@ function getDefaultDocuments(): DocumentType[] {
     {
       id: "1",
       patient: "Adebayo Johnson",
-      type: "Clinical Note",
+      type: "SOAP Note",
       date: "2023-09-15",
       status: "Completed",
       preview: "Patient presents with..."
@@ -327,7 +327,7 @@ function getDefaultDocuments(): DocumentType[] {
     {
       id: "4",
       patient: "Folake Adeyemi",
-      type: "Consultation Note",
+      type: "Progress Note",
       date: "2023-09-10",
       status: "Signed",
       preview: "Referral for cardiology..."

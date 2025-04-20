@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -324,6 +323,26 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               <option value="History & Physical">History & Physical</option>
               <option value="Procedure Note">Procedure Note</option>
             </select>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={convertToStructuredNote}
+              disabled={isGeneratingNote || !transcript}
+              className="ml-2"
+            >
+              {isGeneratingNote ? (
+                <>
+                  <Wand2 className="h-4 w-4 mr-1 animate-spin" />
+                  Converting...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4 mr-1" />
+                  Convert to {selectedFormat}
+                </>
+              )}
+            </Button>
           </div>
 
           

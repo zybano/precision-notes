@@ -56,7 +56,8 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-const reducer = (state: State, action: Action, dispatchFn?: React.Dispatch<Action>): State => {
+// Modified reducer to avoid the circular dependency
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case actionTypes.ADD_TOAST:
       return {
@@ -73,25 +74,10 @@ const reducer = (state: State, action: Action, dispatchFn?: React.Dispatch<Actio
       }
 
     case actionTypes.DISMISS_TOAST: {
-      const { toastId } = action
-
-      if (toastId && dispatchFn) {
-        toastTimeouts.set(
-          toastId,
-          setTimeout(() => {
-            toastTimeouts.delete(toastId)
-            dispatchFn({
-              type: actionTypes.REMOVE_TOAST,
-              toastId,
-            })
-          }, TOAST_REMOVE_DELAY)
-        )
-      }
-
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
+          t.id === action.toastId || action.toastId === undefined
             ? {
                 ...t,
                 open: false,
@@ -136,16 +122,41 @@ interface ToastProviderProps {
 }
 
 function ToastProvider({ children }: ToastProviderProps) {
-  const [state, dispatch] = React.useReducer(
-    (state: State, action: Action) => reducer(state, action, dispatch),
-    {
-      toasts: [],
+  const [state, unsafeDispatch] = React.useReducer(reducer, {
+    toasts: [],
+  });
+  
+  // Create a separate dispatch function that handles the delayed dismiss
+  const dispatch = React.useCallback((action: Action) => {
+    unsafeDispatch(action);
+    
+    // Handle toast removal after dismiss
+    if (action.type === actionTypes.DISMISS_TOAST) {
+      const { toastId } = action;
+      
+      if (toastId) {
+        toastTimeouts.set(
+          toastId,
+          setTimeout(() => {
+            toastTimeouts.delete(toastId);
+            unsafeDispatch({
+              type: actionTypes.REMOVE_TOAST,
+              toastId,
+            });
+          }, TOAST_REMOVE_DELAY)
+        );
+      }
     }
-  );
+  }, []);
 
   React.useEffect(() => {
     toastTimeouts.forEach((timeout) => clearTimeout(timeout))
     toastTimeouts.clear()
+    
+    return () => {
+      toastTimeouts.forEach((timeout) => clearTimeout(timeout))
+      toastTimeouts.clear()
+    }
   }, [])
 
   const toast = React.useCallback(
@@ -208,10 +219,38 @@ function ToastProvider({ children }: ToastProviderProps) {
   )
 }
 
-export { useToast, ToastProvider, toast }
+// Export the hook and provider
+export { useToast, ToastProvider }
 
 // Helper function to simplify usage
-function toast(props: Omit<ToasterToast, "id">) {
-  const { toast: toastFn } = useToast()
-  return toastFn(props)
+export const toast = {
+  // For normal toast notifications
+  default: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
+    const { toast } = useToast()
+    return toast({ ...props })
+  },
+  
+  // For success messages
+  success: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
+    const { toast } = useToast()
+    return toast({ ...props, variant: "success" })
+  },
+  
+  // For error messages
+  error: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
+    const { toast } = useToast()
+    return toast({ ...props, variant: "destructive" })
+  },
+  
+  // For warning messages
+  warning: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
+    const { toast } = useToast()
+    return toast({ ...props, variant: "warning" })
+  },
+  
+  // For information messages
+  info: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
+    const { toast } = useToast()
+    return toast({ ...props, variant: "info" })
+  }
 }

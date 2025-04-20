@@ -5,10 +5,11 @@ import { UseFormReturn } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Document, RawDocumentData } from "./DocumentTypes";
 import DocumentTable from "./DocumentTable";
-import TranscriptDialog from "./TranscriptDialog";
+import SimplifiedTranscriptDialog from "./SimplifiedTranscriptDialog";
 import { TranscriptionResult } from "@/services/transcription";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchUserDocuments } from "@/services/supabaseSetup";
+import EnhancedTranscriptDialog from "@/components/documentation/EnhancedTranscriptDialog.tsx";
 
 interface RecentDocumentsProps {
   setNewDocumentOpen: (open: boolean) => void;
@@ -20,10 +21,10 @@ interface RecentDocumentsProps {
 }
 
 const RecentDocuments: React.FC<RecentDocumentsProps> = ({
-                                                           setNewDocumentOpen,
-                                                           form,
-                                                           refreshRef
-                                                         }) => {
+  setNewDocumentOpen,
+  form,
+  refreshRef
+}) => {
   const { user } = useAuth();
   const [recentDocuments, setRecentDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +34,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
   const [transcriptText, setTranscriptText] = useState("");
   const [transcriptSummary, setTranscriptSummary] = useState("");
   const [showSummary, setShowSummary] = useState(true);
+  const [formattedNotes, setFormattedNotes] = useState("");
 
   const fetchRecentDocuments = async () => {
     if (!user?.id) return;
@@ -57,7 +59,10 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           created_at: doc.created_at,
           updated_at: doc.updated_at,
           notes: doc.notes,
-          transcript_data: doc.transcript_data || null
+          transcript_data: doc.transcript_data || null,
+          document_format: doc.document_format || null,
+          recording_duration: doc.recording_duration || null,
+          generated_title: doc.generated_title || null
         }));
         setRecentDocuments(mappedDocuments);
       } else {
@@ -97,9 +102,36 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
       description: `Opening ${doc.title} for editing`
     });
 
+    // Reset the form first
+    form.reset();
+
+    // Set document ID and basic info
+    form.setValue("documentId", doc.id);
+    form.setValue("type", doc.type);
+    form.setValue("patientName", doc.patient_name);
+    form.setValue("notes", doc.notes || "");
+    
+    // Set document format if available
+    if (doc.document_format) {
+      form.setValue("documentFormat", doc.document_format);
+    }
+    
+    // Set recording duration if available
+    if (doc.recording_duration) {
+      form.setValue("recordingTime", doc.recording_duration);
+    }
+
+    // Set summary if available
+    if (doc.summary) {
+      form.setValue("transcriptSummary", doc.summary);
+    }
+
+    // Parse and set transcript data if available
     if (doc.transcript_data) {
       try {
         const parsedData = JSON.parse(doc.transcript_data);
+        
+        // Create transcript result object
         const transcriptResult: TranscriptionResult = {
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
@@ -107,19 +139,28 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           provider: parsedData.provider || "default"
         };
 
+        // Set transcript-related form values
         form.setValue("transcriptResult", transcriptResult);
         form.setValue("transcript", parsedData.text || "");
-        form.setValue("transcriptSummary", parsedData.summary || "");
+        
+        // Set transcript summary if not already set but available in parsed data
+        if (!doc.summary && parsedData.summary) {
+          form.setValue("transcriptSummary", parsedData.summary);
+        }
+        
+        // If there's patient info in the transcript data, set it
+        if (parsedData.patientInfo) {
+          form.setValue("patientInfo", parsedData.patientInfo);
+        }
       } catch (e) {
         console.error("Error parsing transcript data:", e);
+        toast.error("Error parsing transcript data", {
+          description: "The transcript data could not be loaded properly"
+        });
       }
     }
 
     setNewDocumentOpen(true);
-    form.setValue("type", doc.type);
-    form.setValue("patientName", doc.patient_name);
-    form.setValue("notes", doc.notes || "");
-    form.setValue("documentId", doc.id);
   };
 
   const handleViewTranscript = (doc: Document) => {
@@ -133,11 +174,16 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           text: parsedData.text || "",
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
-          provider: parsedData.provider || "default"
+          provider: parsedData.provider || "default",
+          patientInfo: parsedData.patientInfo || undefined
         });
 
         setTranscriptText(parsedData.text || "");
-        setTranscriptSummary(parsedData.summary || "");
+        setFormattedNotes(doc.notes || "");
+        
+        // Get summary from document first, if not available use the one from transcript data
+        setTranscriptSummary(doc.summary || parsedData.summary || "");
+        
         setTranscriptDialogOpen(true);
       } catch (e) {
         console.error("Error parsing transcript data:", e);
@@ -198,7 +244,10 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           created_at: doc.created_at,
           updated_at: doc.updated_at,
           notes: doc.notes,
-          transcript_data: doc.transcript_data || null
+          transcript_data: doc.transcript_data || null,
+          document_format: doc.document_format || null,
+          recording_duration: doc.recording_duration || null,
+          generated_title: doc.generated_title || null
         }));
 
         setRecentDocuments(prev => [...prev, ...newDocs]);
@@ -238,19 +287,19 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
       <div>
         <DocumentTable
             documents={recentDocuments}
-            onOpenDocument={handleOpenDocument}
             onViewTranscript={handleViewTranscript}
             onDeleteDocument={handleDeleteDocument}
             onLoadMore={loadMoreDocuments}
         />
 
-        <TranscriptDialog
+        <EnhancedTranscriptDialog
             open={transcriptDialogOpen}
             onOpenChange={setTranscriptDialogOpen}
             selectedDocument={selectedDocument}
             parsedTranscript={parsedTranscript}
             transcriptText={transcriptText}
             transcriptSummary={transcriptSummary}
+            formattedNotes={formattedNotes}
             showSummary={showSummary}
             setShowSummary={setShowSummary}
             form={form}

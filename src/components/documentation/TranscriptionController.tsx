@@ -2,6 +2,7 @@
 import { useAudioRecording } from "@/hooks/useAudioRecording";
 import { useTranscription } from "@/hooks/useTranscription";
 import { TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
+import { PatientSummaryResult } from "@/services/summaryUtils";
 import { UseFormReturn } from "react-hook-form";
 
 interface TranscriptionControllerProps {
@@ -20,6 +21,7 @@ interface TranscriptionControllerReturn {
   formatTime: (seconds: number) => string;
   transcript: string;
   transcriptSummary: string;
+  patientInfo: PatientSummaryResult['patientInfo'] | null;
   isTranscribing: boolean;
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
@@ -37,7 +39,7 @@ export const useTranscriptionController = ({
   form: UseFormReturn<any>;
   transcriptionProvider: TranscriptionProvider;
   useSpeechModelNano: boolean;
-}) => {
+}): TranscriptionControllerReturn => {
   const {
     isRecording,
     isPaused,
@@ -50,12 +52,25 @@ export const useTranscriptionController = ({
     resetRecording
   } = useAudioRecording();
 
-  const handleTranscriptionComplete = (result: TranscriptionResult, summary?: string) => {
+  const handleTranscriptionComplete = (
+    result: TranscriptionResult, 
+    summary?: string,
+    patientInfo?: PatientSummaryResult['patientInfo']
+  ) => {
     form.setValue("transcriptResult", result);
     form.setValue("transcript", result.text);
     
     if (summary) {
       form.setValue("transcriptSummary", summary);
+    }
+    
+    if (patientInfo) {
+      form.setValue("patientInfo", patientInfo);
+      
+      // If we have a valid patient name, set it in the form
+      if (patientInfo.name && patientInfo.name !== "Unknown") {
+        form.setValue("patientName", patientInfo.name);
+      }
     }
     
     if (recordingTime > 0) {
@@ -66,6 +81,7 @@ export const useTranscriptionController = ({
   const {
     transcript,
     transcriptSummary,
+    patientInfo,
     isTranscribing,
     showSummary,
     setShowSummary,
@@ -116,6 +132,7 @@ export const useTranscriptionController = ({
     formatTime,
     transcript,
     transcriptSummary,
+    patientInfo,
     showSummary,
     setShowSummary,
     transcriptResult,

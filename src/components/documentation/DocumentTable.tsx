@@ -11,10 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import DocumentRow from "./DocumentRow";
 import { Document } from "./DocumentTypes";
+import { FileText } from "lucide-react";
 
 interface DocumentTableProps {
   documents: Document[];
-  onOpenDocument: (doc: Document) => void;
   onViewTranscript: (doc: Document) => void;
   onDeleteDocument: (doc: Document) => void;
   onLoadMore: () => void;
@@ -22,7 +22,6 @@ interface DocumentTableProps {
 
 const DocumentTable: React.FC<DocumentTableProps> = ({
   documents,
-  onOpenDocument,
   onViewTranscript,
   onDeleteDocument,
   onLoadMore
@@ -38,28 +37,34 @@ const DocumentTable: React.FC<DocumentTableProps> = ({
   return (
     <div className="space-y-6">
       <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Patient</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Last Edited</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {documents.map((doc) => (
-              <DocumentRow
-                key={doc.id}
-                doc={doc}
-                onOpenDocument={onOpenDocument}
-                onViewTranscript={onViewTranscript}
-                onDeleteDocument={onDeleteDocument}
-              />
-            ))}
-          </TableBody>
-        </Table>
+        <div className="w-full overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[25%]">Patient Name</TableHead>
+                <TableHead className="w-[25%]">
+                  <div className="flex items-center gap-1">
+                    <FileText className="h-4 w-4" />
+                    <span>Document Format</span>
+                  </div>
+                </TableHead>
+                <TableHead className="w-[25%]">Last Edited</TableHead>
+                <TableHead className="w-[15%]">Duration</TableHead>
+                <TableHead className="w-[10%] text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents.map((doc) => (
+                <DocumentRow
+                  key={doc.id}
+                  doc={doc}
+                  onViewTranscript={onViewTranscript}
+                  onDeleteDocument={onDeleteDocument}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {documents.length > 0 && (
