@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useRef, RefObject} from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -15,21 +15,28 @@ import {
   generateMedicalDocument,
   DocumentGenerationOptions
 } from "@/services/transcription";
+import jsPDF from "jspdf";
+import ReactMarkdown from "react-markdown";
 
 interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult;
   transcript: string;
   transcriptSummary: string;
+  formattedNotes: string;
+  extractedPatientInfo: any;
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
   form?: any; // Optional form from parent to update
   showSummarySection?: boolean; // Prop to control summary section visibility
 }
 
+
 const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                                                                        transcriptResult,
                                                                        transcript,
                                                                        transcriptSummary,
+    formattedNotes,
+    extractedPatientInfo,
                                                                        showSummary,
                                                                        setShowSummary,
                                                                        form,
@@ -56,6 +63,8 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
     console.groupEnd();
   }, [transcriptResult, transcript, transcriptSummary]);
+
+
   const { toast } = useToast();
   const [selectedFormat, setSelectedFormat] = useState(DocumentFormat.SOAP);
   const [llmProvider, setLlmProvider] = useState(LLMProvider.OPENAI);
@@ -67,6 +76,140 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [highlightedText, setHighlightedText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const transcriptRef = useRef<HTMLDivElement>(null);
+  const exportToPDF = async (contentRef: RefObject<HTMLDivElement>, title?: string): Promise<void> => {
+    try {
+      // Modern implementation using contentRef
+      if (contentRef?.current) {
+        const doc = new jsPDF();
+        const elementTitle = title || 'Medical Document';
+
+        // Define page dimensions and margins
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const usableWidth = pageWidth - (margin * 2);
+        const headerHeight = 60; // Space for header
+
+        // Add logo and branding to the first page
+        // Create a colored header box
+        doc.setFillColor(245, 247, 250); // Light blue-gray background
+        doc.rect(0, 0, pageWidth, headerHeight, 'F');
+
+        // Add border at bottom of header
+        doc.setDrawColor(93, 104, 253); // Primary blue color
+        doc.setLineWidth(1.5);
+        doc.line(0, headerHeight, pageWidth, headerHeight);
+
+        // Add PrecisionNote logo/text
+        doc.setTextColor(4, 5, 35); // Dark color for text
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PrecisionNote', margin, 30);
+
+        // Add tagline
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(93, 104, 253); // Primary blue color
+        doc.text('AI-Powered Medical Documentation', margin, 40);
+
+        // Add document title
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(4, 5, 35); // Dark color for text
+        doc.text(elementTitle, margin, headerHeight + 20);
+
+        // Add generation timestamp
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100); // Gray text
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, margin, headerHeight + 30);
+
+        // Get text content from the element
+        const content = contentRef.current.innerText || '';
+
+        // Format main content
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+
+        // Split text to fit page width
+        const splitText = doc.splitTextToSize(content, usableWidth);
+
+        // Calculate total needed height and number of pages
+        let startY = headerHeight + 40; // Start below the header and title
+        const lineHeight = 7; // Height of each line in points
+
+        // Add content with pagination support
+        let currentPage = 1;
+        let currentY = startY;
+
+        for (let i = 0; i < splitText.length; i++) {
+          // Check if we need a new page
+          if (currentY + lineHeight > pageHeight - margin) {
+            // Add page number to current page
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
+
+            // Add new page
+            doc.addPage();
+            currentPage++;
+            currentY = margin + 15; // Reset Y position on new page
+
+            // Add smaller header to continuation pages
+            doc.setFillColor(245, 247, 250);
+            doc.rect(0, 0, pageWidth, 25, 'F');
+            doc.setDrawColor(93, 104, 253);
+            doc.setLineWidth(1);
+            doc.line(0, 25, pageWidth, 25);
+
+            // Add smaller branding on continuation pages
+            doc.setTextColor(4, 5, 35);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PrecisionNote', margin, 17);
+
+            // Reset to normal text for content
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+          }
+
+          // Add the line to the page
+          doc.text(splitText[i], margin, currentY);
+          currentY += lineHeight;
+        }
+
+        // Add page number to the last page
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
+
+        // Add footer with website to all pages
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('www.precisionnote.com', margin, pageHeight - 10);
+
+        // Save PDF
+        doc.save(`${elementTitle.replace(/\s+/g, '_')}.pdf`);
+
+        toast({
+          title: "PDF Exported",
+          description: "Document has been exported as PDF successfully."
+        });
+      } else {
+        throw new Error("Content reference is not available");
+      }
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export document as PDF.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Sync transcript data with form when loaded
   useEffect(() => {
@@ -140,6 +283,12 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       description: "The transcript has been copied to your clipboard.",
       duration: 3000,
     });
+  };
+  const handleExportToPDF = async () => {
+    if (form && transcriptRef.current) {
+      const documentTitle = form.getValues("title") || "Transcript";
+      await exportToPDF(transcriptRef, documentTitle);
+    }
   };
 
   const getSpeakerColor = (speaker: string) => {
@@ -362,7 +511,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                 <Copy className="h-4 w-4 mr-1" />
                 Copy
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleExportToPDF}>
                 <Copy className="h-4 w-4 mr-1" />
                 Export to PDF
               </Button>
@@ -566,6 +715,47 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               )}
             </div>
         )}
+{/*pdf*/}
+        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <div ref={transcriptRef} className="p-6 bg-white" style={{ width: "800px" }}>
+            <div className="pb-4 border-b border-[#ffcd6a]">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-2xl font-bold text-[#040523]">PrecisionNote</h1>
+                  <p className="text-sm text-[#5768fd]">Medical Documentation</p>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-xl font-medium text-[#040523]">{ "Medical Transscription"}</h2>
+                  <p className="text-sm text-[#5768fd]">Generated on {new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+
+             Patient information if available
+            { extractedPatientInfo && extractedPatientInfo.name !== "Unknown" && (
+                <div className="my-4 p-4 border-l-4 border-[#5768fd]">
+                  <h3 className="font-bold">Patient Information</h3>
+                  <p>Name: {extractedPatientInfo.name}</p>
+                  {extractedPatientInfo.age && <p>Age: {extractedPatientInfo.age}</p>}
+                  {extractedPatientInfo.gender && <p>Gender: {extractedPatientInfo.gender}</p>}
+                </div>
+            )}
+
+            {transcriptSummary && (
+                <div className="my-6">
+                  <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
+                  <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
+                    <p className="text-[#040523]">{transcriptSummary}</p>
+                  </div>
+                </div>
+            )}
+
+            <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Clinical Notes</h2>
+            <div className="mt-4 text-[#040523]">
+              <ReactMarkdown>{formattedNotes}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
       </div>
   );
 };
