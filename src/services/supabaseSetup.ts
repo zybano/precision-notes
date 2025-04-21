@@ -38,7 +38,7 @@ export const checkCreatorIdColumn = async () => {
 };
 
 // Function to save a document with all the required fields
-export const saveDocument = async (documentData: {
+export const ç = async (documentData: {
   title: string;
   patient_name: string;
   type: string;
@@ -204,4 +204,46 @@ export const fetchSharedDocuments = async (userId: string) => {
     console.error("Error fetching shared documents:", error);
     return { success: false, error };
   }
+
+
+};
+
+export const updateDocument = async (documentId: string, documentData: {
+    title?: string;
+    patient_name?: string;
+    type?: string;
+    notes?: string | null;
+    transcript_data?: string | null;
+    summary?: string | null;
+    recording_duration?: number | null;
+    document_format?: string | null;
+    generated_title?: string | null;
+    status?: string;
+}) => {
+    try {
+        if (!documentId) {
+            throw new Error("No document ID provided for update");
+        }
+
+        // Remove undefined fields so we only update what's provided
+        const updatePayload: Record<string, any> = {};
+        Object.keys(documentData).forEach((k) => {
+            if (typeof (documentData as any)[k] !== "undefined") {
+                updatePayload[k] = (documentData as any)[k];
+            }
+        });
+        updatePayload.updated_at = new Date().toISOString();
+
+        const { data, error } = await supabase
+            .from('medical_documents')
+            .update(updatePayload)
+            .eq('id', documentId)
+            .select();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error("Error updating document:", error);
+        return { success: false, error };
+    }
 };
