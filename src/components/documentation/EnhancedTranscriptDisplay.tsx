@@ -4,10 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X } from "lucide-react";
+import {ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, FileDown} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import {
   TranscriptionResult,
   LLMProvider,
@@ -23,60 +23,84 @@ interface TranscriptDisplayProps {
   transcript: string;
   transcriptSummary: string;
   formattedNotes: string;
-  extractedPatientInfo: any;
+  patientInfo: any;
+  documentFormat:string;
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
   form?: any; // Optional form from parent to update
   showSummarySection?: boolean; // Prop to control summary section visibility
 }
 
+const getDocumentFormatFromString = (formatString: string): DocumentFormat | undefined => {
+  switch (formatString.toLowerCase()) {
+    case 'soap':
+      return DocumentFormat.SOAP;
+    case 'history & physical':
+    case 'history and physical':
+      return DocumentFormat.HISTORY_AND_PHYSICAL;
+    case 'progress note':
+      return DocumentFormat.PROGRESS_NOTE;
+    case 'discharge summary':
+      return DocumentFormat.DISCHARGE_SUMMARY;
+    case 'consultation':
+    case 'consultation note':
+      return DocumentFormat.CONSULTATION;
+    case 'procedure':
+    case 'procedure note':
+      return DocumentFormat.PROCEDURE_NOTE;
+    case 'cardiology':
+    case 'cardiology note':
+      return DocumentFormat.CARDIOLOGY;
+    case 'dictation':
+      return DocumentFormat.DICTATION;
+    case 'endocrinology':
+    case 'endocrinology note':
+      return DocumentFormat.ENDOCRINOLOGY;
+    case 'geriatrics':
+    case 'geriatrics note':
+      return DocumentFormat.GERIATRICS;
+    case 'obstetrics':
+    case 'obstetrics note':
+      return DocumentFormat.OBSTETRICS;
+    case 'psychiatry':
+    case 'psychiatry note':
+      return DocumentFormat.PSYCHIATRY;
+    case 'orthopedics':
+    case 'orthopedics note':
+      return DocumentFormat.ORTHOPEDICS;
+    case 'pediatrics':
+    case 'pediatrics note':
+      return DocumentFormat.PEDIATRICS;
+    default:
+      return DocumentFormat.DICTATION;
+  }
+};
 
 const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                                                                        transcriptResult,
                                                                        transcript,
                                                                        transcriptSummary,
     formattedNotes,
-    extractedPatientInfo,
+    documentFormat,
+                                                                       patientInfo,
                                                                        showSummary,
                                                                        setShowSummary,
                                                                        form,
                                                                        showSummarySection = true // Default to true for backward compatibility
                                                                      }) => {
-  // Comprehensive debugging for transcript result
-  useEffect(() => {
-    console.group('EnhancedTranscriptDisplay Debug');
-    console.log('Transcript Result (Full):', JSON.stringify(transcriptResult, null, 2));
-    console.log('Raw Transcript:', transcript);
-    console.log('Transcript Summary:', transcriptSummary);
-
-    // Validate required fields
-    const requiredFields = ['text', 'utterances'];
-    const missingFields = requiredFields.filter(field =>
-        !transcriptResult[field] ||
-        (Array.isArray(transcriptResult[field]) && transcriptResult[field].length === 0)
-    );
-
-    if (missingFields.length > 0) {
-      console.warn('Missing required fields:', missingFields);
-      console.warn('Fallback rendering might be needed');
-    }
-
-    console.groupEnd();
-  }, [transcriptResult, transcript, transcriptSummary]);
-
 
   const { toast } = useToast();
-  const [selectedFormat, setSelectedFormat] = useState(DocumentFormat.SOAP);
+  const [selectedFormat, setSelectedFormat] = useState(getDocumentFormatFromString(documentFormat));
   const [llmProvider, setLlmProvider] = useState(LLMProvider.OPENAI);
-  const [structuredNote, setStructuredNote] = useState("");
+  const [structuredNote, setStructuredNote] = useState(formattedNotes);
   const [convertedNoteType, setConvertedNoteType] = useState("");
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
-  const [extractedResults, setExtractedResults] = useState<Record<string, string>>({});
-  const [showExtractedResults, setShowExtractedResults] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [highlightedText, setHighlightedText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
+
+
   const exportToPDF = async (contentRef: RefObject<HTMLDivElement>, title?: string): Promise<void> => {
     try {
       // Modern implementation using contentRef
@@ -329,14 +353,13 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         form.setValue("notes", result);
         form.setValue("documentFormat", selectedFormat);
         form.setValue("llmProvider", llmProvider);
+        form.setValue("formattedNotes", result);
       }
 
-      // Auto-extract clinical results from the note
-      extractClinicalResults(result);
 
       toast({
         title: "Note Generated",
-        description: `Your transcript has been converted to a structured ${formatName} using ${LLMProvider[llmProvider]}.`,
+        description: `Your transcript has been converted`,
         duration: 3000,
       });
     } catch (error) {
@@ -351,7 +374,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       setIsGeneratingNote(false);
     }
   };
-  
+
   const getFormatName = (format: DocumentFormat) => {
     switch (format) {
       case DocumentFormat.SOAP: return "SOAP Note";
@@ -370,38 +393,6 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       case DocumentFormat.PEDIATRICS: return "Pediatrics Note";
       default: return "Medical Note";
     }
-  };
-
-  const extractClinicalResults = (note: string) => {
-    // Simple pattern-based extraction for common clinical metrics
-    const patterns = [
-      { name: "Blood Pressure", regex: /(?:BP|blood pressure)[:\s]+(\d{2,3}\/\d{2,3})(?:\s*mmHg)?/i },
-      { name: "Heart Rate", regex: /(?:HR|heart rate|pulse)[:\s]+(\d{2,3})(?:\s*bpm)?/i },
-      { name: "Temperature", regex: /(?:temp|temperature)[:\s]+(\d{2,3}(?:\.\d)?)(?:\s*(?:°C|°F|C|F))?/i },
-      { name: "Oxygen Saturation", regex: /(?:O2 sat|oxygen saturation|SpO2)[:\s]+(\d{1,3}%)/ },
-      { name: "Weight", regex: /(?:weight)[:\s]+(\d{1,3}(?:\.\d)?)(?:\s*(?:kg|lbs?))?/i },
-      { name: "Height", regex: /(?:height)[:\s]+(\d{1,3}(?:\.\d)?)(?:\s*(?:cm|in|inches|feet|ft|foot|m))?/i },
-      { name: "BMI", regex: /(?:BMI|body mass index)[:\s]+(\d{1,2}(?:\.\d)?)(?:\s*kg\/m2)?/i }
-    ];
-
-    const results: Record<string, string> = {};
-
-    patterns.forEach(pattern => {
-      const match = note.match(pattern.regex);
-      if (match && match[1]) {
-        results[pattern.name] = match[1];
-      }
-    });
-
-    // Extract diagnoses with a more complex pattern
-    const diagnosisPattern = /(?:assessment|impression|diagnosis)[:\s]+(.*?)(?:\s*(?:plan|treatment|recommendations|follow-up|followup)|\n\n)/is;
-    const diagnosisMatch = note.match(diagnosisPattern);
-    if (diagnosisMatch && diagnosisMatch[1]) {
-      results["Diagnosis"] = diagnosisMatch[1].trim().replace(/\n+/g, " ");
-    }
-
-    setExtractedResults(results);
-    setShowExtractedResults(Object.keys(results).length > 0);
   };
 
   const handleCopyStructuredNote = () => {
@@ -498,86 +489,90 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   return (
       <div className="space-y-4">
-        <div className="flex flex-col space-y-2">
-          <div className="flex justify-between items-center">
+        <div className="space-y-4">
+          {/* Header Section with Title and Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:items-center">
             <div className="flex items-center space-x-2">
               <h3 className="text-lg font-medium">Transcript</h3>
               {transcriptResult.isMock && (
                   <Badge variant="outline" className="text-xs">Sample Data</Badge>
               )}
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" onClick={handleCopyTranscript}>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopyTranscript} className="w-full xs:w-auto">
                 <Copy className="h-4 w-4 mr-1" />
                 Copy
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExportToPDF}>
-                <Copy className="h-4 w-4 mr-1" />
+              <Button variant="outline" size="sm" onClick={handleExportToPDF} className="w-full xs:w-auto">
+                <FileDown className="h-4 w-4 mr-1" />
                 Export to PDF
               </Button>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-start space-y-2 sm:space-y-0 sm:space-x-4 sm:items-center">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="note-format" className="whitespace-nowrap">Convert to:</Label>
-              <select
-                  id="note-format"
-                  className="text-sm rounded-md border border-input bg-transparent px-3 py-1"
-                  value={selectedFormat}
-                  onChange={(e) => setSelectedFormat(e.target.value as DocumentFormat)}
-              >
-                <option value={DocumentFormat.SOAP}>SOAP Note</option>
-                <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
-                <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
-                <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
-                <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
-                <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
-                <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
-                <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
-                <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
-                <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
-                <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
-                <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
-                <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
-                <option value={DocumentFormat.DICTATION}>Dictation</option>
-              </select>
+          {/* Format Conversion Section */}
+          <div className="bg-muted/30 p-3 rounded-md">
+            <div className="flex flex-col space-y-3">
+              <Label htmlFor="note-format" className="font-medium">Convert transcript to:</Label>
 
-              <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={convertToStructuredNote}
-                  disabled={isGeneratingNote || !transcript}
-                  className="ml-2"
-              >
-                {isGeneratingNote ? (
-                    <>
-                      <Wand2 className="h-4 w-4 mr-1 animate-spin" />
-                      Converting...
-                    </>
-                ) : (
-                    <>
-                      <Wand2 className="h-4 w-4 mr-1" />
-                      Convert to {selectedFormat}
-                    </>
-                )}
-              </Button>
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                <select
+                    id="note-format"
+                    className="flex-1 text-sm rounded-md border border-input bg-transparent px-3 py-2"
+                    value={selectedFormat}
+                    onChange={(e) => setSelectedFormat(e.target.value as DocumentFormat)}
+                >
+                  <option value={DocumentFormat.SOAP}>SOAP Note</option>
+                  <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
+                  <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
+                  <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
+                  <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
+                  <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
+                  <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
+                  <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
+                  <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
+                  <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
+                  <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
+                  <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
+                  <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
+                  <option value={DocumentFormat.DICTATION}>Dictation</option>
+                </select>
+
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={convertToStructuredNote}
+                    disabled={isGeneratingNote || !transcript}
+                    className="w-full sm:w-auto"
+                >
+                  {isGeneratingNote ? (
+                      <>
+                        <Wand2 className="h-4 w-4 mr-1 animate-spin" />
+                        <span>Converting...</span>
+                      </>
+                  ) : (
+                      <>
+                        <Wand2 className="h-4 w-4 mr-1" />
+                        <span>Convert</span>
+                      </>
+                  )}
+                </Button>
+              </div>
             </div>
-
-
           </div>
         </div>
-
         <Tabs defaultValue="transcript" className="w-full">
           <TabsList>
+            {selectedFormat && <TabsTrigger value="structured" className="flex items-center gap-1">
+              <List className="h-4 w-4" />
+              {getFormatName(selectedFormat)}
+            </TabsTrigger>}
             <TabsTrigger value="transcript" className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
               Raw Transcript
             </TabsTrigger>
-            {structuredNote && <TabsTrigger value="structured" className="flex items-center gap-1">
-              <List className="h-4 w-4" />
-              {convertedNoteType}
-            </TabsTrigger>}
+
           </TabsList>
 
           <TabsContent value="transcript">
@@ -717,42 +712,63 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         )}
 {/*pdf*/}
         <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          <div ref={transcriptRef} className="p-6 bg-white" style={{ width: "800px" }}>
-            <div className="pb-4 border-b border-[#ffcd6a]">
-              <div className="flex justify-between items-center">
+          <div ref={transcriptRef} className="p-12 bg-white" style={{ width: "800px", fontFamily: "Arial, sans-serif" }}>
+            <div className="mb-12">
+              <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h1 className="text-2xl font-bold text-[#040523]">PrecisionNote</h1>
-                  <p className="text-sm text-[#5768fd]">Medical Documentation</p>
+                  <h1 className="text-4xl font-bold text-[#040523] tracking-wide mb-2">PrecisionNote</h1>
+                  <p className="text-xl text-[#5768fd] font-medium">Medical Documentation</p>
                 </div>
                 <div className="text-right">
-                  <h2 className="text-xl font-medium text-[#040523]">{ "Medical Transscription"}</h2>
-                  <p className="text-sm text-[#5768fd]">Generated on {new Date().toLocaleDateString()}</p>
+                  <h2 className="text-3xl font-semibold text-[#040523] mb-2">{"Medical Transcription"}</h2>
+                  <p className="text-xl text-[#5768fd] font-medium">Generated on {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
+              <div className="border-t-8 border-[#ffcd6a]"></div>
             </div>
 
-             Patient information if available
-            { extractedPatientInfo && extractedPatientInfo.name !== "Unknown" && (
-                <div className="my-4 p-4 border-l-4 border-[#5768fd]">
-                  <h3 className="font-bold">Patient Information</h3>
-                  <p>Name: {extractedPatientInfo.name}</p>
-                  {extractedPatientInfo.age && <p>Age: {extractedPatientInfo.age}</p>}
-                  {extractedPatientInfo.gender && <p>Gender: {extractedPatientInfo.gender}</p>}
-                </div>
-            )}
-
-            {transcriptSummary && (
-                <div className="my-6">
-                  <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
-                  <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
-                    <p className="text-[#040523]">{transcriptSummary}</p>
+            {patientInfo && patientInfo.name !== "Unknown" && (
+                <div className="my-12">
+                  <div className="bg-[#f0f4ff] rounded-lg shadow-md border-l-8 border-[#5768fd] p-8">
+                    <h3 className="text-2xl font-bold text-[#040523] mb-4">Patient Information</h3>
+                    <div className="grid grid-cols-2 gap-8">
+                      <div>
+                        <p className="text-lg mb-2"><span className="font-semibold">Name:</span></p>
+                        <p className="text-xl">{patientInfo.name}</p>
+                      </div>
+                      {patientInfo.age && (
+                          <div>
+                            <p className="text-lg mb-2"><span className="font-semibold">Age:</span></p>
+                            <p className="text-xl">{patientInfo.age}</p>
+                          </div>
+                      )}
+                      {patientInfo.gender && (
+                          <div>
+                            <p className="text-lg mb-2"><span className="font-semibold">Gender:</span></p>
+                            <p className="text-xl">{patientInfo.gender}</p>
+                          </div>
+                      )}
+                    </div>
                   </div>
                 </div>
             )}
 
-            <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Clinical Notes</h2>
-            <div className="mt-4 text-[#040523]">
-              <ReactMarkdown>{formattedNotes}</ReactMarkdown>
+            {transcriptSummary && (
+                <div className="my-12">
+                  <h2 className="text-3xl font-bold text-[#040523] mb-4">Consultation Summary</h2>
+                  <div className="border-t-4 border-[#ffcd6a] mb-8"></div>
+                  <div className="bg-[#f8f9fa] rounded-lg shadow-md border-2 border-[#5768fd]/20 p-8">
+                    <p className="text-xl text-[#040523] leading-relaxed">{transcriptSummary}</p>
+                  </div>
+                </div>
+            )}
+
+            <div className="mt-12">
+              <h2 className="text-3xl font-bold text-[#040523] mb-4">Clinical Notes</h2>
+              <div className="border-t-4 border-[#ffcd6a] mb-8"></div>
+              <div className="text-[#040523] text-xl leading-relaxed">
+                <ReactMarkdown>{structuredNote}</ReactMarkdown>
+              </div>
             </div>
           </div>
         </div>

@@ -86,7 +86,7 @@ const useDocumentOperations = ({
         creator_id: user?.id,
         patient_name: finalPatientName,
         title: `${documentFormat || type} - ${finalPatientName} - ${new Date().toLocaleDateString()}`,
-        status: "Draft",
+        status: "Active",
         recording_duration: data.recordingTime || 0,
         transcript_data: transcriptResult ? JSON.stringify(transcriptResult) : null,
         summary: transcriptSummary || null,

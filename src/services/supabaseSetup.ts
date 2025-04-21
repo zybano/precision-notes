@@ -39,7 +39,7 @@ export const checkCreatorIdColumn = async () => {
 };
 
 // Function to save a document with all the required fields
-export const ç = async (documentData: {
+export const saveDocument = async (documentData: {
   title: string;
   patient_name: string;
   type: string;

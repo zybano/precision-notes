@@ -35,6 +35,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
   const [transcriptSummary, setTranscriptSummary] = useState("");
   const [showSummary, setShowSummary] = useState(true);
   const [formattedNotes, setFormattedNotes] = useState("");
+    const [documentFormat, setDocumentFormat] = useState("");
 
   const fetchRecentDocuments = async () => {
     if (!user?.id) return;
@@ -180,6 +181,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
 
         setTranscriptText(parsedData.text || "");
         setFormattedNotes(doc.notes || "");
+        setDocumentFormat(doc.document_format || "");
         
         // Get summary from document first, if not available use the one from transcript data
         setTranscriptSummary(doc.summary || parsedData.summary || "");
@@ -218,6 +220,9 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
     }
   };
 
+  const handleRefreshDocuments = async () => {
+    await fetchRecentDocuments();
+  };
   const loadMoreDocuments = async () => {
     if (!user?.id) return;
 
@@ -299,11 +304,13 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
             parsedTranscript={parsedTranscript}
             transcriptText={transcriptText}
             transcriptSummary={transcriptSummary}
+            documentFormat={documentFormat}
             formattedNotes={formattedNotes}
             showSummary={showSummary}
             setShowSummary={setShowSummary}
             form={form}
             onEditDocument={handleOpenDocument}
+            onRefreshDocuments={handleRefreshDocuments}
         />
       </div>
   );
