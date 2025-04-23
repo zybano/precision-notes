@@ -27,7 +27,7 @@ export function Hero() {
             <FadeIn delay={0.1} className="flex items-center">
               <div className="space-y-4 sm:space-y-6 max-w-2xl">
                 <div className="inline-block px-3 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium">
-                  Streamlined Clinical Documentation
+                  Chart Smarter, Care Better
                 </div>
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-tight">
                   Clinical Documentation <span className="text-secondary">Made Simple</span>
@@ -57,7 +57,7 @@ export function Hero() {
                       <div className="aspect-video w-full overflow-hidden rounded-md">
                         <iframe
                             className="w-full h-full"
-                            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                            src="https://www.youtube.com/embed/ihmVNweqOYA?autoplay=1"
                             title="PrecisionNote Demo"
                             frameBorder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
