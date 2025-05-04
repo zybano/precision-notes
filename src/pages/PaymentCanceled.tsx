@@ -1,34 +1,42 @@
 
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { XCircle, ArrowLeft } from "lucide-react";
-import Layout from "@/components/Layout";
+import { useNavigate } from "react-router-dom";
+import { XCircle } from "lucide-react";
 
 const PaymentCanceled = () => {
+  const navigate = useNavigate();
+  
   return (
-    <Layout>
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
-        <div className="max-w-md w-full bg-card border border-border rounded-lg p-8 text-center space-y-6">
-          <XCircle className="h-16 w-16 text-amber-500 mx-auto" />
-          
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold">Payment Canceled</h1>
-            <p className="text-muted-foreground">
-              Your payment process was canceled and you have not been charged.
-              You can try again whenever you're ready.
-            </p>
-          </div>
-          
-          <div className="pt-4">
-            <Button asChild className="w-full">
-              <Link to="/pricing">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Pricing
-              </Link>
-            </Button>
-          </div>
+    <div className="container max-w-md mx-auto py-12 px-4">
+      <div className="flex flex-col items-center justify-center text-center space-y-6">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+          <XCircle className="h-10 w-10 text-red-600" />
+        </div>
+        
+        <h1 className="text-2xl font-bold tracking-tight">Payment Canceled</h1>
+        
+        <p className="text-muted-foreground">
+          Your payment was canceled and you have not been charged.
+          You can try again whenever you're ready.
+        </p>
+        
+        <div className="space-y-2">
+          <Button 
+            onClick={() => navigate('/consultation-purchase')}
+            className="w-full"
+          >
+            Try Again
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/dashboard')}
+            className="w-full"
+          >
+            Return to Dashboard
+          </Button>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

@@ -20,11 +20,14 @@ import Features from './pages/Features';
 import Careers from './pages/Careers';
 import Integrations from './pages/Integrations';
 import NotFound from './pages/NotFound';
+import Layout from '@/components/Layout';
+import HospitalDashboard from './pages/hospital/HospitalDashboard';
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
@@ -36,15 +39,20 @@ function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/integrations" element={<Integrations />} />
         
-        {/* Payment routes */}
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/payment-canceled" element={<PaymentCanceled />} />
-        
+        {/* Protected routes that need Layout with sidebar */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/documentation" element={<DocumentationPage />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/consultation-purchase" element={<ConsultationPurchase />} />
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/documentation" element={<DocumentationPage />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/consultation-purchase" element={<ConsultationPurchase />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-canceled" element={<PaymentCanceled />} />
+            
+            {/* Hospital routes (nested under Layout) */}
+            <Route path="/hospital" element={<HospitalDashboard />} />
+            <Route path="/hospital/:section" element={<HospitalDashboard />} />
+          </Route>
         </Route>
         
         <Route path="*" element={<NotFound />} />
