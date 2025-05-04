@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SubscriptionInfo, SubscriptionTier, getSubscriptionInfo } from "@/services/subscriptionService";
+import { SubscriptionInfo, getSubscriptionInfo } from "@/services/subscriptionService";
 
 interface AuthContextType {
   session: Session | null;
