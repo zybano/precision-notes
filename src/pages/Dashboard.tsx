@@ -9,6 +9,7 @@ import { ActivityChart } from "@/components/dashboard/ActivityChart";
 import { MetricsDisplay, MetricProps } from "@/components/dashboard/MetricsDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { SubscriptionUsage } from "@/components/subscription/SubscriptionUsage";
+import { ConsultationStats } from "@/components/subscription/ConsultationStats";
 import { toast } from "sonner";
 import { fetchUserDocuments } from "@/services/supabaseSetup";
 import { DocumentType, calculateUserMetrics, getActivityData } from "@/services/dashboardService";
@@ -110,6 +111,10 @@ const Dashboard = () => {
           </FadeIn>
           
           <FadeIn delay={0.2}>
+            <ConsultationStats />
+          </FadeIn>
+          
+          <FadeIn delay={0.3}>
             <div className="border border-border rounded-lg p-6 bg-card">
               <h2 className="text-lg font-medium mb-4">Quick Links</h2>
               <div className="space-y-2">
