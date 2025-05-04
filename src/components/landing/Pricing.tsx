@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { useState } from "react";
@@ -202,8 +201,10 @@ export function Pricing() {
                 <div key={index} className="border border-border rounded-lg p-5 text-center bg-background hover:border-primary hover:shadow-sm transition-all">
                   <div className="text-2xl font-bold mb-2">{option.price}</div>
                   <p className="text-muted-foreground mb-4">Add {option.consultations} more consultations</p>
-                  <Button variant="outline" className="w-full">
-                    Purchase
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/consultation-purchase">
+                      Purchase
+                    </Link>
                   </Button>
                 </div>
               ))}
