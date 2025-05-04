@@ -260,14 +260,6 @@ function getDefaultMetrics(): MetricType[] {
       description: "Compared to last week",
       icon: Users,
       positive: true
-    },
-    {
-      title: "Efficiency Score",
-      value: "92%",
-      change: "+3%",
-      description: "Documentation quality metric",
-      icon: BarChart,
-      positive: true
     }
   ];
 }
