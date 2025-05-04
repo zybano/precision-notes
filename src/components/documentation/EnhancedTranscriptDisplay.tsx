@@ -21,19 +21,23 @@ interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult;
   transcript: string;
   transcriptSummary: string;
+  formattedNotes?: string; // Added this prop to fix the TypeScript error
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
+  patientInfo?: PatientInfo | null; // Added this prop to fix the TypeScript error
   form?: any; // Optional form from parent to update
   showSummarySection?: boolean; // Prop to control summary section visibility
-  documentId?: string; // <- Added this prop for document identification
+  documentId?: string; // Document identification for updates
 }
 
 const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   transcriptResult,
   transcript,
   transcriptSummary,
+  formattedNotes,
   showSummary,
   setShowSummary,
+  patientInfo,
   form,
   showSummarySection = true, // Default to true for backward compatibility
   documentId

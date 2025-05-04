@@ -14,7 +14,7 @@ import EnhancedTranscriptDisplay from "./EnhancedTranscriptDisplay";
 import { Document, PatientInfo } from "./DocumentTypes";
 import { TranscriptionResult } from "@/services/transcription";
 import { UseFormReturn } from "react-hook-form";
-import { updateDocument } from "@/services/supabaseSetup";
+import { updateDocument } from "@/services/documents/documentService";
 import { toast } from "sonner";
 
 interface EnhancedTranscriptDialogProps {
@@ -120,7 +120,7 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
         notes: formattedNotes || null
       };
       
-      // Call the updateDocument function from supabaseSetup
+      // Call the updateDocument function from documentService
       const { success, error } = await updateDocument(selectedDocument.id, updateData);
       
       if (success) {
