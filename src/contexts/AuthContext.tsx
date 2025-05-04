@@ -23,10 +23,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
 
   const refreshSubscriptionInfo = async () => {
+    console.log('🔄 refreshSubscriptionInfo called. User:', user?.id);
     if (user) {
+      console.log('👤 Fetching subscription info for user:', user.id);
       const info = await getSubscriptionInfo();
+      console.log('📦 Subscription info received:', info);
       setSubscriptionInfo(info);
     } else {
+      console.log('❌ No user, setting subscription info to null');
       setSubscriptionInfo(null);
     }
   };
@@ -45,13 +49,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
           setIsLoading(false);
-          
-          // After authentication state changes, refresh subscription info
-          if (currentSession?.user) {
-            setTimeout(async () => {
-              await refreshSubscriptionInfo();
-            }, 0);
-          }
         }
     );
 
@@ -61,17 +58,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
-      
-      // After initial session check, get subscription info
-      if (currentSession?.user) {
-        await refreshSubscriptionInfo();
-      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Separate useEffect to watch for user changes and refresh subscription info
+  useEffect(() => {
+    console.log('👤 User changed:', user?.id);
+    if (user) {
+      console.log('🔄 Refreshing subscription info due to user change');
+      refreshSubscriptionInfo();
+    } else {
+      console.log('❌ No user, clearing subscription info');
+      setSubscriptionInfo(null);
+    }
+  }, [user]);
 
   const signOut = async () => {
     await supabase.auth.signOut();

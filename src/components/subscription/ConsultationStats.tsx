@@ -10,13 +10,23 @@ import { Link } from "react-router-dom";
 export const ConsultationStats = () => {
   const { subscriptionInfo, refreshSubscriptionInfo } = useAuth();
   
+  console.log('📈 ConsultationStats render. SubscriptionInfo:', subscriptionInfo);
+  
   if (!subscriptionInfo) {
+    console.log('❌ ConsultationStats: No subscription info');
     return null;
   }
   
   const { consultationsRemaining, consultationsTotal } = subscriptionInfo;
   const usedConsultations = consultationsTotal - consultationsRemaining;
   const usagePercentage = Math.floor((usedConsultations / consultationsTotal) * 100);
+  
+  console.log('🧮 Consultation stats:', {
+    total: consultationsTotal,
+    remaining: consultationsRemaining,
+    used: usedConsultations,
+    percentage: usagePercentage
+  });
   
   return (
     <Card>

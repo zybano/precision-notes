@@ -3,9 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, CreditCard, InfoIcon, RefreshCw } from "lucide-react";
+import {CalendarIcon, CreditCard, InfoIcon, PlusCircle, RefreshCw} from "lucide-react";
 import { getSubscriptionTierName } from "@/services/subscriptionService";
 import { format } from "date-fns";
+import {Link} from "react-router-dom";
 
 export const SubscriptionUsage = () => {
   const { subscriptionInfo, refreshSubscriptionInfo } = useAuth();
@@ -48,7 +49,7 @@ export const SubscriptionUsage = () => {
             <span className="text-xs text-muted-foreground">
               {consultationsRemaining} consultations remaining
             </span>
-            {consultationsRemaining <= 10 && (
+            {consultationsRemaining <= 3 && (
               <div className="flex items-center text-xs text-amber-500">
                 <InfoIcon className="h-3 w-3 mr-1" />
                 <span>Running low</span>
@@ -76,7 +77,14 @@ export const SubscriptionUsage = () => {
               Manage Subscription
             </a>
           </Button>
+          <Button variant="outline" className="w-full flex items-center justify-center" asChild>
+            <Link to="/consultation-purchase">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Buy More Consultations
+            </Link>
+          </Button>
         </div>
+
       </CardContent>
     </Card>
   );

@@ -70,7 +70,7 @@ const Dashboard = () => {
     <div className="container max-w-7xl space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <Button onClick={() => navigate("/documentation/new")} className="flex-shrink-0">
+        <Button onClick={() => navigate("/documentation")} className="flex-shrink-0">
           <Plus className="mr-2 h-4 w-4" />
           New Document
         </Button>
@@ -79,22 +79,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 space-y-6">
           {!isLoadingMetrics && <MetricsDisplay metrics={metrics} />}
-          
-          <FadeIn delay={0.2}>
-            <div className="border border-border rounded-lg p-6 bg-card">
-              <h2 className="text-lg font-medium mb-4">Recent Activity</h2>
-              <ActivityChart />
-            </div>
-          </FadeIn>
+
 
           <FadeIn delay={0.3}>
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Recent Documents</h2>
-                <Button variant="outline" asChild>
-                  <Link to="/documentation">View All</Link>
-                </Button>
-              </div>
               <DocumentTables 
                 recentDocuments={documents} 
                 isLoading={isLoadingDocuments}
@@ -103,16 +91,20 @@ const Dashboard = () => {
               />
             </div>
           </FadeIn>
+
+          <FadeIn delay={0.2}>
+            <div className="border border-border rounded-lg p-6 bg-card">
+              <h2 className="text-lg font-medium mb-4">Recent Activity</h2>
+              <ActivityChart />
+            </div>
+          </FadeIn>
         </div>
         
         <div className="space-y-6">
           <FadeIn delay={0.1}>
             <SubscriptionUsage />
           </FadeIn>
-          
-          <FadeIn delay={0.2}>
-            <ConsultationStats />
-          </FadeIn>
+
           
           <FadeIn delay={0.3}>
             <div className="border border-border rounded-lg p-6 bg-card">

@@ -17,33 +17,47 @@ export interface SubscriptionInfo {
 // Get user's subscription info
 export const getSubscriptionInfo = async (): Promise<SubscriptionInfo | null> => {
   try {
+    console.log('🔄 Starting getSubscriptionInfo...');
     const { data: { user } } = await supabase.auth.getUser();
     
+    console.log('🧑 User data:', user);
+    
     if (!user) {
+      console.log('❌ No user found');
       return null;
     }
     
     // Get subscription tier from user metadata
     const subscriptionTier = (user.user_metadata?.subscription_tier as SubscriptionTier) || 'free';
+    console.log('🏆 Subscription tier:', subscriptionTier);
     
     // Default values based on tier
     const tierDefaults = getTierDefaults(subscriptionTier);
+    console.log('📋 Tier defaults:', tierDefaults);
     
     // Get consultation data from user metadata or use defaults
     const consultationsTotal = user.user_metadata?.consultations_total || tierDefaults.consultationsTotal;
     const consultationsUsed = user.user_metadata?.consultations_used || 0;
     const consultationsRemaining = Math.max(0, consultationsTotal - consultationsUsed);
     
+    console.log('📊 Consultation stats:', {
+      total: consultationsTotal,
+      used: consultationsUsed,
+      remaining: consultationsRemaining
+    });
+    
     // Determine if annual billing
     const isAnnualBilling = user.user_metadata?.annual_billing === true;
+    console.log('💳 Annual billing:', isAnnualBilling);
     
     // Get next billing date if available
     let nextBillingDate: Date | undefined;
     if (user.user_metadata?.next_billing_date) {
       nextBillingDate = new Date(user.user_metadata.next_billing_date);
+      console.log('📅 Next billing date:', nextBillingDate);
     }
     
-    return {
+    const subscriptionInfo = {
       tier: subscriptionTier,
       isAnnualBilling,
       consultationsTotal,
@@ -51,8 +65,11 @@ export const getSubscriptionInfo = async (): Promise<SubscriptionInfo | null> =>
       nextBillingDate,
       features: tierDefaults.features
     };
+    
+    console.log('✅ Final subscription info:', subscriptionInfo);
+    return subscriptionInfo;
   } catch (error) {
-    console.error("Error getting subscription info:", error);
+    console.error("❌ Error getting subscription info:", error);
     return null;
   }
 };
