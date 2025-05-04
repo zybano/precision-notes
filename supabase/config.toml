@@ -1,1 +1,35 @@
+
 project_id = "rdjzeayewevditzekveb"
+[api]
+# Port to use for the API URL.
+port = 54323
+# Enable schema changes made on local service to be pushed to remote schema
+realtime = true
+# Additional schemas to expose
+schemas = ["public", "storage", "graphql_public"]
+# Extra schemas to add to the search_path of every request. Only one value is allowed
+extra_search_path = ["public", "extensions"]
+# JWT claim fields and their mappings
+[api.jwt_secret]
+# Priority determines which claim will be selected when similar ones are present
+# recomended values:
+# API supabase-js libraries: 1
+# API deno libraries: 1
+# API nextjs libraries: 1
+# Local dev Docker + API deno libraries: 100
+type = "HS256"
+secret = "super-secret-jwt-token-with-at-least-32-characters-long"
+
+[functions]
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.verify-checkout]
+verify_jwt = false
+
+[db]
+# Port to use for the local database URL.
+port = 54322
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW
+# server_version;` on the remote database to check.
+major_version = 15

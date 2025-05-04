@@ -1,111 +1,158 @@
 
-// Follow the Deno deployment guide for Supabase Edge functions:
-// https://supabase.com/docs/guides/functions/deploy
+// Verify checkout and update user consultation credits
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.25.0";
+import Stripe from "https://esm.sh/stripe@12.16.0";
 
-import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import Stripe from 'https://esm.sh/stripe@12.0.0';
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// Constants
+const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") || "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
+// Initialize Stripe and Supabase clients
+const stripe = new Stripe(STRIPE_SECRET_KEY, {
+  apiVersion: "2022-11-15",
+});
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+// Define CORS headers
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Handle CORS preflight requests
+const handleCors = (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: corsHeaders,
+    });
+  }
+};
+
+// Main function handler
 serve(async (req: Request) => {
   // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 401,
-      });
+    // Parse request
+    const { sessionId } = await req.json();
+
+    if (!sessionId) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Session ID is required",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { 
-        global: { headers: { Authorization: authHeader } },
-        auth: { persistSession: false } 
+    // Retrieve checkout session
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    // Verify payment status
+    if (session.payment_status !== "paid") {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Payment not completed",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Get user ID and quantity from session
+    const userId = session.client_reference_id || session.metadata?.user_id;
+    const quantity = parseInt(session.metadata?.quantity || "0");
+
+    if (!userId || !quantity) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Invalid session data",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Get current user data
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+
+    if (userError || !userData?.user) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "User not found",
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Calculate new consultation total
+    const currentTotal = userData.user.user_metadata?.consultations_total || 0;
+    const newTotal = currentTotal + quantity;
+
+    // Update user metadata
+    const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        ...userData.user.user_metadata,
+        consultations_total: newTotal,
+      },
+    });
+
+    if (updateError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to update user data",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Return success
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Credits updated successfully",
+        credits_added: quantity,
+        total_credits: newTotal,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-
-    // Get the user from the auth header
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'User not authenticated' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 401,
-      });
-    }
-
-    // Parse the request body
-    const { sessionId } = await req.json();
-    if (!sessionId) {
-      return new Response(JSON.stringify({ error: 'Missing session ID' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
-
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
-      apiVersion: '2023-10-16',
-    });
-
-    // Retrieve the session
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    if (!session) {
-      return new Response(JSON.stringify({ error: 'Invalid session ID' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
-
-    // Check if the session is paid
-    if (session.payment_status !== 'paid') {
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: 'Payment not completed',
-        status: session.payment_status
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
-    }
-
-    // Check if the session belongs to the current user
-    if (session.metadata?.user_id !== user.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized access to this session' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 403,
-      });
-    }
-
-    // Get the consultation count from metadata
-    const consultationCount = parseInt(session.metadata?.consultation_count || '0');
-    
-    // Return success with the consultation count
-    return new Response(JSON.stringify({ 
-      success: true, 
-      consultationCount,
-      session_id: session.id
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
   } catch (error) {
-    console.error('Error verifying checkout session:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    console.error("Error verifying checkout:", error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message || "Failed to verify checkout session",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

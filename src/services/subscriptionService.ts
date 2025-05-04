@@ -1,69 +1,21 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useCallback } from "react";
 
-// Define subscription tiers
-export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'enterprise';
+// Define subscription tiers and their features
+export type SubscriptionTier = 'free' | 'starter' | 'professional' | 'enterprise';
 
-// Define subscription info interface
+// Subscription info interface
 export interface SubscriptionInfo {
   tier: SubscriptionTier;
-  consultationsRemaining: number;
-  consultationsTotal: number;
-  nextBillingDate: Date | null;
   isAnnualBilling: boolean;
+  consultationsTotal: number;
+  consultationsRemaining: number;
+  nextBillingDate?: Date;
+  features: string[];
 }
 
-// Create a hook for managing consultations
-export const useConsultation = () => {
-  // Update the user's consultation count
-  const updateConsultations = useCallback(async (consultationCount: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Authentication required");
-        return false;
-      }
-      
-      // In a real implementation, this would update the user's consultation count in the database
-      // For now, we'll just show a success message
-      toast.success(`Added ${consultationCount} consultations to your account!`);
-      return true;
-    } catch (error) {
-      console.error("Error updating consultations:", error);
-      toast.error("Failed to update consultations");
-      return false;
-    }
-  }, []);
-  
-  return { updateConsultations };
-};
-
-// This exported function allows for use outside of React components
-export async function updateConsultations(consultationCount: number): Promise<boolean> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      toast.error("Authentication required");
-      return false;
-    }
-    
-    // In a real implementation, this would update the user's consultation count in the database
-    // For now, we'll just show a success message
-    toast.success(`Added ${consultationCount} consultations to your account!`);
-    return true;
-  } catch (error) {
-    console.error("Error updating consultations:", error);
-    toast.error("Failed to update consultations");
-    return false;
-  }
-}
-
-// Get subscription info for the current user
-export async function getSubscriptionInfo(): Promise<SubscriptionInfo | null> {
+// Get user's subscription info
+export const getSubscriptionInfo = async (): Promise<SubscriptionInfo | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -71,66 +23,169 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo | null> {
       return null;
     }
     
-    // In a real implementation, this would fetch the user's subscription info from the database
-    // For now, we'll return mock data based on the user's metadata
-    const userTier = user.user_metadata?.subscription_tier || 'free';
+    // Get subscription tier from user metadata
+    const subscriptionTier = (user.user_metadata?.subscription_tier as SubscriptionTier) || 'free';
     
-    // Define consultation limits based on tier
-    const tierConsultations = {
-      free: 5,
-      basic: 20,
-      pro: 50,
-      enterprise: 100
-    };
+    // Default values based on tier
+    const tierDefaults = getTierDefaults(subscriptionTier);
     
-    // Mock remaining consultations (between 20% and 90% of total)
-    const total = tierConsultations[userTier as SubscriptionTier];
-    const remaining = Math.floor(total * (0.2 + Math.random() * 0.7));
+    // Get consultation data from user metadata or use defaults
+    const consultationsTotal = user.user_metadata?.consultations_total || tierDefaults.consultationsTotal;
+    const consultationsUsed = user.user_metadata?.consultations_used || 0;
+    const consultationsRemaining = Math.max(0, consultationsTotal - consultationsUsed);
     
-    // Mock next billing date (1-28 days in the future)
-    const nextBillingDate = new Date();
-    nextBillingDate.setDate(nextBillingDate.getDate() + Math.floor(Math.random() * 28) + 1);
+    // Determine if annual billing
+    const isAnnualBilling = user.user_metadata?.annual_billing === true;
     
-    // Mock annual billing status
-    const isAnnualBilling = Math.random() > 0.5;
+    // Get next billing date if available
+    let nextBillingDate: Date | undefined;
+    if (user.user_metadata?.next_billing_date) {
+      nextBillingDate = new Date(user.user_metadata.next_billing_date);
+    }
     
     return {
-      tier: userTier as SubscriptionTier,
-      consultationsRemaining: remaining,
-      consultationsTotal: total,
+      tier: subscriptionTier,
+      isAnnualBilling,
+      consultationsTotal,
+      consultationsRemaining,
       nextBillingDate,
-      isAnnualBilling
+      features: tierDefaults.features
     };
   } catch (error) {
     console.error("Error getting subscription info:", error);
     return null;
   }
-}
+};
 
-// Get a user-friendly name for a subscription tier
-export function getSubscriptionTierName(tier: SubscriptionTier): string {
+// Get default values for each tier
+const getTierDefaults = (tier: SubscriptionTier) => {
   switch (tier) {
-    case 'free':
-      return 'Free';
-    case 'basic':
-      return 'Basic';
-    case 'pro':
-      return 'Professional';
+    case 'starter':
+      return {
+        consultationsTotal: 50,
+        features: [
+          'Basic SOAP note generation',
+          'Transcription service',
+          'Up to 50 consultations per month',
+          'Email support'
+        ]
+      };
+    case 'professional':
+      return {
+        consultationsTotal: 200,
+        features: [
+          'Advanced SOAP note generation',
+          'Premium transcription service',
+          'Up to 200 consultations per month',
+          'Priority email support',
+          'Custom templates'
+        ]
+      };
     case 'enterprise':
-      return 'Enterprise';
+      return {
+        consultationsTotal: 500,
+        features: [
+          'Advanced SOAP note generation',
+          'Premium transcription service',
+          'Up to 500 consultations per month',
+          'Dedicated support',
+          'Custom templates',
+          'Hospital system integration',
+          'Admin dashboard'
+        ]
+      };
+    case 'free':
     default:
-      return 'Unknown';
+      return {
+        consultationsTotal: 10,
+        features: [
+          'Basic SOAP note generation',
+          'Basic transcription service',
+          'Up to 10 consultations per month'
+        ]
+      };
   }
-}
+};
 
-// Check if a user has access to features of a specific tier
-export function hasSubscriptionAccess(userTier: SubscriptionTier, requiredTier: SubscriptionTier): boolean {
-  const tierLevels: Record<SubscriptionTier, number> = {
-    free: 0,
-    basic: 1,
-    pro: 2,
-    enterprise: 3
+// Update consultation count (e.g. after using a service)
+export const updateConsultationUsage = async (): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return false;
+    }
+    
+    // Get current usage
+    const consultationsUsed = (user.user_metadata?.consultations_used || 0) + 1;
+    
+    // Update user metadata
+    const { error } = await supabase.auth.updateUser({
+      data: { consultations_used }
+    });
+    
+    return !error;
+  } catch (error) {
+    console.error("Error updating consultation usage:", error);
+    return false;
+  }
+};
+
+// Add consultations (e.g. after purchase)
+export const addConsultations = async (amount: number): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return false;
+    }
+    
+    // Get current total
+    const currentTotal = user.user_metadata?.consultations_total || 10;
+    const newTotal = currentTotal + amount;
+    
+    // Update user metadata
+    const { error } = await supabase.auth.updateUser({
+      data: { consultations_total: newTotal }
+    });
+    
+    return !error;
+  } catch (error) {
+    console.error("Error adding consultations:", error);
+    return false;
+  }
+};
+
+// Get tier name for display purposes
+export const getSubscriptionTierName = (tier: SubscriptionTier): string => {
+  switch (tier) {
+    case 'starter': return 'Starter';
+    case 'professional': return 'Professional';
+    case 'enterprise': return 'Enterprise';
+    case 'free': return 'Free';
+    default: return 'Unknown';
+  }
+};
+
+// Check if user has access to a feature based on their tier
+export const hasSubscriptionAccess = (
+  userTier: SubscriptionTier, 
+  requiredTier: SubscriptionTier
+): boolean => {
+  const tierLevels = {
+    'free': 0,
+    'starter': 1,
+    'professional': 2,
+    'enterprise': 3
   };
   
   return tierLevels[userTier] >= tierLevels[requiredTier];
-}
+};
+
+export default {
+  getSubscriptionInfo,
+  updateConsultationUsage,
+  addConsultations,
+  getSubscriptionTierName,
+  hasSubscriptionAccess
+};
