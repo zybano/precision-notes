@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { verifyTopupPurchase } from "@/services/payment/stripeService";
 import { useAuth } from "@/contexts/AuthContext";
+import Layout from "@/components/Layout";
 
 const PaymentSuccess = () => {
   const [isVerifying, setIsVerifying] = useState(true);
@@ -42,25 +43,8 @@ const PaymentSuccess = () => {
     verifyPayment();
   }, [location.search, refreshSubscriptionInfo]);
   
-  if (isVerifying) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <h1 className="text-2xl font-bold">Verifying your payment...</h1>
-          <p className="text-muted-foreground">Please wait while we confirm your purchase.</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // If verification failed, redirect to dashboard
-  if (!isSuccess && !isVerifying) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+  const SuccessContent = () => (
+    <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
       <div className="max-w-md w-full bg-card border border-border rounded-lg p-8 text-center space-y-6">
         <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
         
@@ -85,6 +69,27 @@ const PaymentSuccess = () => {
         </div>
       </div>
     </div>
+  );
+
+  const LoadingContent = () => (
+    <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
+      <div className="text-center space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        <h1 className="text-2xl font-bold">Verifying your payment...</h1>
+        <p className="text-muted-foreground">Please wait while we confirm your purchase.</p>
+      </div>
+    </div>
+  );
+  
+  // If verification failed, redirect to dashboard
+  if (!isSuccess && !isVerifying) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return (
+    <Layout>
+      {isVerifying ? <LoadingContent /> : <SuccessContent />}
+    </Layout>
   );
 };
 
