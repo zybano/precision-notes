@@ -1,9 +1,9 @@
 
 import * as React from "react"
-import { 
+import {
   Toast,
   ToastActionElement,
-  ToastProps 
+  ToastProps
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
@@ -33,22 +33,22 @@ function genId() {
 type ActionType = typeof actionTypes
 
 type Action =
-  | {
-      type: ActionType["ADD_TOAST"]
-      toast: ToasterToast
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"]
-      toast: Partial<ToasterToast>
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"]
-      toastId?: string
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"]
-      toastId?: string
-    }
+    | {
+  type: ActionType["ADD_TOAST"]
+  toast: ToasterToast
+}
+    | {
+  type: ActionType["UPDATE_TOAST"]
+  toast: Partial<ToasterToast>
+}
+    | {
+  type: ActionType["DISMISS_TOAST"]
+  toastId?: string
+}
+    | {
+  type: ActionType["REMOVE_TOAST"]
+  toastId?: string
+}
 
 interface State {
   toasts: ToasterToast[]
@@ -69,7 +69,7 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
+            t.id === action.toast.id ? { ...t, ...action.toast } : t
         ),
       }
 
@@ -77,12 +77,12 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.toastId || action.toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
-            : t
+            t.id === action.toastId || action.toastId === undefined
+                ? {
+                  ...t,
+                  open: false,
+                }
+                : t
         ),
       }
     }
@@ -125,25 +125,25 @@ function ToastProvider({ children }: ToastProviderProps) {
   const [state, unsafeDispatch] = React.useReducer(reducer, {
     toasts: [],
   });
-  
+
   // Create a separate dispatch function that handles the delayed dismiss
   const dispatch = React.useCallback((action: Action) => {
     unsafeDispatch(action);
-    
+
     // Handle toast removal after dismiss
     if (action.type === actionTypes.DISMISS_TOAST) {
       const { toastId } = action;
-      
+
       if (toastId) {
         toastTimeouts.set(
-          toastId,
-          setTimeout(() => {
-            toastTimeouts.delete(toastId);
-            unsafeDispatch({
-              type: actionTypes.REMOVE_TOAST,
-              toastId,
-            });
-          }, TOAST_REMOVE_DELAY)
+            toastId,
+            setTimeout(() => {
+              toastTimeouts.delete(toastId);
+              unsafeDispatch({
+                type: actionTypes.REMOVE_TOAST,
+                toastId,
+              });
+            }, TOAST_REMOVE_DELAY)
         );
       }
     }
@@ -152,7 +152,7 @@ function ToastProvider({ children }: ToastProviderProps) {
   React.useEffect(() => {
     toastTimeouts.forEach((timeout) => clearTimeout(timeout))
     toastTimeouts.clear()
-    
+
     return () => {
       toastTimeouts.forEach((timeout) => clearTimeout(timeout))
       toastTimeouts.clear()
@@ -160,62 +160,62 @@ function ToastProvider({ children }: ToastProviderProps) {
   }, [])
 
   const toast = React.useCallback(
-    ({ ...props }: Omit<ToasterToast, "id">) => {
-      const id = genId()
+      ({ ...props }: Omit<ToasterToast, "id">) => {
+        const id = genId()
 
-      dispatch({
-        type: actionTypes.ADD_TOAST,
-        toast: {
-          ...props,
-          id,
-          open: true,
-          onOpenChange: (open) => {
-            if (!open) {
-              dispatch({
-                type: actionTypes.DISMISS_TOAST,
-                toastId: id,
-              })
-            }
+        dispatch({
+          type: actionTypes.ADD_TOAST,
+          toast: {
+            ...props,
+            id,
+            open: true,
+            onOpenChange: (open) => {
+              if (!open) {
+                dispatch({
+                  type: actionTypes.DISMISS_TOAST,
+                  toastId: id,
+                })
+              }
+            },
           },
-        },
-      })
+        })
 
-      return id
-    },
-    [dispatch]
+        return id
+      },
+      [dispatch]
   )
 
   const update = React.useCallback(
-    (props: ToasterToast) => {
-      dispatch({
-        type: actionTypes.UPDATE_TOAST,
-        toast: props,
-      })
-    },
-    [dispatch]
+      (props: ToasterToast) => {
+        dispatch({
+          type: actionTypes.UPDATE_TOAST,
+          toast: props,
+        })
+      },
+      [dispatch]
   )
 
   const dismiss = React.useCallback(
-    (toastId?: string) => {
-      dispatch({
-        type: actionTypes.DISMISS_TOAST,
-        toastId,
-      })
-    },
-    [dispatch]
+      (toastId?: string) => {
+        dispatch({
+          type: actionTypes.DISMISS_TOAST,
+          toastId,
+        })
+      },
+      [dispatch]
   )
 
   return (
-    <ToastContext.Provider
-      value={{
-        toasts: state.toasts,
-        toast,
-        dismiss,
-        update,
-      }}
-    >
-      {children}
-    </ToastContext.Provider>
+      <ToastContext.Provider
+          value={{
+            toasts: state.toasts,
+            toast,
+            dismiss,
+            update,
+          }}
+      >
+        {children}
+      </ToastContext.Provider>
   )
 }
 
@@ -229,25 +229,25 @@ export const toast = {
     const { toast } = useToast()
     return toast({ ...props })
   },
-  
+
   // For success messages
   success: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
     const { toast } = useToast()
     return toast({ ...props, variant: "success" })
   },
-  
+
   // For error messages
   error: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
     const { toast } = useToast()
     return toast({ ...props, variant: "destructive" })
   },
-  
+
   // For warning messages
   warning: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
     const { toast } = useToast()
     return toast({ ...props, variant: "warning" })
   },
-  
+
   // For information messages
   info: (props: { title?: string; description?: string; action?: ToastActionElement }) => {
     const { toast } = useToast()

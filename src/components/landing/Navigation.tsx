@@ -9,11 +9,21 @@ import { ArrowLeft } from "lucide-react";
 import Logo from "@/components/Logo.tsx";
 import React from "react";
 
-export function Navigation() {
+export function Navigation({ currentPage }: { currentPage?: string }) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
+  const routes = [
+    { name: "Home", path: "/" },
+    { name: "Features", path: "/features" },
+    { name: "Pricing", path: "/pricing" },
+    { name: "About", path: "/about" },
+    { name: "Blog", path: "/blog" },
+    // Add a link to consultation purchase
+    { name: "Buy Consultations", path: "/consultation-purchase" },
+  ];
+
   return (
     <nav className="px-4 sm:px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-border w-full">
       <div className="container mx-auto max-w-7xl flex justify-between items-center">
@@ -25,11 +35,11 @@ export function Navigation() {
         </div>
         
         <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
-
-          <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-          <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-          <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+          {routes.map((route) => (
+            <Link to={route.path} key={route.name} className="text-muted-foreground hover:text-foreground transition-colors">
+              {route.name}
+            </Link>
+          ))}
           <ContactDialog>
             <button className="text-muted-foreground hover:text-foreground transition-colors">Contact Us</button>
           </ContactDialog>

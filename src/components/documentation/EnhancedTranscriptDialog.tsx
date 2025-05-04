@@ -1,3 +1,4 @@
+
 import React, { useMemo } from "react";
 import {
   Dialog,
@@ -13,8 +14,9 @@ import EnhancedTranscriptDisplay from "./EnhancedTranscriptDisplay";
 import { Document, PatientInfo } from "./DocumentTypes";
 import { TranscriptionResult } from "@/services/transcription";
 import { UseFormReturn } from "react-hook-form";
-import { updateDocument } from '@/services/supabaseSetup.ts';
+import { updateDocument } from "@/services/documents/documentService";
 import { toast } from "sonner";
+
 interface EnhancedTranscriptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -23,12 +25,10 @@ interface EnhancedTranscriptDialogProps {
   transcriptText: string;
   transcriptSummary: string;
   formattedNotes: string;
-  documentFormat: string;
   showSummary: boolean;
   setShowSummary: (show: boolean) => void;
   form: UseFormReturn<any>;
   onEditDocument: (doc: Document) => void;
-  onRefreshDocuments: () => Promise<void>;
 }
 
 const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
@@ -39,13 +39,10 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
   transcriptText,
   transcriptSummary,
   formattedNotes,
-                                                                             documentFormat,
   showSummary,
   setShowSummary,
   form,
-  onEditDocument,
-                                                                             onRefreshDocuments
-
+  onEditDocument
 }) => {
   // Extract patient info from transcript data if available
   const extractedPatientInfo: PatientInfo | null = useMemo(() => {
@@ -105,46 +102,37 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
       // Call the main edit handler
       onEditDocument(selectedDocument);
       onOpenChange(false);
-
     }
   };
 
-  async function handleUpdateRecord() {
-    if (selectedDocument) {
-      console.log("Selected Document ID:", selectedDocument.id);
-
-      const updatedData = {
-        title: form.getValues('title'),
-        patient_name: form.getValues('patientInfo')?.name,
-        type: form.getValues('documentType'),
-        notes: form.getValues('notes'),
-        transcript_data: JSON.stringify(form.getValues('transcriptResult')),
-        summary: form.getValues('transcriptSummary'),
-        recording_duration: form.getValues('recordingDuration'),
-        document_format: form.getValues('documentFormat'),
-        generated_title: form.getValues('generatedTitle'),
-        status: form.getValues('status'),
-      };
-
-      const { success, error } = await updateDocument(selectedDocument.id, updatedData);
-
-      if (success) {
-
-        //show toast success message
-        toast.success("Document Updated", {
-          description: "The document has been successfully updated.",
-        });
-        //refresh the documents or update the state
-
-        // Call the function to refresh documents or update state
-        onOpenChange(false); // Close the dialog after successful update
-        onRefreshDocuments();
-
-      } else {
-        console.error("Error updating document:", error);
-      }
+  // Handle updating the record
+  const handleUpdateRecord = async () => {
+    if (!selectedDocument?.id) {
+      toast.error("No document selected to update");
+      return;
     }
-  }
+    
+    try {
+      // Prepare the data for update
+      const updateData = {
+        transcript_data: transcriptText || null,
+        summary: transcriptSummary || null,
+        notes: formattedNotes || null
+      };
+      
+      // Call the updateDocument function from documentService
+      const { success, error } = await updateDocument(selectedDocument.id, updateData);
+      
+      if (success) {
+        toast.success("Document updated successfully");
+      } else {
+        toast.error(`Failed to update document: ${error}`);
+      }
+    } catch (err) {
+      console.error("Error updating document:", err);
+      toast.error("An unexpected error occurred");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -171,12 +159,12 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
               transcriptResult={parsedTranscript}
               transcript={transcriptText}
               transcriptSummary={transcriptSummary}
-                formattedNotes={formattedNotes}
-                documentFormat={documentFormat}
+              formattedNotes={formattedNotes}
               patientInfo={extractedPatientInfo}
               showSummary={showSummary}
               setShowSummary={setShowSummary}
               form={form}
+              documentId={selectedDocument?.id}
             />
           )}
         </div>

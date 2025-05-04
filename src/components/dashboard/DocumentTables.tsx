@@ -14,29 +14,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { DocumentType } from "@/services/dashboardService";
 
-type DocumentProps = {
-  id: string;
-  patient: string;
-  type: string;
-  date: string;
-  status: string;
-  preview: string;
-};
-
-type DocumentTablesProps = {
-  recentDocuments: DocumentProps[];
+export interface DocumentTablesProps {
+  recentDocuments: DocumentType[];
   isLoading: boolean;
-  onViewDocument: (doc: DocumentProps) => void;
-  onDeleteDocument: (doc: DocumentProps) => void;
-};
+  onViewDocument: (doc: DocumentType) => void;
+  onDeleteDocument: (doc: DocumentType) => void;
+}
 
 export const DocumentTables = ({ 
-  recentDocuments, 
-  isLoading,
-  onViewDocument,
-  onDeleteDocument 
+  recentDocuments = [], // Default to empty array if undefined
+  isLoading = true,
+  onViewDocument = () => {},
+  onDeleteDocument = () => {}
 }: DocumentTablesProps) => {
+  // Safely handle potentially undefined documents
+  const documents = recentDocuments || [];
+  const drafts = documents.filter(doc => doc.status === "Draft");
+  const completed = documents.filter(doc => doc.status === "Completed");
+  const recent = documents.slice(0, 3);
+
   return (
     <FadeIn delay={0.4}>
       <Card className="border border-border">
@@ -65,7 +63,7 @@ export const DocumentTables = ({
               <div className="py-10 text-center">
                 <p className="text-muted-foreground">Loading documents...</p>
               </div>
-            ) : recentDocuments.length > 0 ? (
+            ) : documents.length > 0 ? (
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -78,7 +76,7 @@ export const DocumentTables = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentDocuments.map((doc) => (
+                    {documents.map((doc) => (
                       <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{doc.patient}</TableCell>
                         <TableCell>{doc.type}</TableCell>
@@ -129,7 +127,7 @@ export const DocumentTables = ({
               </div>
             )}
             
-            {recentDocuments.length > 0 && (
+            {documents.length > 0 && (
               <div className="mt-4">
                 <Pagination>
                   <PaginationContent>
@@ -159,7 +157,7 @@ export const DocumentTables = ({
               <div className="py-10 text-center">
                 <p className="text-muted-foreground">Loading recent documents...</p>
               </div>
-            ) : recentDocuments.length > 0 ? (
+            ) : recent.length > 0 ? (
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -172,7 +170,7 @@ export const DocumentTables = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentDocuments.slice(0, 3).map((doc) => (
+                    {recent.map((doc) => (
                       <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{doc.patient}</TableCell>
                         <TableCell>{doc.type}</TableCell>
@@ -226,7 +224,7 @@ export const DocumentTables = ({
               <div className="py-10 text-center">
                 <p className="text-muted-foreground">Loading draft documents...</p>
               </div>
-            ) : recentDocuments.filter(doc => doc.status === "Draft").length > 0 ? (
+            ) : drafts.length > 0 ? (
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -239,7 +237,7 @@ export const DocumentTables = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentDocuments.filter(doc => doc.status === "Draft").map((doc) => (
+                    {drafts.map((doc) => (
                       <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{doc.patient}</TableCell>
                         <TableCell>{doc.type}</TableCell>
@@ -288,7 +286,7 @@ export const DocumentTables = ({
               <div className="py-10 text-center">
                 <p className="text-muted-foreground">Loading completed documents...</p>
               </div>
-            ) : recentDocuments.filter(doc => doc.status === "Completed").length > 0 ? (
+            ) : completed.length > 0 ? (
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -301,7 +299,7 @@ export const DocumentTables = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentDocuments.filter(doc => doc.status === "Completed").map((doc) => (
+                    {completed.map((doc) => (
                       <TableRow key={doc.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{doc.patient}</TableCell>
                         <TableCell>{doc.type}</TableCell>

@@ -1,13 +1,13 @@
-import React, {useState, useEffect, useRef, RefObject} from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import {ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, FileDown} from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import {
   TranscriptionResult,
   LLMProvider,
@@ -15,241 +15,79 @@ import {
   generateMedicalDocument,
   DocumentGenerationOptions
 } from "@/services/transcription";
-import jsPDF from "jspdf";
-import ReactMarkdown from "react-markdown";
+import { updateDocument } from "@/services/supabaseSetup";
 
 interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult;
   transcript: string;
   transcriptSummary: string;
-  formattedNotes: string;
-  patientInfo: any;
-  documentFormat:string;
+  formattedNotes?: string; // Added this prop to fix the TypeScript error
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
+  patientInfo?: PatientInfo | null; // Added this prop to fix the TypeScript error
   form?: any; // Optional form from parent to update
   showSummarySection?: boolean; // Prop to control summary section visibility
+  documentId?: string; // Document identification for updates
 }
 
-const getDocumentFormatFromString = (formatString: string): DocumentFormat | undefined => {
-  switch (formatString.toLowerCase()) {
-    case 'soap':
-      return DocumentFormat.SOAP;
-    case 'history & physical':
-    case 'history and physical':
-      return DocumentFormat.HISTORY_AND_PHYSICAL;
-    case 'progress note':
-      return DocumentFormat.PROGRESS_NOTE;
-    case 'discharge summary':
-      return DocumentFormat.DISCHARGE_SUMMARY;
-    case 'consultation':
-    case 'consultation note':
-      return DocumentFormat.CONSULTATION;
-    case 'procedure':
-    case 'procedure note':
-      return DocumentFormat.PROCEDURE_NOTE;
-    case 'cardiology':
-    case 'cardiology note':
-      return DocumentFormat.CARDIOLOGY;
-    case 'dictation':
-      return DocumentFormat.DICTATION;
-    case 'endocrinology':
-    case 'endocrinology note':
-      return DocumentFormat.ENDOCRINOLOGY;
-    case 'geriatrics':
-    case 'geriatrics note':
-      return DocumentFormat.GERIATRICS;
-    case 'obstetrics':
-    case 'obstetrics note':
-      return DocumentFormat.OBSTETRICS;
-    case 'psychiatry':
-    case 'psychiatry note':
-      return DocumentFormat.PSYCHIATRY;
-    case 'orthopedics':
-    case 'orthopedics note':
-      return DocumentFormat.ORTHOPEDICS;
-    case 'pediatrics':
-    case 'pediatrics note':
-      return DocumentFormat.PEDIATRICS;
-    default:
-      return DocumentFormat.DICTATION;
-  }
-};
-
 const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
-                                                                       transcriptResult,
-                                                                       transcript,
-                                                                       transcriptSummary,
-    formattedNotes,
-    documentFormat,
-                                                                       patientInfo,
-                                                                       showSummary,
-                                                                       setShowSummary,
-                                                                       form,
-                                                                       showSummarySection = true // Default to true for backward compatibility
-                                                                     }) => {
+  transcriptResult,
+  transcript,
+  transcriptSummary,
+  formattedNotes,
+  showSummary,
+  setShowSummary,
+  patientInfo,
+  form,
+  showSummarySection = true, // Default to true for backward compatibility
+  documentId
+}) => {
+  useEffect(() => {
+    console.group('EnhancedTranscriptDisplay Debug');
+    console.log('Transcript Result (Full):', JSON.stringify(transcriptResult, null, 2));
+    console.log('Raw Transcript:', transcript);
+    console.log('Transcript Summary:', transcriptSummary);
 
+    const requiredFields = ['text', 'utterances'];
+    const missingFields = requiredFields.filter(field =>
+        !transcriptResult[field] ||
+        (Array.isArray(transcriptResult[field]) && transcriptResult[field].length === 0)
+    );
+
+    if (missingFields.length > 0) {
+      console.warn('Missing required fields:', missingFields);
+      console.warn('Fallback rendering might be needed');
+    }
+
+    console.groupEnd();
+  }, [transcriptResult, transcript, transcriptSummary]);
   const { toast } = useToast();
-  const [selectedFormat, setSelectedFormat] = useState(getDocumentFormatFromString(documentFormat));
+  const [selectedFormat, setSelectedFormat] = useState(DocumentFormat.SOAP);
   const [llmProvider, setLlmProvider] = useState(LLMProvider.OPENAI);
-  const [structuredNote, setStructuredNote] = useState(formattedNotes);
+  const [structuredNote, setStructuredNote] = useState("");
   const [convertedNoteType, setConvertedNoteType] = useState("");
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
+  const [extractedResults, setExtractedResults] = useState<Record<string, string>>({});
+  const [showExtractedResults, setShowExtractedResults] = useState(false);
   const [interactiveMode, setInteractiveMode] = useState(false);
   const [highlightedText, setHighlightedText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const transcriptRef = useRef<HTMLDivElement>(null);
 
+  const [editedTranscript, setEditedTranscript] = useState(transcript);
+  const [editedSummary, setEditedSummary] = useState(transcriptSummary);
+  const [editMode, setEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const exportToPDF = async (contentRef: RefObject<HTMLDivElement>, title?: string): Promise<void> => {
-    try {
-      // Modern implementation using contentRef
-      if (contentRef?.current) {
-        const doc = new jsPDF();
-        const elementTitle = title || 'Medical Document';
-
-        // Define page dimensions and margins
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 20;
-        const usableWidth = pageWidth - (margin * 2);
-        const headerHeight = 60; // Space for header
-
-        // Add logo and branding to the first page
-        // Create a colored header box
-        doc.setFillColor(245, 247, 250); // Light blue-gray background
-        doc.rect(0, 0, pageWidth, headerHeight, 'F');
-
-        // Add border at bottom of header
-        doc.setDrawColor(93, 104, 253); // Primary blue color
-        doc.setLineWidth(1.5);
-        doc.line(0, headerHeight, pageWidth, headerHeight);
-
-        // Add PrecisionNote logo/text
-        doc.setTextColor(4, 5, 35); // Dark color for text
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PrecisionNote', margin, 30);
-
-        // Add tagline
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(93, 104, 253); // Primary blue color
-        doc.text('AI-Powered Medical Documentation', margin, 40);
-
-        // Add document title
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(4, 5, 35); // Dark color for text
-        doc.text(elementTitle, margin, headerHeight + 20);
-
-        // Add generation timestamp
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 100); // Gray text
-        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, margin, headerHeight + 30);
-
-        // Get text content from the element
-        const content = contentRef.current.innerText || '';
-
-        // Format main content
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-
-        // Split text to fit page width
-        const splitText = doc.splitTextToSize(content, usableWidth);
-
-        // Calculate total needed height and number of pages
-        let startY = headerHeight + 40; // Start below the header and title
-        const lineHeight = 7; // Height of each line in points
-
-        // Add content with pagination support
-        let currentPage = 1;
-        let currentY = startY;
-
-        for (let i = 0; i < splitText.length; i++) {
-          // Check if we need a new page
-          if (currentY + lineHeight > pageHeight - margin) {
-            // Add page number to current page
-            doc.setFontSize(10);
-            doc.setTextColor(150, 150, 150);
-            doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
-
-            // Add new page
-            doc.addPage();
-            currentPage++;
-            currentY = margin + 15; // Reset Y position on new page
-
-            // Add smaller header to continuation pages
-            doc.setFillColor(245, 247, 250);
-            doc.rect(0, 0, pageWidth, 25, 'F');
-            doc.setDrawColor(93, 104, 253);
-            doc.setLineWidth(1);
-            doc.line(0, 25, pageWidth, 25);
-
-            // Add smaller branding on continuation pages
-            doc.setTextColor(4, 5, 35);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text('PrecisionNote', margin, 17);
-
-            // Reset to normal text for content
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(0, 0, 0);
-          }
-
-          // Add the line to the page
-          doc.text(splitText[i], margin, currentY);
-          currentY += lineHeight;
-        }
-
-        // Add page number to the last page
-        doc.setFontSize(10);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
-
-        // Add footer with website to all pages
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 100);
-        doc.text('www.precisionnote.com', margin, pageHeight - 10);
-
-        // Save PDF
-        doc.save(`${elementTitle.replace(/\s+/g, '_')}.pdf`);
-
-        toast({
-          title: "PDF Exported",
-          description: "Document has been exported as PDF successfully."
-        });
-      } else {
-        throw new Error("Content reference is not available");
-      }
-    } catch (error) {
-      console.error("Error exporting PDF:", error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export document as PDF.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Sync transcript data with form when loaded
   useEffect(() => {
-    // When a transcript is loaded into this component, make sure the form also has access to it
     if (form && transcriptResult) {
-      // Set transcript result for document generation
       form.setValue("transcriptResult", transcriptResult);
-
-      // Set transcript text
       form.setValue("transcript", transcript);
-
-      // Set transcript summary if available
       if (transcriptSummary) {
         form.setValue("transcriptSummary", transcriptSummary);
       }
     }
+    setEditedTranscript(transcript);
+    setEditedSummary(transcriptSummary);
   }, [form, transcriptResult, transcript, transcriptSummary]);
 
   const formatUtterances = (utterances: any[]) => {
@@ -301,18 +139,12 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   const formattedUtterances = formatUtterances(transcriptResult.utterances);
 
   const handleCopyTranscript = () => {
-    navigator.clipboard.writeText(transcript);
+    navigator.clipboard.writeText(editMode ? editedTranscript : transcript);
     toast({
       title: "Transcript Copied",
       description: "The transcript has been copied to your clipboard.",
       duration: 3000,
     });
-  };
-  const handleExportToPDF = async () => {
-    if (form && transcriptRef.current) {
-      const documentTitle = form.getValues("title") || "Transcript";
-      await exportToPDF(transcriptRef, documentTitle);
-    }
   };
 
   const getSpeakerColor = (speaker: string) => {
@@ -333,17 +165,14 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     setStructuredNote("");
 
     try {
-      // Setup document generation options
       const options: DocumentGenerationOptions = {
         provider: llmProvider,
         format: selectedFormat,
-        apiKey: undefined // Using environment variables from config
+        apiKey: undefined
       };
 
-      // Generate the medical document using the transcription service
       const result = await generateMedicalDocument(transcriptResult, options);
       
-      // Get the formatted name for display
       const formatName = getFormatName(selectedFormat);
       
       setStructuredNote(result);
@@ -353,13 +182,13 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         form.setValue("notes", result);
         form.setValue("documentFormat", selectedFormat);
         form.setValue("llmProvider", llmProvider);
-        form.setValue("formattedNotes", result);
       }
 
+      extractClinicalResults(result);
 
       toast({
         title: "Note Generated",
-        description: `Your transcript has been converted`,
+        description: `Your transcript has been converted to a structured ${formatName} using ${LLMProvider[llmProvider]}.`,
         duration: 3000,
       });
     } catch (error) {
@@ -395,6 +224,36 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     }
   };
 
+  const extractClinicalResults = (note: string) => {
+    const patterns = [
+      { name: "Blood Pressure", regex: /(?:BP|blood pressure)[:\s]+(\d{2,3}\/\d{2,3})(?:\s*mmHg)?/i },
+      { name: "Heart Rate", regex: /(?:HR|heart rate|pulse)[:\s]+(\d{2,3})(?:\s*bpm)?/i },
+      { name: "Temperature", regex: /(?:temp|temperature)[:\s]+(\d{2,3}(?:\.\d)?)(?:\s*(?:°C|°F|C|F))?/i },
+      { name: "Oxygen Saturation", regex: /(?:O2 sat|oxygen saturation|SpO2)[:\s]+(\d{1,3}%)/ },
+      { name: "Weight", regex: /(?:weight)[:\s]+(\d{1,3}(?:\.\d)?)(?:\s*(?:kg|lbs?))?/i },
+      { name: "Height", regex: /(?:height)[:\s]+(\d{1,3}(?:\.\d)?)(?:\s*(?:cm|in|inches|feet|ft|foot|m))?/i },
+      { name: "BMI", regex: /(?:BMI|body mass index)[:\s]+(\d{1,2}(?:\.\d)?)(?:\s*kg\/m2)?/i }
+    ];
+
+    const results: Record<string, string> = {};
+
+    patterns.forEach(pattern => {
+      const match = note.match(pattern.regex);
+      if (match && match[1]) {
+        results[pattern.name] = match[1];
+      }
+    });
+
+    const diagnosisPattern = /(?:assessment|impression|diagnosis)[:\s]+(.*?)(?:\s*(?:plan|treatment|recommendations|follow-up|followup)|\n\n)/is;
+    const diagnosisMatch = note.match(diagnosisPattern);
+    if (diagnosisMatch && diagnosisMatch[1]) {
+      results["Diagnosis"] = diagnosisMatch[1].trim().replace(/\n+/g, " ");
+    }
+
+    setExtractedResults(results);
+    setShowExtractedResults(Object.keys(results).length > 0);
+  };
+
   const handleCopyStructuredNote = () => {
     navigator.clipboard.writeText(structuredNote);
     toast({
@@ -402,6 +261,54 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       description: "The structured note has been copied to your clipboard.",
       duration: 3000,
     });
+  };
+
+  const handleSaveDocumentUpdate = async () => {
+    if (!documentId) {
+      toast({
+        title: "Cannot update document",
+        description: "No document ID provided for update.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updatePayload: any = {
+        transcript_data: editedTranscript,
+        summary: editedSummary,
+      };
+      if (structuredNote) {
+        updatePayload.notes = structuredNote;
+        updatePayload.document_format = convertedNoteType || selectedFormat;
+      }
+
+      const res = await updateDocument(documentId, updatePayload);
+
+      if (res.success) {
+        toast({
+          title: "Document Updated",
+          description: "Your changes were saved to Supabase."
+        });
+        setEditMode(false);
+        if (form) {
+          form.setValue("transcript", editedTranscript);
+          form.setValue("transcriptSummary", editedSummary);
+          if (structuredNote) form.setValue("notes", structuredNote);
+          if (convertedNoteType) form.setValue("documentFormat", convertedNoteType);
+        }
+      } else {
+        throw res.error;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error?.message || "There was a problem saving changes.",
+        variant: "destructive"
+      });
+    }
+    setIsSaving(false);
   };
 
   const handleTextSelection = () => {
@@ -435,26 +342,22 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     e.preventDefault();
     const text = e.dataTransfer.getData("text/plain");
 
-    // Update the structured note by adding the dragged text to the appropriate section
-    if (text && sectionId) {
-      const sectionPattern = new RegExp(`(${sectionId}[:\\s]+)(.*?)(?=\\n\\n|$)`, 'is');
-      const updatedNote = structuredNote.replace(sectionPattern, (match, p1, p2) => {
-        return `${p1}${p2}\n• ${text}`;
-      });
+    const sectionPattern = new RegExp(`(${sectionId}[:\\s]+)(.*?)(?=\\n\\n|$)`, 'is');
+    const updatedNote = structuredNote.replace(sectionPattern, (match, p1, p2) => {
+      return `${p1}${p2}\n• ${text}`;
+    });
 
-      setStructuredNote(updatedNote);
+    setStructuredNote(updatedNote);
 
-      toast({
-        title: "Content Added",
-        description: `Added selected text to ${sectionId} section.`,
-        duration: 2000,
-      });
-    }
+    toast({
+      title: "Content Added",
+      description: `Added selected text to ${sectionId} section.`,
+      duration: 2000,
+    });
   };
 
   useEffect(() => {
     if (interactiveMode && structuredNote) {
-      // Ensure the structured note is in a format suitable for interactive editing
       const updatedNote = ensureStructuredFormat(structuredNote);
       if (updatedNote !== structuredNote) {
         setStructuredNote(updatedNote);
@@ -463,7 +366,6 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   }, [interactiveMode, structuredNote]);
 
   const ensureStructuredFormat = (note: string): string => {
-    // Helper function to add bullet points to sections and ensure proper formatting
     const sections = ["SUBJECTIVE", "OBJECTIVE", "ASSESSMENT", "PLAN",
       "CHIEF COMPLAINT", "INTERVAL HISTORY", "CURRENT STATUS",
       "REASON FOR CONSULTATION", "HISTORY OF PRESENT ILLNESS",
@@ -474,7 +376,6 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     sections.forEach(section => {
       const sectionPattern = new RegExp(`(${section}[:\\s]+)(.*?)(?=\\n\\n|$)`, 'is');
       updatedNote = updatedNote.replace(sectionPattern, (match, p1, p2) => {
-        // If content doesn't already have bullet points, add them
         if (!p2.includes('•') && p2.includes('\n')) {
           const lines = p2.split('\n').filter(l => l.trim().length > 0);
           const bulletedLines = lines.map(l => l.startsWith('•') ? l : `• ${l}`).join('\n');
@@ -488,99 +389,115 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   };
 
   return (
-      <div className="space-y-4">
-        <div className="space-y-4">
-          {/* Header Section with Title and Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:items-center">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-medium">Transcript</h3>
-              {transcriptResult.isMock && (
-                  <Badge variant="outline" className="text-xs">Sample Data</Badge>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={handleCopyTranscript} className="w-full xs:w-auto">
-                <Copy className="h-4 w-4 mr-1" />
-                Copy
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportToPDF} className="w-full xs:w-auto">
-                <FileDown className="h-4 w-4 mr-1" />
-                Export to PDF
-              </Button>
-            </div>
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-2">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <h3 className="text-lg font-medium">Transcript</h3>
+            {transcriptResult.isMock && (
+                <Badge variant="outline" className="text-xs">Sample Data</Badge>
+            )}
           </div>
-
-          {/* Format Conversion Section */}
-          <div className="bg-muted/30 p-3 rounded-md">
-            <div className="flex flex-col space-y-3">
-              <Label htmlFor="note-format" className="font-medium">Convert transcript to:</Label>
-
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                <select
-                    id="note-format"
-                    className="flex-1 text-sm rounded-md border border-input bg-transparent px-3 py-2"
-                    value={selectedFormat}
-                    onChange={(e) => setSelectedFormat(e.target.value as DocumentFormat)}
-                >
-                  <option value={DocumentFormat.SOAP}>SOAP Note</option>
-                  <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
-                  <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
-                  <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
-                  <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
-                  <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
-                  <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
-                  <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
-                  <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
-                  <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
-                  <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
-                  <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
-                  <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
-                  <option value={DocumentFormat.DICTATION}>Dictation</option>
-                </select>
-
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={convertToStructuredNote}
-                    disabled={isGeneratingNote || !transcript}
-                    className="w-full sm:w-auto"
-                >
-                  {isGeneratingNote ? (
-                      <>
-                        <Wand2 className="h-4 w-4 mr-1 animate-spin" />
-                        <span>Converting...</span>
-                      </>
-                  ) : (
-                      <>
-                        <Wand2 className="h-4 w-4 mr-1" />
-                        <span>Convert</span>
-                      </>
-                  )}
-                </Button>
-              </div>
-            </div>
+          <div className="flex space-x-2">
+            {editMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveDocumentUpdate}
+                disabled={isSaving}
+                className="flex items-center"
+              >
+                <Save className="h-4 w-4 mr-1" />
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditMode(true)}
+                className="flex items-center"
+              >
+                <ChevronDown className="h-4 w-4 mr-1" />
+                Edit Transcript
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleCopyTranscript}>
+              <Copy className="h-4 w-4 mr-1" />
+              Copy
+            </Button>
           </div>
         </div>
-        <Tabs defaultValue="transcript" className="w-full">
-          <TabsList>
-            {selectedFormat && <TabsTrigger value="structured" className="flex items-center gap-1">
-              <List className="h-4 w-4" />
-              {getFormatName(selectedFormat)}
-            </TabsTrigger>}
-            <TabsTrigger value="transcript" className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              Raw Transcript
-            </TabsTrigger>
-
-          </TabsList>
-
-          <TabsContent value="transcript">
-            <ResizablePanelGroup direction="vertical" className="min-h-[300px] max-h-[600px] border rounded-md">
-              <ResizablePanel defaultSize={70}>
+        <div className="flex flex-col sm:flex-row justify-start space-y-2 sm:space-y-0 sm:space-x-4 sm:items-center">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="note-format" className="whitespace-nowrap">Convert to:</Label>
+            <select
+              id="note-format"
+              className="text-sm rounded-md border border-input bg-transparent px-3 py-1"
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value as DocumentFormat)}
+            >
+              <option value={DocumentFormat.SOAP}>SOAP Note</option>
+              <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
+              <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
+              <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
+              <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
+              <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
+              <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
+              <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
+              <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
+              <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
+              <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
+              <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
+              <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
+              <option value={DocumentFormat.DICTATION}>Dictation</option>
+            </select>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={convertToStructuredNote}
+              disabled={isGeneratingNote || !transcript}
+              className="ml-2"
+            >
+              {isGeneratingNote ? (
+                <>
+                  <Wand2 className="h-4 w-4 mr-1 animate-spin" />
+                  Converting...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4 mr-1" />
+                  Convert to {selectedFormat}
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+      <Tabs defaultValue="transcript" className="w-full">
+        <TabsList>
+          <TabsTrigger value="transcript" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            Raw Transcript
+          </TabsTrigger>
+          {structuredNote && <TabsTrigger value="structured" className="flex items-center gap-1">
+            <List className="h-4 w-4" />
+            {convertedNoteType}
+          </TabsTrigger>}
+        </TabsList>
+        <TabsContent value="transcript">
+          <ResizablePanelGroup direction="vertical" className="min-h-[300px] max-h-[600px] border rounded-md">
+            <ResizablePanel defaultSize={70}>
+              {editMode ? (
+                <Textarea
+                  value={editedTranscript}
+                  onChange={(e) => setEditedTranscript(e.target.value)}
+                  className="h-full min-h-[300px] w-full resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0"
+                  placeholder="Edit transcript text here..."
+                />
+              ) : (
                 <div
-                    className="p-4 h-full overflow-y-auto space-y-4"
-                    onMouseUp={handleTextSelection}
+                  className="p-4 h-full overflow-y-auto space-y-4"
+                  onMouseUp={handleTextSelection}
                 >
                   {formattedUtterances.length > 0 ? (
                       formattedUtterances.map((utterance, index) => (
@@ -615,164 +532,81 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
                       <div className="text-muted-foreground italic">No transcript data available</div>
                   )}
                 </div>
-              </ResizablePanel>
-
-              {showSummarySection && transcriptSummary && (
-                  <>
-                    <ResizableHandle />
-                    <ResizablePanel defaultSize={30}>
-                      <div className="p-4 border-t h-full overflow-y-auto">
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="text-sm font-medium">AI Summary</h4>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                                id="summary-toggle"
-                                checked={showSummary}
-                                onCheckedChange={setShowSummary}
-                            />
-                            <Label htmlFor="summary-toggle" className="text-xs">Show Summary</Label>
-                          </div>
-                        </div>
-                        {showSummary ? (
-                            <div className="text-sm">{transcriptSummary}</div>
-                        ) : (
-                            <div className="text-sm text-muted-foreground italic">Summary hidden</div>
-                        )}
-                      </div>
-                    </ResizablePanel>
-                  </>
               )}
-            </ResizablePanelGroup>
-          </TabsContent>
-
-          {structuredNote && (
-              <TabsContent value="structured">
-                <div className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto relative">
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    {interactiveMode && (
-                        <Badge className="bg-primary/20 text-primary">Interactive Mode: Drag content between panels</Badge>
-                    )}
-                    <Button variant="outline" size="sm" onClick={handleCopyStructuredNote}>
-                      <Copy className="h-4 w-4 mr-1" />
-                      Copy
-                    </Button>
-                  </div>
-                  <div
-                      className={`mt-8 whitespace-pre-wrap font-mono text-sm ${interactiveMode ? 'cursor-pointer' : ''}`}
-                      onDragOver={interactiveMode ? handleDragOver : undefined}
-                  >
-                    {interactiveMode ? (
-                        // Render with interactive sections when in interactive mode
-                        structuredNote.split('\n\n').map((section, idx) => {
-                          const sectionMatch = section.match(/^([A-Z\s&]+):/);
-                          const sectionName = sectionMatch ? sectionMatch[1] : "";
-
-                          return (
-                              <div
-                                  key={idx}
-                                  className={`mb-4 p-2 ${isDragging ? 'border-2 border-dashed border-primary/50 rounded' : ''}`}
-                                  onDragOver={handleDragOver}
-                                  onDrop={(e) => handleDrop(e, sectionName)}
-                              >
-                                {section}
-                              </div>
-                          );
-                        })
-                    ) : (
-                        // Regular render when not in interactive mode
-                        structuredNote
-                    )}
-                  </div>
-                </div>
-              </TabsContent>
-          )}
-
-        </Tabs>
-
-
-        {showSummarySection && transcript && (
-            <div className="border-t mt-3 pt-3">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium">Transcript Summary</h4>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                      id="summary-toggle-bottom"
-                      checked={showSummary}
-                      onCheckedChange={setShowSummary}
-                  />
-                  <Label htmlFor="summary-toggle-bottom" className="text-xs">Show</Label>
-                </div>
-              </div>
-              {showSummary && (
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    {transcriptSummary}
-                  </div>
-              )}
-            </div>
-        )}
-{/*pdf*/}
-        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          <div ref={transcriptRef} className="p-12 bg-white" style={{ width: "800px", fontFamily: "Arial, sans-serif" }}>
-            <div className="mb-12">
-              <div className="flex justify-between items-center mb-8">
-                <div>
-                  <h1 className="text-4xl font-bold text-[#040523] tracking-wide mb-2">PrecisionNote</h1>
-                  <p className="text-xl text-[#5768fd] font-medium">Medical Documentation</p>
-                </div>
-                <div className="text-right">
-                  <h2 className="text-3xl font-semibold text-[#040523] mb-2">{"Medical Transcription"}</h2>
-                  <p className="text-xl text-[#5768fd] font-medium">Generated on {new Date().toLocaleDateString()}</p>
-                </div>
-              </div>
-              <div className="border-t-8 border-[#ffcd6a]"></div>
-            </div>
-
-            {patientInfo && patientInfo.name !== "Unknown" && (
-                <div className="my-12">
-                  <div className="bg-[#f0f4ff] rounded-lg shadow-md border-l-8 border-[#5768fd] p-8">
-                    <h3 className="text-2xl font-bold text-[#040523] mb-4">Patient Information</h3>
-                    <div className="grid grid-cols-2 gap-8">
-                      <div>
-                        <p className="text-lg mb-2"><span className="font-semibold">Name:</span></p>
-                        <p className="text-xl">{patientInfo.name}</p>
+            </ResizablePanel>
+            {showSummarySection && (transcriptSummary || editMode) && (
+              <>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={30}>
+                  <div className="p-4 border-t h-full overflow-y-auto">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-sm font-medium">AI Summary</h4>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="summary-toggle"
+                          checked={showSummary}
+                          onCheckedChange={setShowSummary}
+                        />
+                        <Label htmlFor="summary-toggle" className="text-xs">Show Summary</Label>
                       </div>
-                      {patientInfo.age && (
-                          <div>
-                            <p className="text-lg mb-2"><span className="font-semibold">Age:</span></p>
-                            <p className="text-xl">{patientInfo.age}</p>
-                          </div>
-                      )}
-                      {patientInfo.gender && (
-                          <div>
-                            <p className="text-lg mb-2"><span className="font-semibold">Gender:</span></p>
-                            <p className="text-xl">{patientInfo.gender}</p>
-                          </div>
-                      )}
                     </div>
+                    {showSummary ? (
+                      editMode ? (
+                        <Textarea
+                          value={editedSummary}
+                          onChange={(e) => setEditedSummary(e.target.value)}
+                          className="h-full min-h-[100px] w-full resize-none p-4 text-sm border-0 focus-visible:ring-0"
+                          placeholder="Edit summary text here..."
+                        />
+                      ) : (
+                        <div className="text-sm">{transcriptSummary}</div>
+                      )
+                    ) : (
+                      <div className="text-sm text-muted-foreground italic">Summary hidden</div>
+                    )}
                   </div>
-                </div>
+                </ResizablePanel>
+              </>
             )}
-
-            {transcriptSummary && (
-                <div className="my-12">
-                  <h2 className="text-3xl font-bold text-[#040523] mb-4">Consultation Summary</h2>
-                  <div className="border-t-4 border-[#ffcd6a] mb-8"></div>
-                  <div className="bg-[#f8f9fa] rounded-lg shadow-md border-2 border-[#5768fd]/20 p-8">
-                    <p className="text-xl text-[#040523] leading-relaxed">{transcriptSummary}</p>
-                  </div>
-                </div>
-            )}
-
-            <div className="mt-12">
-              <h2 className="text-3xl font-bold text-[#040523] mb-4">Clinical Notes</h2>
-              <div className="border-t-4 border-[#ffcd6a] mb-8"></div>
-              <div className="text-[#040523] text-xl leading-relaxed">
-                <ReactMarkdown>{structuredNote}</ReactMarkdown>
+          </ResizablePanelGroup>
+        </TabsContent>
+        {structuredNote && (
+          <TabsContent value="structured">
+            <div className="border rounded-md p-4 min-h-[300px] max-h-[600px] overflow-y-auto relative">
+              <div className="absolute top-2 right-2 flex space-x-2">
+                <Button variant="outline" size="sm" onClick={handleCopyStructuredNote}>
+                  <Copy className="h-4 w-4 mr-1" />
+                  Copy
+                </Button>
               </div>
+              <div className={`mt-8 whitespace-pre-wrap font-mono text-sm ${interactiveMode ? 'cursor-pointer' : ''}`}>
+                {structuredNote}
+              </div>
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
+      {showSummarySection && transcript && (
+        <div className="border-t mt-3 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium">Transcript Summary</h4>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="summary-toggle-bottom"
+                checked={showSummary}
+                onCheckedChange={setShowSummary}
+              />
+              <Label htmlFor="summary-toggle-bottom" className="text-xs">Show</Label>
             </div>
           </div>
+          {showSummary && (
+            <div className="p-3 bg-muted rounded-md text-sm">
+              {transcriptSummary}
+            </div>
+          )}
         </div>
-      </div>
+      )}
+    </div>
   );
 };
 
