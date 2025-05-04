@@ -199,10 +199,68 @@ export const hasSubscriptionAccess = (
   return tierLevels[userTier] >= tierLevels[requiredTier];
 };
 
+// Check if template is available for user's tier
+export const isTemplateAvailableForTier = (
+  templateName: string, 
+  userTier: SubscriptionTier
+): boolean => {
+  // Basic templates available to all tiers
+  const basicTemplates = ['SOAP Note', 'History & Physical', 'Dictation (Blank)'];
+  
+  // If it's a basic template, allow access to all tiers
+  if (basicTemplates.includes(templateName)) {
+    return true;
+  }
+  
+  // Advanced templates (available to professional and enterprise)
+  const advancedTemplates = [
+    'Progress Note', 
+    'Discharge Summary', 
+    'Consultation Note', 
+    'Procedure Note'
+  ];
+  
+  if (advancedTemplates.includes(templateName)) {
+    return hasSubscriptionAccess(userTier, 'professional');
+  }
+
+  // Specialty templates (available to enterprise only)
+  const specialtyTemplates = [
+    'Psychiatry Evaluation',
+    'Cardiology Assessment',
+    'Pediatric Examination',
+    'Orthopedic Evaluation',
+    'Obstetrics Assessment'
+  ];
+
+  if (specialtyTemplates.includes(templateName)) {
+    return hasSubscriptionAccess(userTier, 'enterprise');
+  }
+
+  // Default: allow access (for any other templates)
+  return true;
+};
+
+// Update user subscription tier
+export const updateSubscriptionTier = async (tier: SubscriptionTier): Promise<boolean> => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      data: { subscription_tier: tier }
+    });
+    
+    return !error;
+  } catch (error) {
+    console.error("Error updating subscription tier:", error);
+    return false;
+  }
+};
+
 export default {
   getSubscriptionInfo,
   updateConsultationUsage,
   addConsultations,
   getSubscriptionTierName,
-  hasSubscriptionAccess
+  hasSubscriptionAccess,
+  isTemplateAvailableForTier,
+  updateSubscriptionTier
 };

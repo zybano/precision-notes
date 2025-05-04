@@ -1,17 +1,30 @@
+
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { SubscriptionCheckout } from "@/components/subscription/SubscriptionCheckout";
+import { useAuth } from "@/contexts/AuthContext";
+import { SubscriptionTier } from "@/services/subscriptionService";
 
 type BillingCycle = "monthly" | "annual";
 
 export function Pricing() {
+  const { user, refreshSubscriptionInfo } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{
+    name: string;
+    tier: SubscriptionTier;
+    price: string;
+  } | null>(null);
   
   const pricingPlans = [
     {
       name: "Free",
+      tier: "free" as SubscriptionTier,
       description: "For individual providers starting out",
       price: {
         monthly: "$0",
@@ -30,6 +43,7 @@ export function Pricing() {
     },
     {
       name: "Basic",
+      tier: "starter" as SubscriptionTier,
       description: "For growing practices",
       price: {
         monthly: "$25",
@@ -50,6 +64,7 @@ export function Pricing() {
     },
     {
       name: "Professional",
+      tier: "professional" as SubscriptionTier,
       description: "For established medical practices",
       price: {
         monthly: "$85",
@@ -71,6 +86,7 @@ export function Pricing() {
     },
     {
       name: "Enterprise",
+      tier: "enterprise" as SubscriptionTier,
       description: "For hospitals and large organizations",
       price: {
         monthly: "Custom",
@@ -97,6 +113,35 @@ export function Pricing() {
     { consultations: 7, price: "$9" },
     { consultations: 18, price: "$15" }
   ];
+  
+  // Handle plan selection
+  const handlePlanSelect = (plan: typeof pricingPlans[0]) => {
+    // For enterprise, just redirect to the contact link
+    if (plan.tier === 'enterprise') {
+      window.location.href = plan.ctaLink;
+      return;
+    }
+    
+    // For free plan, redirect to signup
+    if (plan.tier === 'free') {
+      window.location.href = plan.ctaLink;
+      return;
+    }
+    
+    // For other plans, open checkout dialog
+    setSelectedPlan({
+      name: plan.name,
+      tier: plan.tier,
+      price: plan.price[billingCycle]
+    });
+    setCheckoutOpen(true);
+  };
+  
+  // Handle checkout completion
+  const handleCheckoutSuccess = () => {
+    setCheckoutOpen(false);
+    refreshSubscriptionInfo();
+  };
 
   return (
     <section id="pricing" className="py-16 md:py-24 bg-white border-t border-border">
@@ -181,14 +226,26 @@ export function Pricing() {
                   ))}
                 </ul>
                 
-                <Link to={plan.ctaLink} className="mt-auto block">
-                  <Button 
-                    variant={plan.contactSales ? "outline" : "default"}
-                    className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : ""}`}
-                  >
-                    {plan.ctaLabel}
-                  </Button>
-                </Link>
+                <div className="mt-auto">
+                  {user ? (
+                    <Button 
+                      variant={plan.contactSales ? "outline" : "default"}
+                      className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : ""}`}
+                      onClick={() => handlePlanSelect(plan)}
+                    >
+                      {plan.ctaLabel}
+                    </Button>
+                  ) : (
+                    <Link to={plan.ctaLink} className="block">
+                      <Button 
+                        variant={plan.contactSales ? "outline" : "default"}
+                        className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : ""}`}
+                      >
+                        {plan.ctaLabel}
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -223,6 +280,21 @@ export function Pricing() {
           </Button>
         </div>
       </div>
+      
+      {/* Checkout Dialog */}
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className="sm:max-w-md">
+          {selectedPlan && (
+            <SubscriptionCheckout
+              tier={selectedPlan.tier}
+              price={selectedPlan.price}
+              isAnnual={billingCycle === 'annual'}
+              onSuccess={handleCheckoutSuccess}
+              onCancel={() => setCheckoutOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

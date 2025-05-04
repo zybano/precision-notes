@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import {CalendarIcon, CreditCard, InfoIcon, PlusCircle, RefreshCw} from "lucide-react";
 import { getSubscriptionTierName } from "@/services/subscriptionService";
 import { format } from "date-fns";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState } from "react";
+import { SubscriptionCheckout } from "@/components/subscription/SubscriptionCheckout";
 
 export const SubscriptionUsage = () => {
   const { subscriptionInfo, refreshSubscriptionInfo } = useAuth();
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   
   if (!subscriptionInfo) {
     return null;
@@ -18,6 +22,31 @@ export const SubscriptionUsage = () => {
   const { tier, consultationsRemaining, consultationsTotal, nextBillingDate, isAnnualBilling } = subscriptionInfo;
   const usedConsultations = consultationsTotal - consultationsRemaining;
   const usagePercentage = Math.floor((usedConsultations / consultationsTotal) * 100);
+  
+  // Determine if upgrade is available based on tier
+  const canUpgrade = tier !== 'enterprise';
+  
+  // Determine next tier for upgrade
+  const getNextTier = () => {
+    switch (tier) {
+      case 'free': return 'starter';
+      case 'starter': return 'professional';
+      case 'professional': return 'enterprise';
+      default: return null;
+    }
+  };
+  
+  const nextTier = getNextTier();
+  
+  // Get next tier price
+  const getNextTierPrice = () => {
+    switch (nextTier) {
+      case 'starter': return isAnnualBilling ? "$285" : "$25";
+      case 'professional': return isAnnualBilling ? "$969" : "$85";
+      case 'enterprise': return "Custom";
+      default: return "";
+    }
+  };
   
   return (
     <Card>
@@ -71,21 +100,49 @@ export const SubscriptionUsage = () => {
         )}
         
         <div className="space-y-2 pt-2">
-          <Button variant="outline" className="w-full flex items-center justify-center" asChild>
-            <a href="/pricing">
+          <Link to="/pricing">
+            <Button variant="outline" className="w-full flex items-center justify-center">
               <CreditCard className="mr-2 h-4 w-4" />
               Manage Subscription
-            </a>
-          </Button>
-          <Button variant="outline" className="w-full flex items-center justify-center" asChild>
-            <Link to="/consultation-purchase">
+            </Button>
+          </Link>
+          
+          <Link to="/consultation-purchase">
+            <Button variant="outline" className="w-full flex items-center justify-center">
               <PlusCircle className="mr-2 h-4 w-4" />
               Buy More Consultations
-            </Link>
-          </Button>
+            </Button>
+          </Link>
+          
+          {canUpgrade && nextTier && (
+            <Button 
+              variant="default" 
+              className="w-full"
+              onClick={() => setUpgradeDialogOpen(true)}
+            >
+              Upgrade to {getSubscriptionTierName(nextTier)}
+            </Button>
+          )}
         </div>
-
       </CardContent>
+      
+      {/* Upgrade Dialog */}
+      <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          {nextTier && (
+            <SubscriptionCheckout
+              tier={nextTier}
+              price={getNextTierPrice()}
+              isAnnual={isAnnualBilling}
+              onSuccess={() => {
+                setUpgradeDialogOpen(false);
+                refreshSubscriptionInfo();
+              }}
+              onCancel={() => setUpgradeDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
