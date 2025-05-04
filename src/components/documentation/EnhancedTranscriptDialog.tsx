@@ -1,3 +1,4 @@
+
 import React, { useMemo } from "react";
 import {
   Dialog,
@@ -13,6 +14,8 @@ import EnhancedTranscriptDisplay from "./EnhancedTranscriptDisplay";
 import { Document, PatientInfo } from "./DocumentTypes";
 import { TranscriptionResult } from "@/services/transcription";
 import { UseFormReturn } from "react-hook-form";
+import { updateDocument } from "@/services/supabaseSetup";
+import { toast } from "sonner";
 
 interface EnhancedTranscriptDialogProps {
   open: boolean;
@@ -35,7 +38,7 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
   parsedTranscript,
   transcriptText,
   transcriptSummary,
-       formattedNotes,
+  formattedNotes,
   showSummary,
   setShowSummary,
   form,
@@ -102,9 +105,34 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
     }
   };
 
-  function handleUpdateRecord() {
-
-  }
+  // Handle updating the record
+  const handleUpdateRecord = async () => {
+    if (!selectedDocument?.id) {
+      toast.error("No document selected to update");
+      return;
+    }
+    
+    try {
+      // Prepare the data for update
+      const updateData = {
+        transcript_data: transcriptText || null,
+        summary: transcriptSummary || null,
+        notes: formattedNotes || null
+      };
+      
+      // Call the updateDocument function from supabaseSetup
+      const { success, error } = await updateDocument(selectedDocument.id, updateData);
+      
+      if (success) {
+        toast.success("Document updated successfully");
+      } else {
+        toast.error(`Failed to update document: ${error}`);
+      }
+    } catch (err) {
+      console.error("Error updating document:", err);
+      toast.error("An unexpected error occurred");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -131,11 +159,12 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
               transcriptResult={parsedTranscript}
               transcript={transcriptText}
               transcriptSummary={transcriptSummary}
-                formattedNotes={formattedNotes}
+              formattedNotes={formattedNotes}
               patientInfo={extractedPatientInfo}
               showSummary={showSummary}
               setShowSummary={setShowSummary}
               form={form}
+              documentId={selectedDocument?.id}
             />
           )}
         </div>
