@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SubscriptionUsage } from "@/components/subscription/SubscriptionUsage";
 import { toast } from "sonner";
 import { fetchUserDocuments } from "@/services/supabaseSetup";
+import { DocumentType, calculateUserMetrics, getActivityData } from "@/services/dashboardService";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -18,64 +19,51 @@ const Dashboard = () => {
   const [metrics, setMetrics] = useState<MetricProps[]>([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [totalDocuments, setTotalDocuments] = useState(0);
+  const [documents, setDocuments] = useState<DocumentType[]>([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
 
   const loadDashboardData = async () => {
     try {
       // Fetch user documents to get the total count
       if (user) {
+        setIsLoadingDocuments(true);
         const result = await fetchUserDocuments(user.id);
         if (result.success && result.data) {
           setTotalDocuments(result.data.length);
         }
+
+        // Fetch documents for the table display
+        const docsData = await calculateUserMetrics(user.id);
+        setMetrics(docsData || []);
+        
+        // Fetch document list for the table
+        const userDocs = await getActivityData(user.id) as any;
+        setDocuments(userDocs || []);
+        setIsLoadingDocuments(false);
       }
 
-      // Get dashboard metrics from the service
-      // In a real app, we would fetch this from an API
-      setMetrics([
-        {
-          title: "Total Documents",
-          value: totalDocuments.toString(),
-          change: "+12.5%",
-          description: "from last month",
-          positive: true,
-          icon: FileText
-        },
-        {
-          title: "Consultations",
-          value: subscriptionInfo?.consultationsRemaining?.toString() || "0",
-          change: subscriptionInfo?.consultationsRemaining ? "Available" : "None left",
-          description: "in current period",
-          positive: true,
-          icon: CalendarCheck2
-        },
-        {
-          title: "Templates Used",
-          value: "4",
-          change: "+2",
-          description: "from last week",
-          positive: true,
-          icon: FileText
-        },
-        {
-          title: "Avg. Documentation Time",
-          value: "5.2 min",
-          change: "-15%",
-          description: "from last month",
-          positive: true,
-          icon: CalendarCheck2
-        }
-      ]);
       setIsLoadingMetrics(false);
     } catch (error) {
       toast.error("Error loading dashboard data");
       console.error("Error loading dashboard data:", error);
       setIsLoadingMetrics(false);
+      setIsLoadingDocuments(false);
     }
   };
 
   useEffect(() => {
     loadDashboardData();
   }, [user, subscriptionInfo, totalDocuments]);
+
+  // Mock document handlers for the DocumentTables component
+  const handleViewDocument = (doc: DocumentType) => {
+    navigate(`/documentation/${doc.id}`);
+  };
+
+  const handleDeleteDocument = (doc: DocumentType) => {
+    toast.error("Delete functionality not yet implemented");
+    console.log("Delete document:", doc.id);
+  };
 
   return (
     <div className="container max-w-7xl space-y-6 p-4 md:p-6">
@@ -106,7 +94,12 @@ const Dashboard = () => {
                   <Link to="/documentation">View All</Link>
                 </Button>
               </div>
-              <DocumentTables />
+              <DocumentTables 
+                recentDocuments={documents} 
+                isLoading={isLoadingDocuments}
+                onViewDocument={handleViewDocument}
+                onDeleteDocument={handleDeleteDocument}
+              />
             </div>
           </FadeIn>
         </div>

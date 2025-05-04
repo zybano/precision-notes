@@ -34,33 +34,38 @@ export interface DocumentType {
 // Function to fetch real activity data from Supabase
 export const getActivityData = async (userId: string | undefined) => {
   if (!userId) {
-    return getDefaultActivityData();
+    return getDefaultDocuments();
   }
 
   try {
-    // Get the last 7 days
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7);
-
-    const { data, error } = await supabase
+    // Simulate API delay for smoother UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const { data: totalDocs, error: totalError } = await supabase
       .from('medical_documents')
-      .select('created_at, type')
+      .select('id, patient_name, type, document_format, created_at, status, notes')
       .eq('creator_id', userId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
-
-    if (error) {
-      console.error("Error fetching activity data:", error);
-      return getDefaultActivityData();
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    if (totalError) throw totalError;
+    
+    if (!totalDocs || totalDocs.length === 0) {
+      return getDefaultDocuments();
     }
-
-    // Process data to count documents by date
-    const result = processActivityData(data || [], startDate, endDate);
-    return result;
+    
+    return totalDocs.map(doc => ({
+      id: doc.id || '',
+      patient: doc.patient_name || 'Unnamed Patient',
+      type: doc.document_format || doc.type || 'Unknown',
+      date: new Date(doc.created_at).toISOString().split('T')[0],
+      status: doc.status || 'Draft',
+      preview: doc.notes ? doc.notes.substring(0, 50) + '...' : 'No content'
+    }));
+    
   } catch (error) {
-    console.error("Unexpected error fetching activity data:", error);
-    return getDefaultActivityData();
+    console.error("Error fetching activity data:", error);
+    return getDefaultDocuments();
   }
 };
 
@@ -164,12 +169,12 @@ export const calculateUserMetrics = async (userId: string | undefined): Promise<
     if (prevWeekError) throw prevWeekError;
     
     // Calculate total recording time (in seconds)
-    const totalRecordingTime = weeklyDocs.reduce((sum, doc) => sum + (doc.recording_duration || 0), 0);
-    const avgRecordingTime = weeklyDocs.length ? Math.round(totalRecordingTime / weeklyDocs.length) : 0;
+    const totalRecordingTime = (weeklyDocs || []).reduce((sum, doc) => sum + (doc.recording_duration || 0), 0);
+    const avgRecordingTime = (weeklyDocs || []).length ? Math.round(totalRecordingTime / weeklyDocs.length) : 0;
     
     // Calculate changes
-    const weeklyChange = prevWeekDocs.length 
-      ? Math.round(((weeklyDocs.length - prevWeekDocs.length) / prevWeekDocs.length) * 100) 
+    const weeklyChange = (prevWeekDocs || []).length 
+      ? Math.round((((weeklyDocs || []).length - (prevWeekDocs || []).length) / (prevWeekDocs || []).length) * 100) 
       : 100;
     
     // Calculate efficiency score (simple algorithm based on recording time and document count)
@@ -186,7 +191,7 @@ export const calculateUserMetrics = async (userId: string | undefined): Promise<
       },
       {
         title: "Notes Completed",
-        value: weeklyDocs.length.toString(),
+        value: ((weeklyDocs || []).length).toString(),
         change: `${weeklyChange > 0 ? "+" : ""}${weeklyChange}%`,
         description: "Notes completed this week",
         icon: Clipboard,
@@ -194,7 +199,7 @@ export const calculateUserMetrics = async (userId: string | undefined): Promise<
       },
       {
         title: "Total Documents",
-        value: totalDocs.length.toString(),
+        value: ((totalDocs || []).length).toString(),
         change: `${weeklyChange > 0 ? "+" : ""}${weeklyChange}%`,
         description: "All-time document count",
         icon: Users,
@@ -283,12 +288,16 @@ export const fetchUserDocuments = async (userId: string | undefined): Promise<Do
     
     if (error) throw error;
     
+    if (!data || data.length === 0) {
+      return getDefaultDocuments();
+    }
+    
     return data.map(doc => ({
-      id: doc.id,
-      patient: doc.patient_name,
-      type: doc.document_format || doc.type, // Use document_format if available, fall back to type
+      id: doc.id || '',
+      patient: doc.patient_name || 'Unnamed Patient',
+      type: doc.document_format || doc.type || 'Unknown',
       date: new Date(doc.created_at).toISOString().split('T')[0],
-      status: doc.status,
+      status: doc.status || 'Draft',
       preview: doc.notes ? doc.notes.substring(0, 50) + '...' : 'No content'
     }));
   } catch (error) {
