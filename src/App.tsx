@@ -22,41 +22,46 @@ import Integrations from './pages/Integrations';
 import NotFound from './pages/NotFound';
 import Layout from '@/components/Layout';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { Toaster } from '@/components/ui/toaster';
 
 function App() {
   return (
     <AuthProvider>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/features" element={<Features />} />
-        <Route path="/careers" element={<Careers />} />
-        <Route path="/integrations" element={<Integrations />} />
-        
-        {/* Protected routes that need Layout with sidebar */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/documentation" element={<DocumentationPage />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/consultation-purchase" element={<ConsultationPurchase />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment-canceled" element={<PaymentCanceled />} />
-            
-            {/* Hospital routes (nested under Layout) */}
-            <Route path="/hospital" element={<HospitalDashboard />} />
-            <Route path="/hospital/:section" element={<HospitalDashboard />} />
+      <SidebarProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/integrations" element={<Integrations />} />
+          
+          {/* Protected routes that need Layout with sidebar */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/documentation" element={<DocumentationPage />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/consultation-purchase" element={<ConsultationPurchase />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment-canceled" element={<PaymentCanceled />} />
+              
+              {/* Hospital routes (nested under Layout) */}
+              <Route path="/hospital" element={<HospitalDashboard />} />
+              <Route path="/hospital/:section" element={<HospitalDashboard />} />
+            </Route>
           </Route>
-        </Route>
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </SidebarProvider>
     </AuthProvider>
   );
 }
