@@ -3,10 +3,14 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { EnterpriseAccessDialog } from "@/components/hospital/EnterpriseAccessDialog";
+import { useState } from "react";
+import { hasSubscriptionAccess } from "@/services/subscriptionService";
 
 const ProtectedRoute = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, subscriptionInfo } = useAuth();
   const location = useLocation();
+  const [showEnterpriseDialog, setShowEnterpriseDialog] = useState(false);
   
   // Check if the current path is part of the hospital system
   const isHospitalRoute = location.pathname.startsWith('/hospital');
@@ -26,13 +30,21 @@ const ProtectedRoute = () => {
   
   // If this is a hospital route, check subscription level
   if (isHospitalRoute) {
-    // In a real app, this would come from a database or user metadata
-    const userSubscriptionLevel = user.user_metadata?.subscription_level || 'free';
-    const hasEnterpriseAccess = userSubscriptionLevel === 'enterprise';
+    const userSubscriptionTier = subscriptionInfo?.tier || 'free';
+    const hasEnterpriseAccess = hasSubscriptionAccess(userSubscriptionTier, 'enterprise');
     
     if (!hasEnterpriseAccess) {
-      toast.error("Hospital system requires Enterprise subscription");
-      return <Navigate to="/pricing" replace />;
+      // Show enterprise access dialog when user tries to access a hospital route without enterprise access
+      setTimeout(() => setShowEnterpriseDialog(true), 10);
+      return (
+        <>
+          <EnterpriseAccessDialog
+            open={showEnterpriseDialog}
+            onOpenChange={setShowEnterpriseDialog}
+          />
+          <Navigate to="/pricing" replace />
+        </>
+      );
     }
   }
 

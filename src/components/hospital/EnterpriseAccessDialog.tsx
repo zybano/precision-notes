@@ -16,7 +16,7 @@ interface EnterpriseAccessDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const EnterpriseAccessDialog = ({ open, onOpenChange }: EnterpriseAccessDialogProps) => {
+export const EnterpriseAccessDialog = ({ open, onOpenChange }: EnterpriseAccessDialogProps) => {
   const navigate = useNavigate();
 
   const handleUpgrade = () => {
