@@ -204,14 +204,6 @@ export const calculateUserMetrics = async (userId: string | undefined): Promise<
         description: "All-time document count",
         icon: Users,
         positive: weeklyChange > 0
-      },
-      {
-        title: "Efficiency Score",
-        value: `${Math.round(efficiencyScore)}%`,
-        change: `${Math.round((weeklyChange / 10) * 3)}%`,
-        description: "Documentation quality metric",
-        icon: BarChart,
-        positive: true
       }
     ];
   } catch (error) {
@@ -259,6 +251,14 @@ function getDefaultMetrics(): MetricType[] {
       change: "+5%",
       description: "Compared to last week",
       icon: Users,
+      positive: true
+    },
+    {
+      title: "Efficiency Score",
+      value: "92%",
+      change: "+3%",
+      description: "Documentation quality metric",
+      icon: BarChart,
       positive: true
     }
   ];
