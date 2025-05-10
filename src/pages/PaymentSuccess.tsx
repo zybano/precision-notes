@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle2 } from "lucide-react";
 import { verifyTopupPurchase } from "@/services/payment/stripeService";
+import { supabase } from "@/integrations/supabase/client";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -15,7 +16,12 @@ const PaymentSuccess = () => {
   const { refreshSubscriptionInfo } = useAuth();
   const [verifyingPurchase, setVerifyingPurchase] = useState(true);
   const [verified, setVerified] = useState(false);
-  
+  const [purchaseDetails, setPurchaseDetails] = useState<{
+    type: 'subscription' | 'consultation';
+    tier?: string;
+    quantity?: number;
+  } | null>(null);
+
   useEffect(() => {
     const verifyPurchase = async () => {
       if (!sessionId) {
@@ -23,19 +29,56 @@ const PaymentSuccess = () => {
         toast.error("No session ID found");
         return;
       }
-      
+
       try {
         setVerifyingPurchase(true);
-        const success = await verifyTopupPurchase(sessionId);
-        
-        if (success) {
+
+        // First, check if this was a subscription or a consultation purchase
+        const { data: purchases, error: purchaseError } = await supabase
+            .from('consultation_purchases')
+            .select('quantity')
+            .eq('stripe_payment_id', sessionId)
+            .single();
+
+        if (!purchaseError && purchases) {
+          // This was a consultation top-up purchase
+          setPurchaseDetails({
+            type: 'consultation',
+            quantity: purchases.quantity
+          });
           setVerified(true);
-          toast.success("Payment successful! Your consultations have been added.");
-          // Refresh subscription info to update the UI
-          await refreshSubscriptionInfo();
         } else {
-          toast.error("Could not verify your purchase. Please contact support.");
+          // This might be a subscription
+          const { data: subscription, error: subError } = await supabase
+              .from('user_subscriptions')
+              .select('subscription_tier')
+              .eq('stripe_subscription_id', sessionId)
+              .single();
+
+          if (!subError && subscription) {
+            // This was a subscription
+            setPurchaseDetails({
+              type: 'subscription',
+              tier: subscription.subscription_tier
+            });
+            setVerified(true);
+          } else {
+            // As a fallback, try the verification endpoint
+            const success = await verifyTopupPurchase(sessionId);
+
+            if (success) {
+              setVerified(true);
+              setPurchaseDetails({
+                type: 'consultation'
+              });
+            } else {
+              toast.error("Could not verify your purchase. Please contact support.");
+            }
+          }
         }
+
+        // Refresh subscription info to update the UI
+        await refreshSubscriptionInfo();
       } catch (error) {
         console.error("Error verifying purchase:", error);
         toast.error("An error occurred while verifying your purchase");
@@ -43,57 +86,65 @@ const PaymentSuccess = () => {
         setVerifyingPurchase(false);
       }
     };
-    
+
     verifyPurchase();
   }, [sessionId, refreshSubscriptionInfo]);
-  
+
   return (
-    <div className="container max-w-md mx-auto py-12 px-4">
-      <div className="flex flex-col items-center justify-center text-center space-y-6">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-          <CheckCircle2 className="h-10 w-10 text-green-600" />
+      <div className="container max-w-md mx-auto py-12 px-4">
+        <div className="flex flex-col items-center justify-center text-center space-y-6">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+            <CheckCircle2 className="h-10 w-10 text-green-600" />
+          </div>
+
+          <h1 className="text-2xl font-bold tracking-tight">Thank you for your purchase!</h1>
+
+          {verifyingPurchase ? (
+              <p className="text-muted-foreground">Verifying your payment...</p>
+          ) : verified ? (
+              <div className="space-y-4">
+                {purchaseDetails?.type === 'consultation' ? (
+                    <p className="text-muted-foreground">
+                      Your consultation credits {purchaseDetails.quantity ? `(${purchaseDetails.quantity})` : ''} have been
+                      added to your account. You can now use them for accessing premium features.
+                    </p>
+                ) : (
+                    <p className="text-muted-foreground">
+                      Your subscription has been successfully activated. You now have access to
+                      {purchaseDetails?.tier ? ` the ${purchaseDetails.tier} tier ` : ' '}
+                      features and benefits.
+                    </p>
+                )}
+
+                <div className="space-y-2">
+                  <Button
+                      onClick={() => navigate('/dashboard')}
+                      className="w-full"
+                  >
+                    Return to Dashboard
+                  </Button>
+                  <Button
+                      variant="outline"
+                      onClick={() => navigate('/documentation')}
+                      className="w-full"
+                  >
+                    Create New Document
+                  </Button>
+                </div>
+              </div>
+          ) : (
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  We couldn't verify your payment. If you believe this is an error,
+                  please contact our support team.
+                </p>
+                <Button onClick={() => navigate('/dashboard')}>
+                  Return to Dashboard
+                </Button>
+              </div>
+          )}
         </div>
-        
-        <h1 className="text-2xl font-bold tracking-tight">Thank you for your purchase!</h1>
-        
-        {verifyingPurchase ? (
-          <p className="text-muted-foreground">Verifying your payment...</p>
-        ) : verified ? (
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Your consultation credits have been added to your account. You can now use them for
-              accessing premium features.
-            </p>
-            
-            <div className="space-y-2">
-              <Button 
-                onClick={() => navigate('/dashboard')}
-                className="w-full"
-              >
-                Return to Dashboard
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/documentation')}
-                className="w-full"
-              >
-                Create New Document
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              We couldn't verify your payment. If you believe this is an error,
-              please contact our support team.
-            </p>
-            <Button onClick={() => navigate('/dashboard')}>
-              Return to Dashboard
-            </Button>
-          </div>
-        )}
       </div>
-    </div>
   );
 };
 

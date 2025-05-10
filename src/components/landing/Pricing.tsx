@@ -1,15 +1,26 @@
-
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
-import { useState } from "react";
-import { Check } from "lucide-react";
+import { Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { SubscriptionCheckout } from "@/components/subscription/SubscriptionCheckout";
 import { useAuth } from "@/contexts/AuthContext";
+import { 
+  getSubscriptionPlansWithRegionalPricing, 
+  getRegionInfo,
+  formatPrice,
+  getConsultationPackagesWithRegionalPricing,
+  toggleNigeriaMode,
+  sortPlansByTier,
+  TIER_ORDER
+} from "@/services/regionalPricingService";
+import { PricingPlan } from "@/components/landing/PricingPlan";
+import { TopupOptions } from "@/components/landing/TopupOptions";
+import { BillingToggle } from "@/components/landing/BillingToggle";
+import { PricingLoadingState } from "@/components/landing/PricingLoadingState";
+import { BillingCycle, PricingPlan as PricingPlanType, TopupOption, RegionInfo } from "@/types/subscription";
 import { SubscriptionTier } from "@/services/subscriptionService";
-
-type BillingCycle = "monthly" | "annual";
 
 export function Pricing() {
   const { user, refreshSubscriptionInfo } = useAuth();
@@ -21,101 +32,241 @@ export function Pricing() {
     price: string;
   } | null>(null);
   
-  const pricingPlans = [
-    {
-      name: "Free",
-      tier: "free" as SubscriptionTier,
-      description: "For individual providers starting out",
+  // State for dynamically loaded plans
+  const [pricingPlans, setPricingPlans] = useState<PricingPlanType[]>([]);
+  const [topupOptions, setTopupOptions] = useState<TopupOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [regionInfo, setRegionInfo] = useState<RegionInfo | null>(null);
+  const [isNigeriaMode, setIsNigeriaMode] = useState(false);
+  
+  // Load plans from database
+  useEffect(() => {
+    const fetchPlans = async () => {
+      setIsLoading(true);
+      try {
+        // Get user's region information
+        const region = await getRegionInfo();
+        setRegionInfo(region);
+        setIsNigeriaMode(region.isNigeria);
+        
+        // Get plans with regional pricing
+        const plans = await getSubscriptionPlansWithRegionalPricing();
+        
+        // Transform plans to format expected by the component
+        const formattedPlans = plans.map(plan => formatPlanForDisplay(plan, region));
+        setPricingPlans(formattedPlans);
+        
+        // Get consultation packages
+        const packages = await getConsultationPackagesWithRegionalPricing();
+        
+        // Transform packages to format expected by the component
+        const formattedPackages = packages.map(pkg => formatPackageForDisplay(pkg, region));
+        setTopupOptions(formattedPackages);
+      } catch (error) {
+        console.error('Error loading pricing data:', error);
+        
+        // Use hardcoded plans as fallback
+        setPricingPlans(getFallbackPlans());
+        
+        // Use hardcoded topup options as fallback
+        setTopupOptions([
+          { id: '1', consultations: 7, price: "$9", discountPercentage: 0 },
+          { id: '2', consultations: 18, price: "$15", discountPercentage: 15 }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPlans();
+  }, [isNigeriaMode]); // Re-fetch when Nigeria mode changes
+  
+  // Format a subscription plan for display
+  const formatPlanForDisplay = (plan: any, region: RegionInfo): PricingPlanType => {
+    // Determine if we should use regional pricing
+    const useRegionalPricing = region.isNigeria && plan.regional_pricing;
+    const currencySymbol = useRegionalPricing 
+      ? plan.regional_pricing?.currency_symbol || '$'
+      : '$';
+    
+    // Get the appropriate prices
+    const priceMonthly = useRegionalPricing
+      ? plan.regional_pricing?.price_monthly || plan.price_monthly 
+      : plan.price_monthly;
+      
+    const priceAnnual = useRegionalPricing
+      ? plan.regional_pricing?.price_annual || plan.price_annual
+      : plan.price_annual;
+    
+    // For enterprise tier, show "Custom" instead of a price
+    const displayPriceMonthly = plan.tier === 'enterprise' 
+      ? 'Custom' 
+      : formatPrice(priceMonthly, currencySymbol);
+      
+    const displayPriceAnnual = plan.tier === 'enterprise'
+      ? 'Custom'
+      : formatPrice(priceAnnual, currencySymbol);
+    
+    return {
+      id: plan.id,
+      tier: plan.tier as SubscriptionTier,
+      name: plan.name,
+      description: plan.description,
       price: {
-        monthly: "$0",
-        annual: "$0"
+        monthly: displayPriceMonthly,
+        annual: displayPriceAnnual
       },
-      ctaLabel: "Start Free",
-      ctaLink: "/signup",
-      features: [
-        "5 consultations",
-        "SOAP Template",
-        "History & Physical Template",
-        "Secure storage"
-      ],
-      highlight: "No Credit Card Required",
-      popular: false
-    },
-    {
-      name: "Basic",
-      tier: "starter" as SubscriptionTier,
-      description: "For growing practices",
-      price: {
-        monthly: "$25",
-        annual: "$285"
-      },
-      ctaLabel: "Subscribe",
-      ctaLink: "/signup?plan=basic",
-      features: [
-        "30 consultations/month",
-        "SOAP Template",
-        "History & Physical Template",
-        "Email Support",
-        "Secure storage"
-      ],
-      highlight: "Most Popular",
-      popular: true,
-      savings: "Save 5% annually"
-    },
-    {
-      name: "Professional",
-      tier: "professional" as SubscriptionTier,
-      description: "For established medical practices",
-      price: {
-        monthly: "$85",
-        annual: "$969"
-      },
-      ctaLabel: "Subscribe",
-      ctaLink: "/signup?plan=professional",
-      features: [
-        "80 consultations/month",
-        "All Templates",
-        "Priority Support",
-        "Dictation",
-        "Custom templates",
-        "Advanced analytics"
-      ],
-      highlight: "Best Value",
-      popular: false,
-      savings: "Save 5% annually"
-    },
-    {
-      name: "Enterprise",
-      tier: "enterprise" as SubscriptionTier,
-      description: "For hospitals and large organizations",
-      price: {
-        monthly: "Custom",
-        annual: "Custom"
-      },
-      ctaLabel: "Contact Sales",
-      ctaLink: "mailto:sales@precisionnote.com?subject=Enterprise%20Plan%20Inquiry",
-      features: [
-        "Everything in Professional",
-        "Custom integrations",
-        "Multi-team management",
-        "Dedicated account manager",
-        "Advanced Analytics",
-        "Hospital Management System"
-      ],
-      highlight: "For Large Organizations",
-      popular: false,
-      contactSales: true
+      features: Array.isArray(plan.features) ? plan.features : [],
+      ctaLabel: plan.cta_label || (plan.tier === 'free' ? 'Start Free' : plan.tier === 'enterprise' ? 'Contact Sales' : 'Subscribe'),
+      ctaLink: plan.cta_link || (plan.tier === 'free' ? '/signup' : plan.tier === 'enterprise' ? 'mailto:sales@precisionnote.com' : `/signup?plan=${plan.tier}`),
+      highlight: plan.highlight || getPlanHighlight(plan.tier),
+      popular: plan.popular || plan.tier === 'starter',
+      savings: plan.tier !== 'free' && plan.tier !== 'enterprise' ? 'Save 5% annually' : undefined,
+      contactSales: plan.contact_sales || plan.tier === 'enterprise'
+    };
+  };
+  
+  // Format a consultation package for display
+  const formatPackageForDisplay = (pkg: any, region: RegionInfo): TopupOption => {
+    // Determine if we should use regional pricing
+    const useRegionalPricing = region.isNigeria && pkg.regional_pricing;
+    const currencySymbol = useRegionalPricing 
+      ? pkg.regional_pricing?.currency_symbol || '$'
+      : '$';
+    
+    // Get the appropriate price
+    const price = useRegionalPricing
+      ? pkg.regional_pricing?.price || pkg.price
+      : pkg.price;
+    
+    return {
+      id: pkg.id,
+      consultations: pkg.quantity,
+      price: formatPrice(price, currencySymbol),
+      discountPercentage: pkg.discount_percentage
+    };
+  };
+  
+  // Get plan highlight based on tier
+  const getPlanHighlight = (tier: string): string => {
+    switch (tier) {
+      case 'free': return 'No Credit Card Required';
+      case 'starter': return 'Most Popular';
+      case 'professional': return 'Best Value';
+      case 'enterprise': return 'For Large Organizations';
+      default: return '';
     }
-  ];
-
-  // Top-up options
-  const topupOptions = [
-    { consultations: 7, price: "$9" },
-    { consultations: 18, price: "$15" }
-  ];
+  };
+  
+  // Toggle Nigeria mode for testing
+  const handleToggleNigeriaMode = () => {
+    const newMode = toggleNigeriaMode();
+    setIsNigeriaMode(newMode);
+  };
+  
+  // Hardcoded fallback plans in case of database error
+  const getFallbackPlans = (): PricingPlanType[] => {
+    const plans = [
+      {
+        id: '1',
+        tier: "free" as SubscriptionTier,
+        name: "Free",
+        description: "For individual providers starting out",
+        price: {
+          monthly: "$0",
+          annual: "$0"
+        },
+        ctaLabel: "Start Free",
+        ctaLink: "/signup",
+        features: [
+          "5 consultations",
+          "SOAP Template",
+          "History & Physical Template",
+          "Secure storage"
+        ],
+        highlight: "No Credit Card Required",
+        popular: false
+      },
+      {
+        id: '2',
+        tier: "starter" as SubscriptionTier,
+        name: "Basic",
+        description: "For growing practices",
+        price: {
+          monthly: "$25",
+          annual: "$285"
+        },
+        ctaLabel: "Subscribe",
+        ctaLink: "/signup?plan=basic",
+        features: [
+          "30 consultations/month",
+          "SOAP Template",
+          "History & Physical Template",
+          "Email Support",
+          "Secure storage"
+        ],
+        highlight: "Most Popular",
+        popular: true,
+        savings: "Save 5% annually"
+      },
+      {
+        id: '3',
+        tier: "professional" as SubscriptionTier,
+        name: "Professional",
+        description: "For established medical practices",
+        price: {
+          monthly: "$85",
+          annual: "$969"
+        },
+        ctaLabel: "Subscribe",
+        ctaLink: "/signup?plan=professional",
+        features: [
+          "80 consultations/month",
+          "All Templates",
+          "Priority Support",
+          "Dictation",
+          "Custom templates",
+          "Advanced analytics"
+        ],
+        highlight: "Best Value",
+        popular: false,
+        savings: "Save 5% annually"
+      },
+      {
+        id: '4',
+        tier: "enterprise" as SubscriptionTier,
+        name: "Enterprise",
+        description: "For hospitals and large organizations",
+        price: {
+          monthly: "Custom",
+          annual: "Custom"
+        },
+        ctaLabel: "Contact Sales",
+        ctaLink: "mailto:sales@precisionnote.com?subject=Enterprise%20Plan%20Inquiry",
+        features: [
+          "Everything in Professional",
+          "Custom integrations",
+          "Multi-team management",
+          "Dedicated account manager",
+          "Advanced Analytics",
+          "Hospital Management System"
+        ],
+        highlight: "For Large Organizations",
+        popular: false,
+        contactSales: true
+      }
+    ];
+    
+    // Sort plans by tier
+    return plans.sort((a, b) => {
+      const orderA = TIER_ORDER[a.tier as keyof typeof TIER_ORDER] || 999;
+      const orderB = TIER_ORDER[b.tier as keyof typeof TIER_ORDER] || 999;
+      return orderA - orderB;
+    });
+  };
   
   // Handle plan selection
-  const handlePlanSelect = (plan: typeof pricingPlans[0]) => {
+  const handlePlanSelect = (plan: PricingPlanType) => {
     // For enterprise, just redirect to the contact link
     if (plan.tier === 'enterprise') {
       window.location.href = plan.ctaLink;
@@ -143,6 +294,15 @@ export function Pricing() {
     refreshSubscriptionInfo();
   };
 
+  // Handle billing cycle change
+  const handleBillingCycleChange = (cycle: BillingCycle) => {
+    setBillingCycle(cycle);
+  };
+
+  if (isLoading) {
+    return <PricingLoadingState />;
+  }
+
   return (
     <section id="pricing" className="py-16 md:py-24 bg-white border-t border-border">
       <div className="container mx-auto px-6 max-w-7xl">
@@ -153,120 +313,49 @@ export function Pricing() {
               Choose the perfect plan for your practice. All plans include core features with flexible options as you grow.
             </p>
             
-            <div className="mt-6 inline-flex items-center p-1 bg-muted rounded-full">
-              <button
-                onClick={() => setBillingCycle("monthly")}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                  billingCycle === "monthly" 
-                    ? "bg-white shadow-sm text-primary" 
-                    : "text-muted-foreground"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle("annual")}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all relative ${
-                  billingCycle === "annual" 
-                    ? "bg-white shadow-sm text-primary" 
-                    : "text-muted-foreground"
-                }`}
-              >
-                Annual
-                <span className="absolute -top-2 -right-2 bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded-full">
-                  Save 5%
-                </span>
-              </button>
+            {/* Region indicator and toggle (visible only in development) */}
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="mt-4 flex justify-center items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleNigeriaMode}
+                  className="flex items-center space-x-1"
+                >
+                  <Globe className="h-4 w-4" />
+                  <span>
+                    {isNigeriaMode ? 'Switch to Global Pricing' : 'Switch to Nigeria Pricing'}
+                  </span>
+                </Button>
+              </div>
+            )}
+            
+            {/*/!* Display Nigeria-specific pricing notice *!/*/}
+            {/*{regionInfo && regionInfo.isNigeria && (*/}
+            {/*  <div className="mt-4 bg-green-50 text-green-800 px-4 py-2 rounded-md inline-block">*/}
+            {/*    <span>🇳🇬 Nigeria-specific pricing available</span>*/}
+            {/*  </div>*/}
+            {/*)}*/}
+            
+            <div className="mt-6">
+              <BillingToggle billingCycle={billingCycle} onChange={handleBillingCycleChange} />
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {pricingPlans.map((plan, index) => (
-              <div 
-                key={index}
-                className={`rounded-xl border ${
-                  plan.popular 
-                    ? "border-primary shadow-lg" 
-                    : "border-border"
-                } bg-background p-6 relative flex flex-col h-full`}
-              >
-                {plan.highlight && (
-                  <div className={`absolute -top-3 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium ${
-                    plan.popular ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}>
-                    {plan.highlight}
-                  </div>
-                )}
-                
-                <div className="mb-5">
-                  <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground">{plan.description}</p>
-                </div>
-                
-                <div className="mb-5">
-                  <div className="text-3xl font-bold mb-1">
-                    {plan.price[billingCycle]}
-                    {plan.price[billingCycle] !== "Custom" && (
-                      <span className="text-sm font-normal text-muted-foreground">
-                        {billingCycle === "monthly" ? "/month" : "/year"}
-                      </span>
-                    )}
-                  </div>
-                  {billingCycle === "annual" && plan.savings && (
-                    <span className="text-sm text-green-600">{plan.savings}</span>
-                  )}
-                </div>
-                
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start">
-                      <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                <div className="mt-auto">
-                  {user ? (
-                    <Button 
-                      variant={plan.contactSales ? "outline" : "default"}
-                      className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : ""}`}
-                      onClick={() => handlePlanSelect(plan)}
-                    >
-                      {plan.ctaLabel}
-                    </Button>
-                  ) : (
-                    <Link to={plan.ctaLink} className="block">
-                      <Button 
-                        variant={plan.contactSales ? "outline" : "default"}
-                        className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : ""}`}
-                      >
-                        {plan.ctaLabel}
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
+              <PricingPlan
+                key={plan.id || index}
+                plan={plan}
+                billingCycle={billingCycle}
+                user={user}
+                onSelectPlan={handlePlanSelect}
+              />
             ))}
           </div>
           
           {/* Top-up options */}
-          <div className="mt-16 max-w-3xl mx-auto">
-            <h3 className="text-xl font-semibold text-center mb-6">Need more consultations?</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {topupOptions.map((option, index) => (
-                <div key={index} className="border border-border rounded-lg p-5 text-center bg-background hover:border-primary hover:shadow-sm transition-all">
-                  <div className="text-2xl font-bold mb-2">{option.price}</div>
-                  <p className="text-muted-foreground mb-4">Add {option.consultations} more consultations</p>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link to="/consultation-purchase">
-                      Purchase
-                    </Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TopupOptions options={topupOptions} />
         </FadeIn>
         
         <div className="mt-16 text-center">

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -8,6 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const NIGERIA_COUNTRY_CODE = 'NG';
+
 serve(async (req) => {
   // Handle preflight requests
   if (req.method === "OPTIONS") {
@@ -16,38 +17,38 @@ serve(async (req) => {
 
   try {
     // Parse the request body
-    const { tier, isAnnual, successUrl, cancelUrl } = await req.json();
-    
+    const { tier, isAnnual, successUrl, cancelUrl, regionCode } = await req.json();
+
     // Validate inputs
     if (!tier || !successUrl || !cancelUrl) {
       return new Response(
-        JSON.stringify({ error: "Missing required parameters" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Missing required parameters" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Create Supabase client using the anon key for user authentication
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
     // Get authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Missing Authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Missing Authorization header" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    
+
     if (userError || !userData.user) {
       return new Response(
-        JSON.stringify({ error: "Authentication failed", details: userError?.message }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Authentication failed", details: userError?.message }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -75,53 +76,58 @@ serve(async (req) => {
       customerId = newCustomer.id;
     }
 
-    // Set up subscription price IDs based on tier and billing cycle
-    // These would be your actual Stripe price IDs in production
-    const priceMap = {
-      starter: {
-        monthly: "price_starter_monthly", // Replace with actual price ID
-        annual: "price_starter_annual"
-      },
-      professional: {
-        monthly: "price_professional_monthly", // Replace with actual price ID
-        annual: "price_professional_annual"
-      }
-    };
+    // Get the right price based on the tier, billing cycle, and region
+    // First, fetch the plan from the database
+    const { data: plans, error: plansError } = await supabaseClient
+        .from('subscription_plans')
+        .select('*')
+        .eq('tier', tier)
+        .eq('is_active', true)
+        .limit(1);
 
-    const billingCycle = isAnnual ? "annual" : "monthly";
-    const priceId = priceMap[tier][billingCycle];
-
-    // For demo purposes, create prices if they don't exist
-    // In production, you would use your pre-created price IDs
-    let price;
-    try {
-      // Try to retrieve the price (this will fail in development because we're using dummy price IDs)
-      price = await stripe.prices.retrieve(priceId);
-    } catch (e) {
-      // Create a temporary price for demonstration
-      let amount;
-      if (tier === 'starter') {
-        amount = isAnnual ? 28500 : 2500;
-      } else if (tier === 'professional') {
-        amount = isAnnual ? 96900 : 8500;
-      } else {
-        throw new Error("Invalid tier");
-      }
-
-      const product = await stripe.products.create({
-        name: `${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan (${isAnnual ? 'Annual' : 'Monthly'})`,
-        description: `Subscription for ${tier} tier with ${isAnnual ? 'annual' : 'monthly'} billing`,
-      });
-
-      price = await stripe.prices.create({
-        product: product.id,
-        unit_amount: amount,
-        currency: "usd",
-        recurring: {
-          interval: isAnnual ? "year" : "month",
-        },
-      });
+    if (plansError || !plans || plans.length === 0) {
+      return new Response(
+          JSON.stringify({ error: "Plan not found", details: plansError?.message }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const plan = plans[0];
+    let priceAmount = isAnnual ? plan.price_annual : plan.price_monthly;
+    let currencyCode = 'usd';
+
+    // Check if we need to use regional pricing
+    const isNigeria = regionCode === NIGERIA_COUNTRY_CODE;
+    if (isNigeria) {
+      // Fetch regional pricing
+      const { data: regionalPricing, error: regionalError } = await supabaseClient
+          .from('regional_pricing')
+          .select('*')
+          .eq('plan_id', plan.id)
+          .eq('country_code', NIGERIA_COUNTRY_CODE)
+          .eq('is_active', true)
+          .limit(1);
+
+      if (!regionalError && regionalPricing && regionalPricing.length > 0) {
+        priceAmount = isAnnual ? regionalPricing[0].price_annual : regionalPricing[0].price_monthly;
+        currencyCode = regionalPricing[0].currency.toLowerCase();
+      }
+    }
+
+    // For demo/development purposes, create temporary product and price
+    const product = await stripe.products.create({
+      name: `${plan.name} Plan (${isAnnual ? 'Annual' : 'Monthly'})`,
+      description: `Subscription for ${plan.name} tier with ${isAnnual ? 'annual' : 'monthly'} billing`,
+    });
+
+    const price = await stripe.prices.create({
+      product: product.id,
+      unit_amount: priceAmount,
+      currency: currencyCode,
+      recurring: {
+        interval: isAnnual ? "year" : "month",
+      },
+    });
 
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({
@@ -139,26 +145,28 @@ serve(async (req) => {
         metadata: {
           user_id: user.id,
           tier: tier,
-          is_annual: isAnnual ? "true" : "false"
+          is_annual: isAnnual ? "true" : "false",
+          region_code: regionCode || 'global'
         }
       },
       metadata: {
         user_id: user.id,
-        tier: tier
+        tier: tier,
+        region_code: regionCode || 'global'
       }
     });
 
     // Return the session URL
     return new Response(
-      JSON.stringify({ url: session.url }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ url: session.url }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error creating checkout session:", error);
-    
+
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to create checkout session" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: error.message || "Failed to create checkout session" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

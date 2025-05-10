@@ -19,4 +19,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // Remove console.* calls in production build
+        drop_console: mode === 'production',
+        // Keep console.error and console.warn in production
+        pure_funcs: mode === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
+      },
+    },
+  },
 }));

@@ -14,58 +14,81 @@ export interface SubscriptionInfo {
   features: string[];
 }
 
-// Get user's subscription info
+// Get user's subscription info from the new database structure
 export const getSubscriptionInfo = async (): Promise<SubscriptionInfo | null> => {
   try {
     console.log('🔄 Starting getSubscriptionInfo...');
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     console.log('🧑 User data:', user);
-    
+
     if (!user) {
       console.log('❌ No user found');
       return null;
     }
-    
-    // Get subscription tier from user metadata
-    const subscriptionTier = (user.user_metadata?.subscription_tier as SubscriptionTier) || 'free';
-    console.log('🏆 Subscription tier:', subscriptionTier);
-    
-    // Default values based on tier
-    const tierDefaults = getTierDefaults(subscriptionTier);
-    console.log('📋 Tier defaults:', tierDefaults);
-    
-    // Get consultation data from user metadata or use defaults
-    const consultationsTotal = user.user_metadata?.consultations_total || tierDefaults.consultationsTotal;
-    const consultationsUsed = user.user_metadata?.consultations_used || 0;
+
+    // Fetch user subscription from the new table
+    const { data: subscription, error } = await supabase
+        .from('user_subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('user_id', user.id)
+        .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('❌ Error fetching subscription:', error);
+      return null;
+    }
+
+    // If no subscription record found, use default free tier values
+    if (!subscription) {
+      console.log('⚠️ No subscription record found, using defaults');
+      const tierDefaults = getTierDefaults('free');
+      return {
+        tier: 'free',
+        isAnnualBilling: false,
+        consultationsTotal: tierDefaults.consultationsTotal,
+        consultationsRemaining: tierDefaults.consultationsTotal,
+        features: tierDefaults.features
+      };
+    }
+
+    // Get subscription details
+    const subscriptionTier = subscription.subscription_tier as SubscriptionTier || 'free';
+    const isAnnualBilling = subscription.is_annual_billing || false;
+    const consultationsTotal = subscription.consultations_total || 10;
+    const consultationsUsed = subscription.consultations_used || 0;
     const consultationsRemaining = Math.max(0, consultationsTotal - consultationsUsed);
-    
+
     console.log('📊 Consultation stats:', {
       total: consultationsTotal,
       used: consultationsUsed,
       remaining: consultationsRemaining
     });
-    
-    // Determine if annual billing
-    const isAnnualBilling = user.user_metadata?.annual_billing === true;
-    console.log('💳 Annual billing:', isAnnualBilling);
-    
+
     // Get next billing date if available
     let nextBillingDate: Date | undefined;
-    if (user.user_metadata?.next_billing_date) {
-      nextBillingDate = new Date(user.user_metadata.next_billing_date);
+    if (subscription.next_billing_date) {
+      nextBillingDate = new Date(subscription.next_billing_date);
       console.log('📅 Next billing date:', nextBillingDate);
     }
-    
+
+    // Get features from the plan or defaults
+    let features: string[] = [];
+    if (subscription.subscription_plans && subscription.subscription_plans.features) {
+      features = subscription.subscription_plans.features;
+    } else {
+      features = getTierDefaults(subscriptionTier).features;
+    }
+
     const subscriptionInfo = {
       tier: subscriptionTier,
       isAnnualBilling,
       consultationsTotal,
       consultationsRemaining,
       nextBillingDate,
-      features: tierDefaults.features
+      features
     };
-    
+
     console.log('✅ Final subscription info:', subscriptionInfo);
     return subscriptionInfo;
   } catch (error) {
@@ -128,19 +151,34 @@ const getTierDefaults = (tier: SubscriptionTier) => {
 export const updateConsultationUsage = async (): Promise<boolean> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return false;
     }
-    
-    // Get current usage
-    const consultationsUsed = (user.user_metadata?.consultations_used || 0) + 1;
-    
-    // Update user metadata
-    const { error } = await supabase.auth.updateUser({
-      data: { consultations_used }
-    });
-    
+
+    // Update consultations_used in the user_subscriptions table
+    const { data: subscription, error: fetchError } = await supabase
+        .from('user_subscriptions')
+        .select('consultations_used')
+        .eq('user_id', user.id)
+        .single();
+
+    if (fetchError) {
+      console.error("Error fetching subscription:", fetchError);
+      return false;
+    }
+
+    const consultationsUsed = (subscription?.consultations_used || 0) + 1;
+
+    // Update the database record
+    const { error } = await supabase
+        .from('user_subscriptions')
+        .update({
+          consultations_used: consultationsUsed,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
     return !error;
   } catch (error) {
     console.error("Error updating consultation usage:", error);
@@ -152,20 +190,34 @@ export const updateConsultationUsage = async (): Promise<boolean> => {
 export const addConsultations = async (amount: number): Promise<boolean> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return false;
     }
-    
-    // Get current total
-    const currentTotal = user.user_metadata?.consultations_total || 10;
-    const newTotal = currentTotal + amount;
-    
-    // Update user metadata
-    const { error } = await supabase.auth.updateUser({
-      data: { consultations_total: newTotal }
-    });
-    
+
+    // Get current subscription
+    const { data: subscription, error: fetchError } = await supabase
+        .from('user_subscriptions')
+        .select('consultations_total')
+        .eq('user_id', user.id)
+        .single();
+
+    if (fetchError) {
+      console.error("Error fetching subscription:", fetchError);
+      return false;
+    }
+
+    const newTotal = (subscription?.consultations_total || 10) + amount;
+
+    // Update database record
+    const { error } = await supabase
+        .from('user_subscriptions')
+        .update({
+          consultations_total: newTotal,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
     return !error;
   } catch (error) {
     console.error("Error adding consultations:", error);
@@ -186,8 +238,8 @@ export const getSubscriptionTierName = (tier: SubscriptionTier): string => {
 
 // Check if user has access to a feature based on their tier
 export const hasSubscriptionAccess = (
-  userTier: SubscriptionTier, 
-  requiredTier: SubscriptionTier
+    userTier: SubscriptionTier,
+    requiredTier: SubscriptionTier
 ): boolean => {
   const tierLevels = {
     'free': 0,
@@ -195,31 +247,31 @@ export const hasSubscriptionAccess = (
     'professional': 2,
     'enterprise': 3
   };
-  
+
   return tierLevels[userTier] >= tierLevels[requiredTier];
 };
 
 // Check if template is available for user's tier
 export const isTemplateAvailableForTier = (
-  templateName: string, 
-  userTier: SubscriptionTier
+    templateName: string,
+    userTier: SubscriptionTier
 ): boolean => {
   // Basic templates available to all tiers
   const basicTemplates = ['SOAP Note', 'History & Physical', 'Dictation (Blank)'];
-  
+
   // If it's a basic template, allow access to all tiers
   if (basicTemplates.includes(templateName)) {
     return true;
   }
-  
+
   // Advanced templates (available to professional and enterprise)
   const advancedTemplates = [
-    'Progress Note', 
-    'Discharge Summary', 
-    'Consultation Note', 
+    'Progress Note',
+    'Discharge Summary',
+    'Consultation Note',
     'Procedure Note'
   ];
-  
+
   if (advancedTemplates.includes(templateName)) {
     return hasSubscriptionAccess(userTier, 'professional');
   }
@@ -244,10 +296,21 @@ export const isTemplateAvailableForTier = (
 // Update user subscription tier
 export const updateSubscriptionTier = async (tier: SubscriptionTier): Promise<boolean> => {
   try {
-    const { error } = await supabase.auth.updateUser({
-      data: { subscription_tier: tier }
-    });
-    
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return false;
+    }
+
+    // Update the subscription_tier in the user_subscriptions table
+    const { error } = await supabase
+        .from('user_subscriptions')
+        .update({
+          subscription_tier: tier,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
     return !error;
   } catch (error) {
     console.error("Error updating subscription tier:", error);
