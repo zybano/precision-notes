@@ -163,12 +163,12 @@ export const updateConsultationUsage = async (): Promise<boolean> => {
         .eq('user_id', user.id)
         .single();
 
-    if (fetchError) {
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error("Error fetching subscription:", fetchError);
       return false;
     }
 
-    const consultationsUsed = (subscription?.consultations_used || 0) + 1;
+    const consultationsUsed = ((subscription?.consultations_used) || 0) + 1;
 
     // Update the database record
     const { error } = await supabase
@@ -202,12 +202,12 @@ export const addConsultations = async (amount: number): Promise<boolean> => {
         .eq('user_id', user.id)
         .single();
 
-    if (fetchError) {
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error("Error fetching subscription:", fetchError);
       return false;
     }
 
-    const newTotal = (subscription?.consultations_total || 10) + amount;
+    const newTotal = ((subscription?.consultations_total) || 10) + amount;
 
     // Update database record
     const { error } = await supabase
@@ -269,7 +269,8 @@ export const isTemplateAvailableForTier = (
     'Progress Note',
     'Discharge Summary',
     'Consultation Note',
-    'Procedure Note'
+    'Procedure Note', 
+    'Comprehensive Clinical Note'
   ];
 
   if (advancedTemplates.includes(templateName)) {
@@ -291,6 +292,41 @@ export const isTemplateAvailableForTier = (
 
   // Default: allow access (for any other templates)
   return true;
+};
+
+// Get required tier for a template
+export const getRequiredTierForTemplate = (templateName: string): SubscriptionTier | null => {
+  // Basic templates available to all tiers
+  const basicTemplates = ['SOAP Note', 'History & Physical', 'Dictation (Blank)'];
+  if (basicTemplates.includes(templateName)) {
+    return 'free';
+  }
+
+  // Advanced templates (available to professional and enterprise)
+  const advancedTemplates = [
+    'Progress Note',
+    'Discharge Summary',
+    'Consultation Note', 
+    'Procedure Note',
+    'Comprehensive Clinical Note'
+  ];
+  if (advancedTemplates.includes(templateName)) {
+    return 'professional';
+  }
+
+  // Specialty templates (available to enterprise only)
+  const specialtyTemplates = [
+    'Psychiatry Evaluation',
+    'Cardiology Assessment',
+    'Pediatric Examination',
+    'Orthopedic Evaluation',
+    'Obstetrics Assessment'
+  ];
+  if (specialtyTemplates.includes(templateName)) {
+    return 'enterprise';
+  }
+
+  return null;
 };
 
 // Update user subscription tier
@@ -325,5 +361,6 @@ export default {
   getSubscriptionTierName,
   hasSubscriptionAccess,
   isTemplateAvailableForTier,
+  getRequiredTierForTemplate,
   updateSubscriptionTier
 };

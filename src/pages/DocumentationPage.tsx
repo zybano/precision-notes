@@ -1,6 +1,5 @@
-// Updated DocumentationPage.tsx
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { documentTemplates } from "@/data/documentTemplates";
 import { useDocumentFormat } from "@/hooks/useDocumentFormat";
@@ -12,10 +11,22 @@ import DocumentationInitializer from "@/components/documentation/DocumentationIn
 import useDocumentOperations from "@/hooks/useDocumentOperations";
 import { useTranscriptionController } from "@/components/documentation/TranscriptionController";
 import { toast } from "sonner";
+import { getCredits } from "@/services/payment/paymentService";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import { Coins, CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("saved");
   const [newDocumentOpen, setNewDocumentOpen] = useState(false);
+  const [creditBalance, setCreditBalance] = useState<number | undefined>(undefined);
+  const [isLoadingCredits, setIsLoadingCredits] = useState(false);
+  
+  // Get subscription info
+  const { subscriptionInfo } = useAuth();
+  
   // Create a ref to store the refresh function
   const tabsRefreshRef = useRef({
     refreshSavedDocuments: () => {},
@@ -56,6 +67,31 @@ const DocumentationPage = () => {
     transcriptionProvider,
     useSpeechModelNano
   });
+
+  // Load credit balance
+  useEffect(() => {
+    const fetchCredits = async () => {
+      setIsLoadingCredits(true);
+      try {
+        const { success, balance } = await getCredits();
+        if (success) {
+          setCreditBalance(balance);
+        } else {
+          console.error("Failed to fetch credit balance");
+        }
+      } catch (error) {
+        console.error("Error fetching credits:", error);
+      } finally {
+        setIsLoadingCredits(false);
+      }
+    };
+    
+    fetchCredits();
+    
+    // Refresh credits every 60 seconds
+    const interval = setInterval(fetchCredits, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle document dialog close
   const handleDialogClose = () => {
@@ -112,7 +148,48 @@ const DocumentationPage = () => {
   return (
       <DocumentationInitializer>
         <div className={"container mx-auto py-6 space-y-8 w-full"}>
-          <DocumentationHeader />
+          <div className="flex justify-between items-center">
+            <DocumentationHeader />
+            
+            <div className="flex items-center gap-4">
+              {/* Credit balance display */}
+              <Card className="border border-green-100">
+                <CardContent className="p-3 flex items-center gap-2">
+                  <Coins className="h-4 w-4 text-amber-500" />
+                  <div>
+                    <div className="text-sm font-medium">Credits</div>
+                    <div className="text-xl font-bold">
+                      {isLoadingCredits ? '...' : creditBalance !== undefined ? creditBalance : 'N/A'}
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-2"
+                    onClick={() => window.location.href = '/consultation-purchase'}
+                  >
+                    <CreditCard className="h-3.5 w-3.5 mr-1" />
+                    Buy
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              {/* Subscription tier badge */}
+              {subscriptionInfo?.tier && (
+                <Badge 
+                  variant={
+                    subscriptionInfo.tier === 'free' ? 'outline' : 
+                    subscriptionInfo.tier === 'starter' ? 'default' :
+                    subscriptionInfo.tier === 'professional' ? 'secondary' :
+                    'destructive'
+                  }
+                  className="text-xs p-1.5"
+                >
+                  {subscriptionInfo.tier.charAt(0).toUpperCase() + subscriptionInfo.tier.slice(1)} Plan
+                </Badge>
+              )}
+            </div>
+          </div>
 
           <DocumentationSearch
               setNewDocumentOpen={setNewDocumentOpen}
@@ -159,6 +236,8 @@ const DocumentationPage = () => {
               onFileUpload={transcriptionControls.onFileUpload}
               documentSaved={documentSaved}
               exportToPDF={exportToPDF}
+              creditBalance={creditBalance}
+              checkingCredits={transcriptionControls.checkingCredits}
           />
         </div>
       </DocumentationInitializer>

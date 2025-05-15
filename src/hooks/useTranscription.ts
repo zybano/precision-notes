@@ -11,6 +11,7 @@ import {
   generatePatientSummary,
   PatientSummaryResult
 } from "@/services/summaryUtils";
+import { hasEnoughCredits } from "@/services/payment/paymentService";
 
 interface TranscriptionOptions {
   provider: TranscriptionProvider;
@@ -40,6 +41,20 @@ export const useTranscription = (onTranscriptionComplete?: (
       return null;
     }
 
+    // Check if user has sufficient credits before proceeding
+    const hasCredits = await hasEnoughCredits(1);
+    
+    if (!hasCredits) {
+      toast.error("Insufficient credits", {
+        description: "You need at least 1 credit to process this transcription.",
+        action: {
+          label: "Get Credits",
+          onClick: () => window.location.href = '/consultation-purchase',
+        },
+      });
+      return null;
+    }
+
     const audioBlob = new Blob(chunks, { type: 'audio/webm' });
 
     setIsTranscribing(true);
@@ -65,11 +80,7 @@ export const useTranscription = (onTranscriptionComplete?: (
         });
         
         // Try to use Claude first, fall back to OpenAI if needed
-        try {
-          summaryResult = await generatePatientSummary (result.text);
-        } catch (claudeError) {
-       console.error(claudeError);
-        }
+        summaryResult = await generatePatientSummary(result.text);
         
         setTranscriptSummary(summaryResult.summary);
         setPatientInfo(summaryResult.patientInfo);

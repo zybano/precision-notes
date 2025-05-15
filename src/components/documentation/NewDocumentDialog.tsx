@@ -1,33 +1,42 @@
-// UpdatedNewDocumentDialog.tsx - Modified version
 
-import React, { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Check, LayoutDashboard, FileText, Eye, FileCog, Copy, Download, Printer, Brain, Edit } from "lucide-react";
-import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import { useReactToPrint } from "react-to-print";
 import {
-  TranscriptionResult,
-  TranscriptionProvider,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { UseFormReturn } from "react-hook-form";
+import {
+  DocumentFormat,
   LLMProvider,
-  DocumentFormat
+  TranscriptionProvider,
+  TranscriptionResult,
 } from "@/services/transcription";
-import EnhancedRecordingInterface from "@/components/documentation/EnhancedRecordingInterface";
-import DrugMonograph from "@/components/documentation/DrugMonograph";
-import EnhancedContextPanel from "@/components/documentation/EnhancedContextPanel";
-import DocumentVerificationDialog from "@/components/documentation/DocumentVerificationDialog";
 import { PatientSummaryResult } from "@/services/summaryUtils";
+import { AlertCircle, Coins, Info } from "lucide-react";
+import TranscriptDisplay from "./TranscriptDisplay";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Card } from "@/components/ui/card";
+import ProviderSelectionPanel from "./ProviderSelectionPanel";
+import { toast } from "sonner";
+import TemplateSelectionPanel from "./TemplateSelectionPanel";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface UpdatedNewDocumentDialogProps {
+export interface NewDocumentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  form: any;
+  form: UseFormReturn<any>;
   onSubmit: (data: any) => void;
   isRecording: boolean;
   isPaused: boolean;
@@ -41,9 +50,9 @@ interface UpdatedNewDocumentDialogProps {
   formatTime: (seconds: number) => string;
   transcript: string;
   transcriptSummary: string;
-  patientInfo?: PatientSummaryResult['patientInfo'] | null;
+  patientInfo: PatientSummaryResult["patientInfo"] | null;
   showSummary: boolean;
-  setShowSummary: (value: boolean) => void;
+  setShowSummary: (show: boolean) => void;
   transcriptResult: TranscriptionResult | null;
   documentTemplates: any[];
   transcriptionProvider: TranscriptionProvider;
@@ -53,11 +62,13 @@ interface UpdatedNewDocumentDialogProps {
   documentFormat: DocumentFormat;
   setDocumentFormat: (format: DocumentFormat) => void;
   onFileUpload: (file: File) => void;
-  documentSaved?: boolean;
-  exportToPDF?: (contentRef: React.RefObject<HTMLDivElement>, title?: string) => Promise<void>;
+  documentSaved: boolean;
+  exportToPDF: () => void;
+  creditBalance?: number;
+  checkingCredits?: boolean;
 }
 
-const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
+const UpdatedNewDocumentDialog: React.FC<NewDocumentDialogProps> = ({
   open,
   onOpenChange,
   form,
@@ -86,384 +97,415 @@ const UpdatedNewDocumentDialog: React.FC<UpdatedNewDocumentDialogProps> = ({
   documentFormat,
   setDocumentFormat,
   onFileUpload,
-  documentSaved = false,
-  exportToPDF
+  documentSaved,
+  exportToPDF,
+  creditBalance,
+  checkingCredits = false,
 }) => {
   const [activeTab, setActiveTab] = useState("record");
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
-  const [tempFormData, setTempFormData] = useState<any>(null);
-  
-  const { register, handleSubmit, formState: { errors }, setValue, watch, getValues } = form;
-  const notesContent = watch("notes");
-  const printRef = useRef<HTMLDivElement>(null);
-  const documentTitle = watch("title") || "Medical Report";
+  const [showTranscriptLoading, setShowTranscriptLoading] = useState(false);
 
-  // Extract patient name from AI if available
-  useEffect(() => {
-    if (patientInfo && patientInfo.name !== "Unknown" && open) {
-      setValue("patientName", patientInfo.name);
+  // State to track form validation errors
+  const patientNameValue = form.watch("patientName");
+
+  // Handle file upload
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setShowTranscriptLoading(true);
+      try {
+        await onFileUpload(file);
+      } finally {
+        setShowTranscriptLoading(false);
+      }
     }
-  }, [patientInfo, open, setValue]);
-
-  const handleCopyToEMR = () => {
-    navigator.clipboard.writeText(getValues().notes);
-    toast.success("Notes Copied");
   };
 
-  // Handle PDF download with direct HTML to PDF conversion
-  const handleDownloadPDF = async () => {
-    if (!printRef.current) {
-      toast.error("PDF Generation Failed", {
-        description: "Unable to generate PDF document."
+  const handleTemplateSelection = (template: any) => {
+    // Set the form values based on the template
+    form.setValue("type", template.title);
+    setActiveTab("details");
+    toast.success(`Template selected: ${template.title}`);
+  };
+  
+  // Format credit display
+  const getCreditDisplay = () => {
+    if (creditBalance === undefined) {
+      return "Loading credits...";
+    }
+    
+    return creditBalance === 1 
+      ? "1 credit remaining" 
+      : `${creditBalance} credits remaining`;
+  };
+  
+  // Determine if user has enough credits
+  const hasEnoughCredits = creditBalance !== undefined && creditBalance > 0;
+  
+  // Handle submit with credit check
+  const handleFormSubmit = async (data: any) => {
+    if (!hasEnoughCredits) {
+      toast.error("Insufficient credits", {
+        description: "You need at least 1 credit to create a document.",
+        action: {
+          label: "Get Credits",
+          onClick: () => window.location.href = '/consultation-purchase',
+        },
       });
       return;
     }
-
-    if (exportToPDF) {
-      await exportToPDF(printRef, documentTitle);
-    } else {
-      toast.error("PDF Export Unavailable", {
-        description: "PDF export function is not available."
-      });
-    }
-  };
-
-  const handleDocumentGenerated = (document: string, formatName?: string) => {
-    setValue("notes", document);
     
-    // Set the document format in the form if available
-    if (formatName) {
-      setValue("documentFormat", formatName);
-    }
-    
-    setActiveTab("notes");
-    toast.success("Document Generated");
+    await onSubmit(data);
   };
-
-  const toggleEditMode = () => {
-    setIsEditMode(!isEditMode);
-  };
-
-  // New validation function to check required fields before submission
-  const validateDocument = (data: any) => {
-    // List of required fields for document submission
-    const requiredFields = [
-      { field: 'type', label: 'Document Type' },
-      { field: 'notes', label: 'Notes Content' },
-    ];
-
-    const missingFields = requiredFields
-      .filter(({ field }) => !data[field] || data[field].trim() === '')
-      .map(({ label }) => label);
-
-    if (missingFields.length > 0) {
-      toast.error(`Missing required fields: ${missingFields.join(', ')}`);
-      return false;
-    }
-
-    return true;
-  };
-
-  // Wrapped submit handler with validation
-  const handleValidatedSubmit = (data: any) => {
-    if (validateDocument(data)) {
-      // Store form data temporarily
-      setTempFormData(data);
-      
-      // Open the verification dialog before final submission
-      if (transcript && !data.infoVerified) {
-        setVerificationDialogOpen(true);
-        return;
-      }
-      
-      // If no transcript or already verified, submit directly
-      onSubmit(data);
-    }
-  };
-  
-  // Handle verification confirmation
-  const handleVerificationConfirm = () => {
-    if (tempFormData) {
-      // Set the verified flag
-      tempFormData.infoVerified = true;
-      
-      // Submit the form with verified data
-      onSubmit(tempFormData);
-    }
-  };
-  
-  // Display patient name if extracted
-  const extractedPatientName = patientInfo && patientInfo.name !== "Unknown" 
-    ? patientInfo.name 
-    : null;
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
-          <DialogHeader className="p-6 pb-2 text-center">
-            <DialogTitle className="text-2xl text-center ">Consultation Documentation</DialogTitle>
-            <DialogDescription className={"text-center"}>
-              Record your consultation, generate notes, and export to your EMR system
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl w-full h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleFormSubmit)}
+            className="flex flex-col h-full"
+          >
+            {/* Credit balance display */}
+            <div className="flex items-center justify-end gap-2 px-4 py-2 bg-muted/40">
+              <Coins className="h-4 w-4 text-amber-500" />
+              <div className="text-sm font-medium">
+                {checkingCredits 
+                  ? "Checking credits..." 
+                  : getCreditDisplay()}
+              </div>
+              
+              {!hasEnoughCredits && !checkingCredits && creditBalance !== undefined && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="destructive" className="ml-2">
+                        <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                        No Credits
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>You need at least 1 credit to create a document</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                className="ml-auto"
+                onClick={() => window.location.href = '/consultation-purchase'}
+              >
+                Buy Credits
+              </Button>
+            </div>
 
-          <div className="flex flex-col lg:flex-row h-full">
-            <div className="lg:w-full p-6 pt-0 border-r">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-3 mb-8">
-                  <TabsTrigger value="record" className="flex items-center">
-                    <FileText className="h-4 w-4 mr-2" /> Transcription
-                  </TabsTrigger>
-                  <TabsTrigger value="notes" className="flex items-center" disabled={!transcript}>
-                    <FileText className="h-4 w-4 mr-2" /> Notes
-                  </TabsTrigger>
-                  <TabsTrigger value="export" className="flex items-center" disabled={!transcript}>
-                    <FileCog className="h-4 w-4 mr-2" /> Export
-                  </TabsTrigger>
-                </TabsList>
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="flex-1 flex flex-col overflow-hidden"
+            >
+              <TabsList className="w-full justify-start px-4 py-0 h-auto bg-transparent border-b rounded-none">
+                <TabsTrigger
+                  value="templates"
+                  className="rounded-none rounded-t-lg border-b-2 border-b-transparent data-[state=active]:border-b-primary"
+                >
+                  Templates
+                </TabsTrigger>
+                <TabsTrigger
+                  value="record"
+                  className="rounded-none rounded-t-lg border-b-2 border-b-transparent data-[state=active]:border-b-primary"
+                >
+                  Dictate
+                </TabsTrigger>
+                <TabsTrigger
+                  value="details"
+                  className="rounded-none rounded-t-lg border-b-2 border-b-transparent data-[state=active]:border-b-primary"
+                >
+                  Document Details
+                </TabsTrigger>
+                <TabsTrigger
+                  value="settings"
+                  className="rounded-none rounded-t-lg border-b-2 border-b-transparent data-[state=active]:border-b-primary"
+                >
+                  Settings
+                </TabsTrigger>
+              </TabsList>
 
-                <TabsContent value="record" className="mt-0">
-                  {/* Removed the form tag from here - key fix! */}
-                  <EnhancedRecordingInterface
-                    isRecording={isRecording}
-                    isPaused={isPaused}
-                    recordingTime={recordingTime}
-                    isTranscribing={isTranscribing}
-                    useSpeechModelNano={useSpeechModelNano}
-                    setUseSpeechModelNano={setUseSpeechModelNano}
-                    startRecording={startRecording}
-                    pauseRecording={pauseRecording}
-                    stopRecording={stopRecording}
-                    formatTime={formatTime}
-                    onDownloadPdf={handleDownloadPDF}
-                    onCopyToEMR={handleCopyToEMR}
-                    transcriptResult={transcriptResult}
-                    documentFormat={documentFormat}
-                    setDocumentFormat={setDocumentFormat}
-                    onDocumentGenerated={handleDocumentGenerated}
-                    onFileUpload={onFileUpload}
-                  />
-                </TabsContent>
+              <TabsContent
+                value="templates"
+                className="flex-1 overflow-auto p-4"
+              >
+                <TemplateSelectionPanel
+                  templates={documentTemplates}
+                  onSelectTemplate={handleTemplateSelection}
+                />
+              </TabsContent>
 
-                <TabsContent value="notes" className="mt-0">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="notes" className="text-lg font-medium">Generated Notes</Label>
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="showSummary"
-                              checked={showSummary}
-                              onCheckedChange={setShowSummary}
-                            />
-                            <Label htmlFor="showSummary" className="text-sm">Show Summary</Label>
-                          </div>
-                          <Button
-                            type="button" 
-                            onClick={toggleEditMode}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center"
-                          >
-                            {isEditMode ? (
-                              <>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Preview
-                              </>
-                            ) : (
-                              <>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
+              <TabsContent
+                value="record"
+                className="flex-1 overflow-auto p-4 pt-2"
+              >
+                <div className="mb-4">
+                  {!isRecording && !isTranscribing && !transcript && (
+                    <Alert className="mb-4">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Use dictation to quickly create medical documentation.
+                        Click the record button to start.
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
-                      {showSummary && transcriptSummary && (
-                        <div className="bg-muted p-3 rounded-md text-sm mb-4">
-                          <p className="font-medium mb-1">Summary:</p>
-                          <p>{transcriptSummary}</p>
-                          
-                          {/* Display patient info if available */}
-                          {patientInfo && patientInfo.name !== "Unknown" && (
-                            <div className="mt-2 pt-2 border-t border-muted-foreground/20">
-                              <p className="font-medium">Patient: {patientInfo.name}</p>
-                              {patientInfo.age && <p className="text-xs">Age: {patientInfo.age}</p>}
-                              {patientInfo.gender && <p className="text-xs">Gender: {patientInfo.gender}</p>}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {isEditMode ? (
-                        <Textarea
-                          id="notes"
-                          className="min-h-[350px] font-mono text-sm resize-y"
-                          {...register("notes")}
-                        />
-                      ) : (
-                        <div
-                          className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
-                        >
-                          <ReactMarkdown>{notesContent}</ReactMarkdown>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex justify-between">
-                      <Button
-                        type="button" 
-                        variant="outline"
-                        onClick={() => setActiveTab("record")}
-                      >
-                        Back to Recording
-                      </Button>
-                      <div className="space-x-2">
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex justify-center space-x-4">
+                      {!isRecording && !isTranscribing && (
                         <Button
-                          type="button" 
-                          className="flex items-center"
-                          onClick={() => setActiveTab("export")}
+                          type="button"
+                          className="bg-red-600 hover:bg-red-700"
+                          onClick={startRecording}
+                          disabled={checkingCredits || !hasEnoughCredits}
                         >
-                          Export Options
-                          <FileCog className="ml-2 h-4 w-4" />
+                          {checkingCredits ? (
+                            "Checking Credits..."
+                          ) : !hasEnoughCredits ? (
+                            "No Credits Available"
+                          ) : (
+                            "Start Recording"
+                          )}
                         </Button>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
+                      )}
 
-                <TabsContent value="export" className="mt-0">
-                  <div className="space-y-6">
-                    <div className="rounded-lg border p-6">
-                      <h3 className="text-lg font-medium mb-4 flex items-center">
-                        <FileCog className="h-5 w-5 mr-2" />
-                        Export Options
-                      </h3>
+                      {isRecording && !isPaused && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={pauseRecording}
+                        >
+                          Pause
+                        </Button>
+                      )}
 
-                      <div className="space-y-4">
-                        <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
-                          <div className="bg-accent rounded-full p-1 mt-0.5">
-                            <FileText className="h-5 w-5 text-accent-foreground" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Copy to EMR</h4>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              Copy the formatted notes to paste directly into your EMR system
-                            </p>
-                            <Button
-                              type="button" 
-                              onClick={handleCopyToEMR}
-                              size="sm"
-                            >
-                              <Copy className="h-4 w-4 mr-2" />
-                              Copy to Clipboard
-                            </Button>
-                          </div>
-                        </div>
+                      {isRecording && isPaused && (
+                        <Button
+                          type="button"
+                          className="bg-red-600 hover:bg-red-700"
+                          onClick={startRecording}
+                        >
+                          Resume
+                        </Button>
+                      )}
 
-                        <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
-                          <div className="bg-accent rounded-full p-1 mt-0.5">
-                            <Download className="h-5 w-5 text-accent-foreground" />
+                      {isRecording && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={stopRecording}
+                        >
+                          Stop & Transcribe
+                        </Button>
+                      )}
+
+                      <div className="flex items-center">
+                        {(isRecording || recordingTime > 0) && (
+                          <div
+                            className={`text-lg font-mono ${
+                              isRecording ? "text-red-500" : ""
+                            }`}
+                          >
+                            {formatTime(recordingTime)}
                           </div>
-                          <div>
-                            <h4 className="font-medium">Download PDF</h4>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              Save the consultation notes as a PDF document
-                            </p>
-                            <Button
-                              type="button" 
-                              onClick={handleDownloadPDF}
-                              size="sm"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download PDF
-                            </Button>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex justify-between">
-                      <Button
-                        type="button" 
-                        variant="outline"
-                        onClick={() => setActiveTab("notes")}
+                    <div className="flex items-center justify-center">
+                      <label
+                        htmlFor="upload"
+                        className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm flex items-center transition-colors"
                       >
-                        Back to Notes
-                      </Button>
-                      <Button
-                        type="submit"
-                        onClick={handleSubmit(handleValidatedSubmit)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Save Document
-                      </Button>
+                        <span>Or upload audio</span>
+                        <Input
+                          id="upload"
+                          type="file"
+                          className="hidden"
+                          accept="audio/*"
+                          onChange={handleFileChange}
+                          disabled={isTranscribing || checkingCredits || !hasEnoughCredits}
+                        />
+                      </label>
                     </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
-
-          {/* Hidden container for PDF export */}
-          <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-            <div ref={printRef} className="p-6 bg-white" style={{ width: "800px" }}>
-              <div className="pb-4 border-b border-[#ffcd6a]">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h1 className="text-2xl font-bold text-[#040523]">PrecisionNote</h1>
-                    <p className="text-sm text-[#5768fd]">Medical Documentation</p>
-                  </div>
-                  <div className="text-right">
-                    <h2 className="text-xl font-medium text-[#040523]">{documentTitle || "Medical Report"}</h2>
-                    <p className="text-sm text-[#5768fd]">Generated on {new Date().toLocaleDateString()}</p>
-                  </div>
                 </div>
+
+                {(transcript || isTranscribing || showTranscriptLoading) && (
+                  <Card className="mt-4">
+                    <TranscriptDisplay
+                      transcriptResult={transcriptResult}
+                      transcript={transcript}
+                      transcriptSummary={transcriptSummary}
+                      showSummary={showSummary}
+                      setShowSummary={setShowSummary}
+                      isTranscribing={isTranscribing || showTranscriptLoading}
+                    />
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent
+                value="details"
+                className="flex-1 overflow-auto p-4 pt-2"
+              >
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Document Type</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="patientName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Patient Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter patient name"
+                            {...field}
+                            className={
+                              patientInfo?.name &&
+                              patientNameValue !== patientInfo.name
+                                ? "border-yellow-300 bg-yellow-50"
+                                : ""
+                            }
+                          />
+                        </FormControl>
+                        {patientInfo?.name &&
+                          patientNameValue !== patientInfo.name && (
+                            <FormDescription className="text-yellow-600">
+                              We detected "{patientInfo.name}" in the transcript.
+                            </FormDescription>
+                          )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Enter medical notes"
+                            className="min-h-[200px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {transcript && (
+                    <FormField
+                      control={form.control}
+                      name="infoVerified"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              Verify Information
+                            </FormLabel>
+                            <FormDescription>
+                              I have verified that all information in this
+                              document is accurate.
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent
+                value="settings"
+                className="flex-1 overflow-auto p-4"
+              >
+                <ProviderSelectionPanel
+                  transcriptionProvider={transcriptionProvider}
+                  setTranscriptionProvider={setTranscriptionProvider}
+                  llmProvider={llmProvider}
+                  setLlmProvider={setLlmProvider}
+                  documentFormat={documentFormat}
+                  setDocumentFormat={setDocumentFormat}
+                  useSpeechModelNano={useSpeechModelNano}
+                  setUseSpeechModelNano={setUseSpeechModelNano}
+                />
+              </TabsContent>
+            </Tabs>
+
+            <div className="border-t p-4 flex justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  onOpenChange(false);
+                }}
+              >
+                Cancel
+              </Button>
+
+              <div className="space-x-2">
+                {transcript && documentSaved && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={exportToPDF}
+                  >
+                    Export to PDF
+                  </Button>
+                )}
+                <Button 
+                  type="submit" 
+                  disabled={isTranscribing || (!!transcript && !form.watch("infoVerified")) || checkingCredits || !hasEnoughCredits}
+                >
+                  {isTranscribing
+                    ? "Processing..."
+                    : transcript && !form.watch("infoVerified")
+                    ? "Please Verify Information"
+                    : checkingCredits
+                    ? "Checking Credits..."
+                    : !hasEnoughCredits
+                    ? "Insufficient Credits"
+                    : "Save Document"}
+                </Button>
               </div>
-
-              {/* Patient information if available */}
-              {patientInfo && patientInfo.name !== "Unknown" && (
-                <div className="my-4 p-4 border-l-4 border-[#5768fd]">
-                  <h3 className="font-bold">Patient Information</h3>
-                  <p>Name: {patientInfo.name}</p>
-                  {patientInfo.age && <p>Age: {patientInfo.age}</p>}
-                  {patientInfo.gender && <p>Gender: {patientInfo.gender}</p>}
-                </div>
-              )}
-
-              {transcriptSummary && (
-                <div className="my-6">
-                  <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Consultation Summary</h2>
-                  <div className="bg-gray-50 p-4 border rounded border-[#5768fd]/20">
-                    <p className="text-[#040523]">{transcriptSummary}</p>
-                  </div>
-                </div>
-              )}
-
-              <h2 className="text-xl font-bold text-[#040523] border-b border-[#ffcd6a] pb-2 mb-4">Clinical Notes</h2>
-              <div className="mt-4 text-[#040523]">
-                <ReactMarkdown>{notesContent}</ReactMarkdown>
-              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Document Verification Dialog */}
-      <DocumentVerificationDialog
-        open={verificationDialogOpen}
-        onOpenChange={setVerificationDialogOpen}
-        form={form}
-        patientInfo={patientInfo}
-        documentFormat={documentFormat}
-        onConfirm={handleVerificationConfirm}
-      />
-    </>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

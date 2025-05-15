@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle, ListFilter, Copy, Star, LucideIcon, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { isTemplateAvailableForTier } from "@/services/subscriptionService";
+import { isTemplateAvailableForTier, getRequiredTierForTemplate } from "@/services/subscriptionService";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 export interface TemplateParameter {
   name: string;
@@ -33,15 +34,23 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   parameters,
   onViewDetails,
   onUseTemplate,
-  isFeatured = false,
-  requiredTier
+  isFeatured = false
 }) => {
   const { subscriptionInfo } = useAuth();
   const isDictation = title === "Dictation (Blank)";
   
+  // Get the required tier for this template
+  const requiredTier = getRequiredTierForTemplate(title);
+  
   // Check if user has access to this template
   const hasAccess = subscriptionInfo && 
     isTemplateAvailableForTier(title, subscriptionInfo.tier);
+  
+  // Format required tier name for display
+  const getFormattedTierName = (tier: string | null): string => {
+    if (!tier) return "";
+    return tier.charAt(0).toUpperCase() + tier.slice(1);
+  };
   
   return (
     <Card className={`h-full flex flex-col hover:shadow-md transition-all cursor-pointer border ${isDictation ? 'border-primary/80 bg-primary/5' : isFeatured ? 'border-primary/50 bg-primary/5' : 'border-border'} overflow-hidden ${!hasAccess ? 'opacity-75' : ''}`}>
@@ -58,27 +67,21 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                   <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                 )}
                 
-                {!hasAccess && requiredTier && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center">
-                          <Lock className="h-3.5 w-3.5 text-amber-500 ml-1" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Requires {requiredTier} plan or higher</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                {requiredTier && requiredTier !== 'free' && (
+                  <Badge 
+                    variant={requiredTier === 'professional' ? 'outline' : 'secondary'} 
+                    className={`ml-2 text-xs ${requiredTier === 'enterprise' ? 'bg-purple-100 text-purple-800 hover:bg-purple-100' : ''}`}
+                  >
+                    {getFormattedTierName(requiredTier)}
+                  </Badge>
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-1">{description}</p>
               
-              {!hasAccess && (
+              {!hasAccess && requiredTier && (
                 <div className="mt-2 text-xs flex items-center text-amber-600">
                   <AlertCircle className="h-3 w-3 mr-1" />
-                  <span>Upgrade to {requiredTier || 'a higher tier'} to unlock</span>
+                  <span>Upgrade to {getFormattedTierName(requiredTier)} to unlock</span>
                 </div>
               )}
             </div>

@@ -1,9 +1,11 @@
-
 import { useAudioRecording } from "@/hooks/useAudioRecording";
 import { useTranscription } from "@/hooks/useTranscription";
 import { TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
 import { PatientSummaryResult } from "@/services/summaryUtils";
 import { UseFormReturn } from "react-hook-form";
+import { hasEnoughCredits, deductCredits, getCredits } from "@/services/payment/paymentService";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
 interface TranscriptionControllerProps {
   form: UseFormReturn<any>;
@@ -15,7 +17,7 @@ interface TranscriptionControllerReturn {
   isRecording: boolean;
   isPaused: boolean;
   recordingTime: number;
-  startRecording: () => void;
+  startRecording: () => Promise<void>;
   pauseRecording: () => void;
   handleStopRecording: () => void;
   formatTime: (seconds: number) => string;
@@ -26,9 +28,11 @@ interface TranscriptionControllerReturn {
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
   transcriptResult: TranscriptionResult | null;
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File) => Promise<TranscriptionResult | null>;
   resetRecording: () => void;
   resetTranscription: () => void;
+  creditBalance?: number;
+  checkingCredits: boolean;
 }
 
 export const useTranscriptionController = ({
@@ -44,13 +48,16 @@ export const useTranscriptionController = ({
     isRecording,
     isPaused,
     recordingTime,
-    startRecording,
+    startRecording: baseStartRecording,
     pauseRecording,
     stopRecording: baseStopRecording,
     formatTime,
     audioChunks,
     resetRecording
   } = useAudioRecording();
+  
+  const [checkingCredits, setCheckingCredits] = useState(false);
+  const [creditBalance, setCreditBalance] = useState<number | undefined>(undefined);
 
   const handleTranscriptionComplete = (
     result: TranscriptionResult, 
@@ -76,6 +83,14 @@ export const useTranscriptionController = ({
     if (recordingTime > 0) {
       form.setValue("recordingTime", recordingTime);
     }
+    
+    // Deduct 1 credit for the transcription
+    deductCredits(1).then(({ success, balance }) => {
+      if (success && balance !== undefined) {
+        setCreditBalance(balance);
+        toast.success(`1 credit used for transcription. ${balance} credits remaining.`);
+      }
+    });
   };
 
   const {
@@ -90,6 +105,32 @@ export const useTranscriptionController = ({
     handleFileUpload: baseHandleFileUpload,
     resetTranscription
   } = useTranscription(handleTranscriptionComplete);
+
+  // Start recording with credit check
+  const startRecording = async () => {
+    setCheckingCredits(true);
+    try {
+      const hasCredits = await hasEnoughCredits(1);
+      if (!hasCredits) {
+        toast.error("Insufficient credits", {
+          description: "You need at least 1 credit to create a new transcription.",
+          action: {
+            label: "Get Credits",
+            onClick: () => window.location.href = '/consultation-purchase',
+          },
+        });
+        return;
+      }
+      
+      // If we have credits, start recording
+      baseStartRecording();
+    } catch (error) {
+      console.error("Error checking credits:", error);
+      toast.error("Could not verify credits. Please try again.");
+    } finally {
+      setCheckingCredits(false);
+    }
+  };
 
   const handleStopRecording = async () => {
     const chunks = [...audioChunks]; // Create a copy of the current chunks
@@ -109,17 +150,51 @@ export const useTranscriptionController = ({
   };
 
   const onFileUpload = async (file: File) => {
-    const result = await baseHandleFileUpload(file, {
-      provider: transcriptionProvider,
-      useSpeechModelNano
-    });
-    
-    if (result) {
-      form.setValue("recordingTime", 0);
+    // Check credits before processing the file
+    setCheckingCredits(true);
+    try {
+      const hasCredits = await hasEnoughCredits(1);
+      if (!hasCredits) {
+        toast.error("Insufficient credits", {
+          description: "You need at least 1 credit to process this audio file.",
+          action: {
+            label: "Get Credits",
+            onClick: () => window.location.href = '/consultation-purchase',
+          },
+        });
+        return null;
+      }
+      
+      const result = await baseHandleFileUpload(file, {
+        provider: transcriptionProvider,
+        useSpeechModelNano
+      });
+      
+      if (result) {
+        form.setValue("recordingTime", 0);
+      }
+      
+      return result;
+    } finally {
+      setCheckingCredits(false);
     }
-    
-    return result;
   };
+  
+  // Load credit balance on component mount
+  useEffect(() => {
+    const loadCredits = async () => {
+      try {
+        const { success, balance } = await getCredits();
+        if (success) {
+          setCreditBalance(balance);
+        }
+      } catch (error) {
+        console.error("Error loading credits:", error);
+      }
+    };
+    
+    loadCredits();
+  }, []);
 
   return {
     isRecording,
@@ -138,7 +213,9 @@ export const useTranscriptionController = ({
     transcriptResult,
     onFileUpload,
     resetRecording,
-    resetTranscription
+    resetTranscription,
+    creditBalance,
+    checkingCredits
   };
 };
 

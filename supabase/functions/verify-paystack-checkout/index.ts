@@ -34,7 +34,7 @@ serve(async (req) => {
       headers: {
         Authorization: `Bearer ${paystackSecretKey}`,
         'Content-Type': 'application/json',
-      },
+      }
     });
 
     if (!response.ok) {
@@ -44,130 +44,176 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-
-    if (!data.status || !data.data) {
-      throw new Error('Invalid response from Paystack');
+    
+    if (!data.status || data.data.status !== 'success') {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: 'Transaction was not successful' 
+      }), { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      });
     }
 
-    // Check if the transaction was successful
-    const transactionStatus = data.data.status;
-    const isSuccess = transactionStatus === 'success';
-
-    // Get the transaction metadata
-    const metadata = data.data.metadata || {};
+    // Transaction was successful
+    const transaction = data.data;
+    const metadata = transaction.metadata || {};
     const userId = metadata.user_id;
-    const quantity = parseInt(metadata.quantity || '1', 10);
-    const packageId = metadata.package_id;
+    const productType = metadata.product_type || 'consultation';
+    const quantity = metadata.quantity ? parseInt(metadata.quantity) : 1;
 
-    // If successful, update our records
-    if (isSuccess && userId) {
-      // Update the transaction status
-      const { error: updateError } = await supabase
-        .from('transaction_history')
-        .update({
-          status: 'completed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('payment_provider_reference', reference)
-        .eq('payment_provider', 'paystack');
+    // Update transaction history
+    const { error: updateError } = await supabase
+      .from('transaction_history')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('payment_provider_reference', reference);
 
-      if (updateError) {
-        console.error('Error updating transaction:', updateError);
-      }
+    if (updateError) {
+      console.error('Error updating transaction history:', updateError);
+    }
 
-      // Record the consultation purchase
-      const { error: purchaseError } = await supabase
-        .from('consultation_purchases')
-        .insert({
-          user_id: userId,
-          package_id: packageId || null,
-          quantity,
-          amount_paid: data.data.amount / 100, // Convert from kobo to naira
-          payment_provider: 'paystack',
-          payment_provider_reference: reference
-        });
-
-      if (purchaseError) {
-        console.error('Error recording purchase:', purchaseError);
-      }
-
-      // Update the user's consultations
-      // First, check if the user has an entry in user_subscriptions
-      const { data: subscriptionData, error: subscriptionError } = await supabase
-        .from('user_subscriptions')
-        .select('consultations_total, consultations_remaining')
-        .eq('user_id', userId)
-        .single();
-
-      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
-        console.error('Error fetching subscription:', subscriptionError);
-      }
-
-      if (subscriptionData) {
-        // Update existing record
-        const newTotal = (subscriptionData.consultations_total || 0) + quantity;
-        const newRemaining = (subscriptionData.consultations_remaining || 0) + quantity;
-
-        await supabase
-          .from('user_subscriptions')
-          .update({
-            consultations_total: newTotal,
-            consultations_remaining: newRemaining,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId);
-      } else {
-        // Create new record if it doesn't exist
-        await supabase
-          .from('user_subscriptions')
-          .insert({
-            user_id: userId,
-            consultations_total: quantity,
-            consultations_remaining: quantity,
-            payment_provider: 'paystack',
-            updated_at: new Date().toISOString()
-          });
-      }
-
-      // Update user credits
-      const { data: creditData, error: creditError } = await supabase
+    // Process based on product type
+    if (productType === 'consultation') {
+      // Add consultation credits to the user
+      const { data: userData, error: userError } = await supabase
         .from('user_credits')
         .select('balance, total_earned')
         .eq('user_id', userId)
         .single();
 
-      if (creditError && creditError.code !== 'PGRST116') {
-        console.error('Error fetching user credits:', creditError);
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error fetching user credits:', userError);
       }
 
-      if (creditData) {
-        // Update existing credits
-        await supabase
+      // Calculate new balances
+      let currentBalance = 0;
+      let currentEarned = 0;
+      
+      if (userData) {
+        currentBalance = userData.balance || 0;
+        currentEarned = userData.total_earned || 0;
+      }
+      
+      const newBalance = currentBalance + quantity;
+      const newEarned = currentEarned + quantity;
+
+      // Update or insert user_credits record
+      if (userData) {
+        const { error: creditUpdateError } = await supabase
           .from('user_credits')
           .update({
-            balance: creditData.balance + quantity,
-            total_earned: creditData.total_earned + quantity,
+            balance: newBalance,
+            total_earned: newEarned,
             updated_at: new Date().toISOString()
           })
           .eq('user_id', userId);
+
+        if (creditUpdateError) {
+          console.error('Error updating user credits:', creditUpdateError);
+        }
       } else {
-        // Create new credit record
-        await supabase
+        const { error: creditInsertError } = await supabase
           .from('user_credits')
           .insert({
             user_id: userId,
             balance: quantity,
             total_earned: quantity,
-            total_used: 0,
-            updated_at: new Date().toISOString()
+            total_used: 0
           });
+
+        if (creditInsertError) {
+          console.error('Error inserting user credits:', creditInsertError);
+        }
+      }
+
+      // Add record to consultation_purchases if needed
+      if (metadata.package_id) {
+        const { error: purchaseError } = await supabase
+          .from('consultation_purchases')
+          .insert({
+            user_id: userId,
+            package_id: metadata.package_id,
+            quantity,
+            amount_paid: transaction.amount / 100, // Convert from kobo to naira
+            payment_provider: 'paystack',
+            payment_provider_reference: reference
+          });
+
+        if (purchaseError) {
+          console.error('Error recording consultation purchase:', purchaseError);
+        }
+      }
+    } else if (productType === 'subscription') {
+      // Handle subscription purchase
+      const tier = metadata.tier || 'free';
+      const billingCycle = metadata.billing_cycle || 'monthly';
+      
+      // Calculate next billing date
+      const nextBillingDate = new Date();
+      if (billingCycle === 'annual') {
+        nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
+      } else {
+        nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+      }
+      
+      // Update or insert user_subscriptions record
+      const { data: existingSub, error: subQueryError } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+        
+      if (subQueryError && subQueryError.code !== 'PGRST116') {
+        console.error('Error fetching subscription:', subQueryError);
+      }
+      
+      if (existingSub) {
+        // Update existing subscription
+        const { error: subUpdateError } = await supabase
+          .from('user_subscriptions')
+          .update({
+            subscription_tier: tier,
+            is_annual_billing: billingCycle === 'annual',
+            next_billing_date: nextBillingDate.toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+          
+        if (subUpdateError) {
+          console.error('Error updating subscription:', subUpdateError);
+        }
+      } else {
+        // Create new subscription
+        const { error: subInsertError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: userId,
+            subscription_tier: tier,
+            is_annual_billing: billingCycle === 'annual',
+            next_billing_date: nextBillingDate.toISOString(),
+            consultations_total: tier === 'free' ? 10 : tier === 'starter' ? 50 : tier === 'professional' ? 200 : 500,
+            consultations_used: 0
+          });
+          
+        if (subInsertError) {
+          console.error('Error creating subscription:', subInsertError);
+        }
       }
     }
 
     return new Response(
-      JSON.stringify({
-        success: isSuccess,
-        transaction: isSuccess ? data.data : null
+      JSON.stringify({ 
+        success: true, 
+        transaction: {
+          amount: transaction.amount / 100,
+          currency: transaction.currency,
+          reference: transaction.reference,
+          status: transaction.status,
+          product_type: productType,
+          quantity: quantity
+        } 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
