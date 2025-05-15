@@ -102,6 +102,7 @@ export type Database = {
           id: string
           is_active: boolean
           package_id: string | null
+          payment_provider: string | null
           price: number
           region: string
           updated_at: string | null
@@ -114,6 +115,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           package_id?: string | null
+          payment_provider?: string | null
           price: number
           region: string
           updated_at?: string | null
@@ -126,6 +128,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           package_id?: string | null
+          payment_provider?: string | null
           price?: number
           region?: string
           updated_at?: string | null
@@ -148,6 +151,7 @@ export type Database = {
           currency_symbol: string
           id: string
           is_active: boolean
+          payment_provider: string | null
           plan_id: string | null
           price_annual: number
           price_monthly: number
@@ -161,6 +165,7 @@ export type Database = {
           currency_symbol: string
           id?: string
           is_active?: boolean
+          payment_provider?: string | null
           plan_id?: string | null
           price_annual: number
           price_monthly: number
@@ -174,6 +179,7 @@ export type Database = {
           currency_symbol?: string
           id?: string
           is_active?: boolean
+          payment_provider?: string | null
           plan_id?: string | null
           price_annual?: number
           price_monthly?: number
@@ -241,6 +247,78 @@ export type Database = {
           price_monthly?: number
           tier?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      transaction_history: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          id: string
+          metadata: Json | null
+          payment_provider: string
+          payment_provider_reference: string | null
+          status: string
+          transaction_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency: string
+          id?: string
+          metadata?: Json | null
+          payment_provider: string
+          payment_provider_reference?: string | null
+          status: string
+          transaction_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payment_provider?: string
+          payment_provider_reference?: string | null
+          status?: string
+          transaction_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_credits: {
+        Row: {
+          balance: number
+          created_at: string | null
+          id: string
+          total_earned: number
+          total_used: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          total_earned?: number
+          total_used?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          total_earned?: number
+          total_used?: number
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { createConsultationCheckout } from "@/services/payment/stripeService";
+import { createConsultationCheckout } from "@/services/payment/paymentService";
 import { getConsultationPackagesWithRegionalPricing, getRegionInfo, formatPrice } from "@/services/regionalPricingService";
 import { toast } from "sonner";
 
@@ -126,7 +126,7 @@ export const ConsultationTopup = ({
                 throw new Error("Selected package not found");
             }
 
-            // Use real Stripe checkout
+            // Use our unified payment service
             const result = await createConsultationCheckout(
                 selectedPackage.quantity,
                 `${window.location.origin}/payment-success`,
@@ -134,7 +134,7 @@ export const ConsultationTopup = ({
             );
 
             if (result.success && result.url) {
-                // Redirect to Stripe checkout
+                // Redirect to checkout
                 window.location.href = result.url;
             } else {
                 toast.error(result.error || "Failed to create checkout");

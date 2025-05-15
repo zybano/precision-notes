@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { createPlanCheckout } from "@/services/payment/subscriptionService";
+import { createPlanCheckout } from "@/services/payment/paymentService";
 import { SubscriptionTier } from "@/services/subscriptionService";
 import { getRegionInfo } from "@/services/regionalPricingService";
 
@@ -48,7 +49,7 @@ export const SubscriptionCheckout = ({
     try {
       setIsLoading(true);
 
-      // Use the real Stripe checkout flow
+      // Use the unified payment service
       const result = await createPlanCheckout({
         tier,
         isAnnual,
@@ -59,7 +60,7 @@ export const SubscriptionCheckout = ({
       });
 
       if (result.success && result.url) {
-        // Redirect to Stripe checkout page
+        // Redirect to checkout page
         window.location.href = result.url;
       } else {
         toast.error(result.error || "Failed to create checkout session");
@@ -106,8 +107,8 @@ export const SubscriptionCheckout = ({
             <div className="text-2xl font-bold">
               {price}
               <span className="text-sm font-normal text-muted-foreground">
-              {isAnnual ? '/year' : '/month'}
-            </span>
+                {isAnnual ? '/year' : '/month'}
+              </span>
             </div>
 
             {savings && (

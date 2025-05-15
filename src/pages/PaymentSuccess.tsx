@@ -6,12 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle2 } from "lucide-react";
-import { verifyTopupPurchase } from "@/services/payment/stripeService";
+import { verifyTopupPurchase } from "@/services/payment/paymentService";
 import { supabase } from "@/integrations/supabase/client";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams.get('session_id') || searchParams.get('reference');
+  const paymentProvider = searchParams.get('provider') || 'stripe'; // Default to stripe
   const navigate = useNavigate();
   const { refreshSubscriptionInfo } = useAuth();
   const [verifyingPurchase, setVerifyingPurchase] = useState(true);
@@ -26,7 +27,7 @@ const PaymentSuccess = () => {
     const verifyPurchase = async () => {
       if (!sessionId) {
         setVerifyingPurchase(false);
-        toast.error("No session ID found");
+        toast.error("No session ID or reference found");
         return;
       }
 
@@ -36,8 +37,8 @@ const PaymentSuccess = () => {
         // First, check if this was a subscription or a consultation purchase
         const { data: purchases, error: purchaseError } = await supabase
             .from('consultation_purchases')
-            .select('quantity')
-            .eq('stripe_payment_id', sessionId)
+            .select('quantity, payment_provider')
+            .eq(`payment_provider_reference`, sessionId)
             .single();
 
         if (!purchaseError && purchases) {
@@ -51,8 +52,8 @@ const PaymentSuccess = () => {
           // This might be a subscription
           const { data: subscription, error: subError } = await supabase
               .from('user_subscriptions')
-              .select('subscription_tier')
-              .eq('stripe_subscription_id', sessionId)
+              .select('subscription_tier, payment_provider')
+              .eq(`payment_provider_subscription_id`, sessionId)
               .single();
 
           if (!subError && subscription) {
@@ -64,7 +65,10 @@ const PaymentSuccess = () => {
             setVerified(true);
           } else {
             // As a fallback, try the verification endpoint
-            const success = await verifyTopupPurchase(sessionId);
+            const success = await verifyTopupPurchase(
+              sessionId, 
+              (paymentProvider as 'stripe' | 'paystack')
+            );
 
             if (success) {
               setVerified(true);
@@ -88,7 +92,7 @@ const PaymentSuccess = () => {
     };
 
     verifyPurchase();
-  }, [sessionId, refreshSubscriptionInfo]);
+  }, [sessionId, paymentProvider, refreshSubscriptionInfo]);
 
   return (
       <div className="container max-w-md mx-auto py-12 px-4">

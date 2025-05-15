@@ -1,5 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { SubscriptionTier } from "@/services/subscriptionService";
+import { addCredits } from "./paymentService";
 
 // Function to create a Stripe checkout session for consultation top-up
 export const createConsultationCheckout = async (
@@ -22,9 +24,8 @@ export const createConsultationCheckout = async (
         .eq('is_active', true)
         .single();
 
-    if (packagesError) {
+    if (packagesError && packagesError.code !== 'PGRST116') {
       console.error("Error fetching package:", packagesError);
-      // If no exact match, continue without package ID
     }
 
     // Create a checkout session via Supabase Edge Function
@@ -40,7 +41,8 @@ export const createConsultationCheckout = async (
         metadata: {
           user_id: user.id,
           product_type: 'consultation',
-          package_id: packages?.id
+          package_id: packages?.id,
+          quantity
         }
       })
     });
@@ -71,24 +73,41 @@ export const verifyTopupPurchase = async (sessionId: string): Promise<boolean> =
 
     if (error) throw error;
 
-    // If verification successful, record the purchase in our new table
+    // If verification successful, record the purchase in our database
     if (data?.success && data?.session) {
       const session = data.session;
       const userId = session.metadata?.user_id;
       const packageId = session.metadata?.package_id;
-      const quantity = session.metadata?.quantity || 0;
+      const quantity = parseInt(session.metadata?.quantity || '0', 10);
 
       if (userId) {
+        // Insert into consultation_purchases table
         await supabase.from('consultation_purchases').insert({
           user_id: userId,
           package_id: packageId || null,
-          quantity: Number(quantity),
-          amount_paid: session.amount_total || 0,
-          stripe_payment_id: session.id
+          quantity,
+          amount_paid: session.amount_total ? session.amount_total / 100 : 0, // Convert from cents
+          payment_provider: 'stripe',
+          payment_provider_reference: session.id
         });
 
-        // Also update the user's consultation total
-        await addConsultationsToUser(userId, Number(quantity));
+        // Record transaction
+        await supabase.from('transaction_history').insert({
+          user_id: userId,
+          amount: session.amount_total ? session.amount_total / 100 : 0,
+          currency: session.currency?.toUpperCase() || 'USD',
+          payment_provider: 'stripe',
+          payment_provider_reference: session.id,
+          transaction_type: 'topup',
+          status: 'completed',
+          metadata: {
+            quantity,
+            package_id: packageId
+          }
+        });
+
+        // Also add credits to the user
+        await addCredits(quantity);
       }
     }
 
@@ -99,41 +118,38 @@ export const verifyTopupPurchase = async (sessionId: string): Promise<boolean> =
   }
 };
 
-// Helper function to update user's consultations
-const addConsultationsToUser = async (userId: string, quantity: number): Promise<void> => {
+// Function to create a plan checkout session
+export const createPlanCheckout = async (params: {
+  tier: SubscriptionTier;
+  isAnnual: boolean;
+  successUrl?: string;
+  cancelUrl?: string;
+  regionCode?: string;
+}): Promise<{ success: boolean; url?: string; error?: string }> => {
   try {
-    // Get current subscription
-    const { data: subscription, error: fetchError } = await supabase
-        .from('user_subscriptions')
-        .select('consultations_total')
-        .eq('user_id', userId)
-        .single();
+    // Set default success/cancel URLs if not provided
+    const successUrl = params.successUrl || `${window.location.origin}/payment-success`;
+    const cancelUrl = params.cancelUrl || `${window.location.origin}/payment-canceled`;
 
-    if (fetchError) {
-      console.error("Error fetching subscription:", fetchError);
-      return;
-    }
+    // Call the edge function to create a checkout session
+    const { data, error } = await supabase.functions.invoke('create-plan-checkout', {
+      body: JSON.stringify({
+        tier: params.tier,
+        isAnnual: params.isAnnual,
+        successUrl,
+        cancelUrl,
+        regionCode: params.regionCode || 'US' // Include region code for pricing adjustment
+      })
+    });
 
-    const newTotal = (subscription?.consultations_total || 0) + quantity;
+    if (error) throw new Error(error.message);
 
-    // Update user_subscriptions table
-    const { error } = await supabase
-        .from('user_subscriptions')
-        .update({
-          consultations_total: newTotal,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
-
-    if (error) {
-      console.error("Error updating consultations:", error);
-    }
+    return { success: true, url: data.url };
   } catch (error) {
-    console.error("Error adding consultations to user:", error);
+    console.error("Error creating plan checkout:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to create checkout" 
+    };
   }
-};
-
-export default {
-  createConsultationCheckout,
-  verifyTopupPurchase
 };
