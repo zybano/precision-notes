@@ -21,7 +21,7 @@ export function Navigation({ currentPage }: { currentPage?: string }) {
     { name: "About", path: "/about" },
     { name: "Blog", path: "/blog" },
     // Add a link to consultation purchase
-    { name: "Buy Consultations", path: "/consultation-purchase" },
+    // { name: "Buy Consultations", path: "/consultation-purchase" },
   ];
 
   return (

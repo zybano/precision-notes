@@ -34,7 +34,7 @@ export interface DocumentType {
 // Function to fetch real activity data from Supabase
 export const getActivityData = async (userId: string | undefined) => {
   if (!userId) {
-    return getDefaultDocuments();
+    // return getDefaultDocuments();
   }
 
   try {
@@ -51,7 +51,7 @@ export const getActivityData = async (userId: string | undefined) => {
     if (totalError) throw totalError;
     
     if (!totalDocs || totalDocs.length === 0) {
-      return getDefaultDocuments();
+      // return getDefaultDocuments();
     }
     
     return totalDocs.map(doc => ({
@@ -65,7 +65,7 @@ export const getActivityData = async (userId: string | undefined) => {
     
   } catch (error) {
     console.error("Error fetching activity data:", error);
-    return getDefaultDocuments();
+    // return getDefaultDocuments();
   }
 };
 
@@ -266,9 +266,9 @@ function getDefaultMetrics(): MetricType[] {
 
 // Mock function for document retrieval
 export const fetchUserDocuments = async (userId: string | undefined): Promise<DocumentType[]> => {
-  if (!userId) {
-    return getDefaultDocuments();
-  }
+  // if (!userId) {
+  //   return getDefaultDocuments();
+  // }
   
   try {
     const { data, error } = await supabase
@@ -280,9 +280,9 @@ export const fetchUserDocuments = async (userId: string | undefined): Promise<Do
     
     if (error) throw error;
     
-    if (!data || data.length === 0) {
-      return getDefaultDocuments();
-    }
+    // if (!data || data.length === 0) {
+    //   return getDefaultDocuments();
+    // }
     
     return data.map(doc => ({
       id: doc.id || '',
@@ -294,47 +294,10 @@ export const fetchUserDocuments = async (userId: string | undefined): Promise<Do
     }));
   } catch (error) {
     console.error("Error fetching user documents:", error);
-    return getDefaultDocuments();
+
   }
 };
 
-// Default documents as fallback
-function getDefaultDocuments(): DocumentType[] {
-  return [
-    {
-      id: "1",
-      patient: "Adebayo Johnson",
-      type: "SOAP Note",
-      date: "2023-09-15",
-      status: "Completed",
-      preview: "Patient presents with..."
-    },
-    {
-      id: "2",
-      patient: "Chidinma Okonkwo",
-      type: "Surgical Report",
-      date: "2023-09-14",
-      status: "Draft",
-      preview: "Pre-operative assessment..."
-    },
-    {
-      id: "3",
-      patient: "Emmanuel Nwachukwu",
-      type: "Discharge Summary",
-      date: "2023-09-12",
-      status: "Completed",
-      preview: "Patient discharged in stable..."
-    },
-    {
-      id: "4",
-      patient: "Folake Adeyemi",
-      type: "Progress Note",
-      date: "2023-09-10",
-      status: "Signed",
-      preview: "Referral for cardiology..."
-    }
-  ];
-}
 
 // Map icon strings to components - kept for backward compatibility
 export const getIconForMetric = (iconName: Metric['icon']) => {

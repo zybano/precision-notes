@@ -29,7 +29,7 @@ export const BillingToggle = ({ billingCycle, onChange }: BillingToggleProps) =>
       >
         Annual
         <span className="absolute -top-2 -right-2 bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded-full">
-          Save 5%
+          Save 20%
         </span>
       </button>
     </div>

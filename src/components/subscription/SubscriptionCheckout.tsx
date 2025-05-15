@@ -82,9 +82,9 @@ export const SubscriptionCheckout = ({
 
     if (isNaN(numericPrice)) return null;
 
-    // Annual plan saves 5% compared to paying monthly
+    // Annual plan saves 20% compared to paying monthly
     const monthlyCost = numericPrice;
-    const annualCost = monthlyCost * 12 * 0.95;
+    const annualCost = monthlyCost * 12 * 0.80;
     const savings = monthlyCost * 12 - annualCost;
 
     const currencySymbol = regionInfo?.currencySymbol || '$';

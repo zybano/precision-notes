@@ -316,29 +316,65 @@ export const formatRegionalPrice = async (priceInCents: number): Promise<string>
   }
 };
 
-/**
- * Cache the user's region info for better performance
- */
-let cachedRegionInfo: RegionalPricingInfo | null = null;
 
 /**
- * Get cached region info or fetch if not available
+ * Cache key for storing region info in localStorage
+ */
+const REGION_INFO_CACHE_KEY = 'precision_notes_region_info';
+
+/**
+ * Cache expiry time in milliseconds (72 hours)
+ */
+const CACHE_EXPIRY_TIME = 72 * 60 * 60 * 1000;
+
+/**
+ * Get cached region info from localStorage or fetch if not available
  */
 export const getRegionInfo = async (): Promise<RegionalPricingInfo> => {
-  if (cachedRegionInfo) {
-    return cachedRegionInfo;
+  try {
+    // Try to get cached data from localStorage
+    const cachedData = localStorage.getItem(REGION_INFO_CACHE_KEY);
+
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+
+      // Check if the cache has expired
+      if (parsedData.timestamp && Date.now() - parsedData.timestamp < CACHE_EXPIRY_TIME) {
+        console.log('Using cached region info from localStorage');
+        return parsedData.regionInfo;
+      }
+
+      // Cache expired, clear it
+      console.log('Region info cache expired, fetching fresh data');
+      localStorage.removeItem(REGION_INFO_CACHE_KEY);
+    }
+
+    // If no valid cache exists, fetch fresh data
+    const regionInfo = await detectUserCountry();
+
+    // Store in localStorage with timestamp
+    const cacheData = {
+      regionInfo,
+      timestamp: Date.now()
+    };
+
+    localStorage.setItem(REGION_INFO_CACHE_KEY, JSON.stringify(cacheData));
+
+    return regionInfo;
+  } catch (error) {
+    // If there's any error with localStorage, fall back to direct detection
+    console.error('Error accessing localStorage:', error);
+    return await detectUserCountry();
   }
-  
-  cachedRegionInfo = await detectUserCountry();
-  return cachedRegionInfo;
 };
 
 /**
- * Clear cached region info (useful for testing)
+ * Clear cached region info
  */
 export const clearRegionCache = (): void => {
-  cachedRegionInfo = null;
+  localStorage.removeItem(REGION_INFO_CACHE_KEY);
 };
+
 
 /**
  * Format price for display based on currency and value
@@ -348,7 +384,7 @@ export const formatPrice = (value: number, currencySymbol: string = '$'): string
 };
 
 /**
- * Set country override for testing (will be stored in localStorage)
+ * Set country override for testing
  */
 export const setCountryOverride = (countryCode: string | null): void => {
   if (countryCode) {
@@ -356,7 +392,7 @@ export const setCountryOverride = (countryCode: string | null): void => {
   } else {
     localStorage.removeItem('override_country_code');
   }
-  
+
   // Clear cache to ensure new country code takes effect
   clearRegionCache();
 };
@@ -367,16 +403,16 @@ export const setCountryOverride = (countryCode: string | null): void => {
 export const toggleNigeriaMode = (): boolean => {
   const currentOverride = localStorage.getItem('override_country_code');
   const isNigeria = currentOverride === NIGERIA_COUNTRY_CODE;
-  
+
   if (isNigeria) {
     localStorage.removeItem('override_country_code');
   } else {
     localStorage.setItem('override_country_code', NIGERIA_COUNTRY_CODE);
   }
-  
+
   // Clear cache to ensure new country code takes effect
   clearRegionCache();
-  
+
   // Return new status
   return !isNigeria;
 };

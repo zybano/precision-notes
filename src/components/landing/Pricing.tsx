@@ -121,7 +121,7 @@ export function Pricing() {
       ctaLink: plan.cta_link || (plan.tier === 'free' ? '/signup' : plan.tier === 'enterprise' ? 'mailto:sales@precisionnote.com' : `/signup?plan=${plan.tier}`),
       highlight: plan.highlight || getPlanHighlight(plan.tier),
       popular: plan.popular || plan.tier === 'starter',
-      savings: plan.tier !== 'free' && plan.tier !== 'enterprise' ? 'Save 5% annually' : undefined,
+      savings: plan.tier !== 'free' && plan.tier !== 'enterprise' ? 'Save 20% annually' : undefined,
       contactSales: plan.contact_sales || plan.tier === 'enterprise'
     };
   };
@@ -207,7 +207,7 @@ export function Pricing() {
         ],
         highlight: "Most Popular",
         popular: true,
-        savings: "Save 5% annually"
+        savings: "Save 20% annually"
       },
       {
         id: '3',
@@ -230,7 +230,7 @@ export function Pricing() {
         ],
         highlight: "Best Value",
         popular: false,
-        savings: "Save 5% annually"
+        savings: "Save 20% annually"
       },
       {
         id: '4',

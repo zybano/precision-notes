@@ -7,7 +7,7 @@ import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import DocumentationPage from './pages/DocumentationPage';
 import Settings from './pages/Settings';
-import Pricing from './pages/Pricing';
+import PricingPage from './pages/PricingPage.tsx';
 import Blog from './pages/Blog';
 import About from './pages/About';
 import ForgotPassword from './pages/ForgotPassword';
@@ -23,8 +23,8 @@ import NotFound from './pages/NotFound';
 import Layout from '@/components/Layout';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { Toaster } from '@/components/ui/toaster';
-import { ToastProvider } from '@/hooks/use-toast';
+import { Toaster } from 'sonner'; // Update to use Sonner directly
+import { ToastProvider } from '@/providers/ToastProvider'; // Import from our new provider
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Create a client
@@ -50,7 +50,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/about" element={<About />} />
               <Route path="/features" element={<Features />} />
@@ -75,7 +75,7 @@ function App() {
               
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <Toaster />
+            <Toaster position="top-right" richColors />
           </SidebarProvider>
         </ToastProvider>
       </AuthProvider>

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { createPlanCheckout as createStripePlanCheckout } from "./stripeService";
 import { createPaystackCheckout } from "./paystackService";
 import { SubscriptionTier } from "@/services/subscriptionService";
+import { getRegionInfo } from "@/services/regionalPricingService";
 
 /**
  * Get the current user's credit balance
@@ -72,39 +73,128 @@ export const deductCredits = async (amount: number = 1): Promise<{
       };
     }
 
-    // Update credits in the database
+    // Calculate new balance
     const newBalance = (balance || 0) - amount;
+    
+    // Update the balance
     const { error: updateError } = await supabase
       .from('user_credits')
       .update({ 
         balance: newBalance,
-        total_used: supabase.rpc('increment', { row_id: user.id, increment_amount: amount }),
         updated_at: new Date().toISOString()
       })
       .eq('user_id', user.id);
-
+      
     if (updateError) {
-      console.error("Error updating credits:", updateError);
-      return { success: false, error: "Failed to deduct credits" };
+      console.error("Error updating credits balance:", updateError);
+      return { success: false, error: "Failed to update credit balance" };
+    }
+    
+    try {
+      // Update the total_used with a separate direct call
+      const { error: totalUsedError } = await supabase
+        .from('user_credits')
+        .update({ 
+          total_used: supabase.rpc('get_total_used', { user_id: user.id }) + amount
+        })
+        .eq('user_id', user.id);
+      
+      if (totalUsedError) {
+        console.error("Error updating total_used:", totalUsedError);
+        // Continue execution, as this is not critical
+      }
+    } catch (err) {
+      console.error("Error updating total_used:", err);
+      // Continue execution, as this is not critical
     }
 
     // Record transaction
-    await supabase.from('transaction_history').insert({
-      user_id: user.id,
-      amount: -amount, // Negative amount for deduction
-      currency: 'CREDITS',
-      payment_provider: 'system',
-      transaction_type: 'usage',
-      status: 'completed',
-      metadata: {
-        action: 'document_creation'
-      }
-    });
+    try {
+      await supabase.from('transaction_history').insert({
+        user_id: user.id,
+        amount: -amount, // Negative amount for deduction
+        currency: 'CREDITS',
+        payment_provider: 'system',
+        transaction_type: 'usage',
+        status: 'completed',
+        metadata: {
+          action: 'document_creation'
+        }
+      });
+    } catch (err) {
+      console.error("Error recording transaction:", err);
+      // Continue execution, as this is not critical
+    }
 
     return { success: true, balance: newBalance };
   } catch (error) {
     console.error("Error in deductCredits:", error);
     return { success: false, error: "An unexpected error occurred" };
+  }
+};
+
+/**
+ * Create checkout session for consultation credits purchase based on user's region
+ */
+export const createConsultationCheckout = async (
+    quantity: number,
+    successUrl: string,
+    cancelUrl: string
+): Promise<{ success: boolean; url?: string; error?: string }> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Get region info to determine the payment processor
+    const regionInfo = await getRegionInfo();
+
+    // Use appropriate payment processor based on region
+    if (regionInfo.isNigeria) {
+      // Import and use the createConsultationCheckout from paystackService
+      const { createConsultationCheckout: createPaystackConsultationCheckout } = await import('./paystackService');
+      return await createPaystackConsultationCheckout(quantity, successUrl, cancelUrl);
+    } else {
+      // Use the Stripe implementation
+      const { createConsultationCheckout: createStripeConsultationCheckout } = await import('./stripeService');
+      return await createStripeConsultationCheckout(quantity, successUrl, cancelUrl);
+    }
+  } catch (error) {
+    console.error("Error creating consultation checkout:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create checkout"
+    };
+  }
+};
+
+/**
+ * Verify a topup purchase from any payment provider
+ */
+export const verifyTopupPurchase = async (
+    sessionId: string,
+    provider: 'stripe' | 'paystack' = 'stripe'
+): Promise<boolean> => {
+  try {
+    if (!sessionId) {
+      console.error("No session ID provided for verification");
+      return false;
+    }
+
+    // Verify with the appropriate payment provider
+    if (provider === 'paystack') {
+      // Import and use the verification function from paystackService
+      const { verifyTopupPurchase: verifyPaystackTopupPurchase } = await import('./paystackService');
+      return await verifyPaystackTopupPurchase(sessionId);
+    } else {
+      // Use Stripe verification
+      const { verifyTopupPurchase: verifyStripeTopupPurchase } = await import('./stripeService');
+      return await verifyStripeTopupPurchase(sessionId);
+    }
+  } catch (error) {
+    console.error("Error verifying topup purchase:", error);
+    return false;
   }
 };
 

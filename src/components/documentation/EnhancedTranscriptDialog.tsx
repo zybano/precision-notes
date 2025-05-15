@@ -14,7 +14,7 @@ import EnhancedTranscriptDisplay from "./EnhancedTranscriptDisplay";
 import { Document, PatientInfo } from "./DocumentTypes";
 import { TranscriptionResult } from "@/services/transcription";
 import { UseFormReturn } from "react-hook-form";
-import { updateDocument } from "@/services/documents/documentService";
+import { updateDocument } from "@/services/supabaseSetup";
 import { toast } from "sonner";
 
 interface EnhancedTranscriptDialogProps {
@@ -32,18 +32,18 @@ interface EnhancedTranscriptDialogProps {
 }
 
 const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
-  open,
-  onOpenChange,
-  selectedDocument,
-  parsedTranscript,
-  transcriptText,
-  transcriptSummary,
-  formattedNotes,
-  showSummary,
-  setShowSummary,
-  form,
-  onEditDocument
-}) => {
+                                                                             open,
+                                                                             onOpenChange,
+                                                                             selectedDocument,
+                                                                             parsedTranscript,
+                                                                             transcriptText,
+                                                                             transcriptSummary,
+                                                                             formattedNotes,
+                                                                             showSummary,
+                                                                             setShowSummary,
+                                                                             form,
+                                                                             onEditDocument
+                                                                           }) => {
   // Extract patient info from transcript data if available
   const extractedPatientInfo: PatientInfo | null = useMemo(() => {
     if (!parsedTranscript) return null;
@@ -53,18 +53,18 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
       if ('patientInfo' in parsedTranscript) {
         return parsedTranscript.patientInfo as PatientInfo;
       }
-      
+
       // Otherwise, try to extract basic info from the transcript summary
       if (transcriptSummary) {
         // Simple pattern matching to extract patient name
         const nameMatch = transcriptSummary.match(/patient(?:'s)? name is ([\w\s]+)[,\.\n]/i) ||
-                         transcriptSummary.match(/patient: ([\w\s]+)[,\.\n]/i);
-                         
+            transcriptSummary.match(/patient: ([\w\s]+)[,\.\n]/i);
+
         const ageMatch = transcriptSummary.match(/([0-9]+)[- ]year[s]?[- ]old/i) ||
-                        transcriptSummary.match(/age:?\s*([0-9]+)/i);
-                        
+            transcriptSummary.match(/age:?\s*([0-9]+)/i);
+
         const genderMatch = transcriptSummary.match(/\b(male|female|non-binary)\b/i);
-        
+
         if (nameMatch || ageMatch || genderMatch) {
           return {
             name: nameMatch ? nameMatch[1].trim() : "Unknown",
@@ -73,7 +73,7 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
           };
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error("Error extracting patient info:", error);
@@ -91,14 +91,14 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
           ...parsedTranscript,
           patientInfo: extractedPatientInfo
         };
-        
+
         // Update the form before opening the document
         form.setValue('patientInfo', extractedPatientInfo);
-        
+
         // Update the transcript result in the form
         form.setValue('transcriptResult', enhancedTranscript);
       }
-      
+
       // Call the main edit handler
       onEditDocument(selectedDocument);
       onOpenChange(false);
@@ -111,7 +111,7 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
       toast.error("No document selected to update");
       return;
     }
-    
+
     try {
       // Prepare the data for update
       const updateData = {
@@ -119,10 +119,10 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
         summary: transcriptSummary || null,
         notes: formattedNotes || null
       };
-      
-      // Call the updateDocument function from documentService
+
+      // Call the updateDocument function from supabaseSetup
       const { success, error } = await updateDocument(selectedDocument.id, updateData);
-      
+
       if (success) {
         toast.success("Document updated successfully");
       } else {
@@ -135,59 +135,59 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {selectedDocument?.patient_name} - Transcribed Conversation
-          </DialogTitle>
-          <DialogDescription>
-            Transcribed on {selectedDocument?.updated_at ? new Date(selectedDocument.updated_at).toLocaleString() : ""}
-            {extractedPatientInfo && extractedPatientInfo.name !== "Unknown" && (
-              <div className="mt-1 text-sm">
-                <span className="font-medium">Patient:</span> {extractedPatientInfo.name}
-                {extractedPatientInfo.age && `, ${extractedPatientInfo.age} years old`}
-                {extractedPatientInfo.gender && `, ${extractedPatientInfo.gender}`}
-              </div>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDocument?.patient_name} - Transcribed Conversation
+            </DialogTitle>
+            <DialogDescription>
+              Transcribed on {selectedDocument?.updated_at ? new Date(selectedDocument.updated_at).toLocaleString() : ""}
+              {extractedPatientInfo && extractedPatientInfo.name !== "Unknown" && (
+                  <div className="mt-1 text-sm">
+                    <span className="font-medium">Patient:</span> {extractedPatientInfo.name}
+                    {extractedPatientInfo.age && `, ${extractedPatientInfo.age} years old`}
+                    {extractedPatientInfo.gender && `, ${extractedPatientInfo.gender}`}
+                  </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 flex-1 overflow-hidden">
+            {parsedTranscript && (
+                <EnhancedTranscriptDisplay
+                    transcriptResult={parsedTranscript}
+                    transcript={transcriptText}
+                    transcriptSummary={transcriptSummary}
+                    formattedNotes={formattedNotes}
+                    patientInfo={extractedPatientInfo}
+                    showSummary={showSummary}
+                    setShowSummary={setShowSummary}
+                    form={form}
+                    documentId={selectedDocument?.id}
+                />
             )}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="mt-4 flex-1 overflow-hidden">
-          {parsedTranscript && (
-            <EnhancedTranscriptDisplay
-              transcriptResult={parsedTranscript}
-              transcript={transcriptText}
-              transcriptSummary={transcriptSummary}
-              formattedNotes={formattedNotes}
-              patientInfo={extractedPatientInfo}
-              showSummary={showSummary}
-              setShowSummary={setShowSummary}
-              form={form}
-              documentId={selectedDocument?.id}
-            />
-          )}
-        </div>
-        
-        <DialogFooter className="flex justify-between">
-          <Button 
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            Close
-          </Button>
-          
-          <Button 
-            variant="default" 
-            className="flex items-center gap-2"
-            onClick={handleUpdateRecord}
-          >
-            <Edit className="h-4 w-4" />
-            Update Document
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </div>
+
+          <DialogFooter className="flex justify-between">
+            <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
+
+            <Button
+                variant="default"
+                className="flex items-center gap-2"
+                onClick={handleUpdateRecord}
+            >
+              <Edit className="h-4 w-4" />
+              Update Document
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
   );
 };
 

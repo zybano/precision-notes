@@ -63,10 +63,11 @@ const PaymentSuccess = () => {
               tier: subscription.subscription_tier
             });
             setVerified(true);
-          } else {
+          }
+          else {
             // As a fallback, try the verification endpoint
             const success = await verifyTopupPurchase(
-              sessionId, 
+              sessionId,
               (paymentProvider as 'stripe' | 'paystack')
             );
 

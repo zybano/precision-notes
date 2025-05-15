@@ -1,14 +1,17 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, Pause, StopCircle, Play, FileText, Loader2, Upload } from "lucide-react";
+import { Mic, Pause, StopCircle, Play, FileText, Loader2, Upload, Coins } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DocumentGenerationPanel from "./DocumentGenerationPanel";
-import {DocumentFormat, LLMProvider, TranscriptionResult} from "@/services/transcription";
+import { DocumentFormat, LLMProvider, TranscriptionResult } from "@/services/transcription";
 import SpecialtyTemplates from "@/components/SpecialtyTemplates.tsx";
+import CreditCheckDialog from "./CreditCheckDialog";
+import { hasEnoughCredits, getCredits } from "@/services/payment/simpleCreditService";
+import { toast } from "sonner";
 
 interface EnhancedRecordingInterfaceProps {
     isRecording: boolean;
@@ -31,28 +34,99 @@ interface EnhancedRecordingInterfaceProps {
     onFileUpload: (file: File) => void;
 }
 
+const CREDITS_REQUIRED = {
+    RECORDING: 1,
+    FILE_UPLOAD: 1,
+};
+
 const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
-                                                                                   isRecording,
-                                                                                   isPaused,
-                                                                                   recordingTime,
-                                                                                   isTranscribing,
-                                                                                   useSpeechModelNano,
-                                                                                   setUseSpeechModelNano,
-                                                                                   startRecording,
-                                                                                   pauseRecording,
-                                                                                   stopRecording,
-                                                                                   formatTime,
-                                                                                   onDownloadPdf,
-                                                                                   onCopyToEMR,
-                                                                                   onPrint,
-                                                                                   transcriptResult,
-                                                                                   documentFormat,
-                                                                                   setDocumentFormat,
-                                                                                   onDocumentGenerated,
-                                                                                   onFileUpload,
-                                                                               }) => {
+    isRecording,
+    isPaused,
+    recordingTime,
+    isTranscribing,
+    useSpeechModelNano,
+    setUseSpeechModelNano,
+    startRecording,
+    pauseRecording,
+    stopRecording,
+    formatTime,
+    onDownloadPdf,
+    onCopyToEMR,
+    onPrint,
+    transcriptResult,
+    documentFormat,
+    setDocumentFormat,
+    onDocumentGenerated,
+    onFileUpload,
+}) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileError, setFileError] = useState<string | null>(null);
+    const [creditDialogOpen, setCreditDialogOpen] = useState(false);
+    const [creditInfo, setCreditInfo] = useState({ balance: 0, required: 1 });
+    const [isLoadingCredits, setIsLoadingCredits] = useState(false);
+
+    // Fetch credits on component mount
+    useEffect(() => {
+        loadCredits();
+    }, []);
+
+    const loadCredits = async () => {
+        try {
+            setIsLoadingCredits(true);
+            const { success, balance, error } = await getCredits();
+            if (success) {
+                setCreditInfo(prevState => ({ ...prevState, balance: balance || 0 }));
+            } else {
+                console.error("Failed to load credits:", error);
+                toast.error("Failed to load credit balance", {
+                    description: error || "Please try again later.",
+                });
+            }
+        } catch (err) {
+            console.error("Error loading credits:", err);
+        } finally {
+            setIsLoadingCredits(false);
+        }
+    };
+
+    const checkCreditsAndProceed = async (
+        action: 'record' | 'upload',
+        onSuccess: () => void
+    ) => {
+        try {
+            setIsLoadingCredits(true);
+            
+            // Determine credits required based on action
+            const requiredCredits = action === 'record' 
+                ? CREDITS_REQUIRED.RECORDING 
+                : CREDITS_REQUIRED.FILE_UPLOAD;
+            
+            // Update the required credits in state
+            setCreditInfo(prevState => ({ ...prevState, required: requiredCredits }));
+            
+            // Check if user has enough credits
+            const hasEnough = await hasEnoughCredits(requiredCredits);
+            
+            if (hasEnough) {
+                // User has enough credits, proceed with the action
+                onSuccess();
+            } else {
+                // User doesn't have enough credits, show the dialog
+                setCreditDialogOpen(true);
+            }
+        } catch (err) {
+            console.error(`Error checking credits for ${action}:`, err);
+            toast.error("Failed to verify credits", {
+                description: "Please try again later.",
+            });
+        } finally {
+            setIsLoadingCredits(false);
+        }
+    };
+
+    const handleStartRecording = () => {
+        checkCreditsAndProceed('record', startRecording);
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFileError(null);
@@ -82,7 +156,8 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                 return;
             }
 
-            onFileUpload(file);
+            // Check credits before processing the file
+            checkCreditsAndProceed('upload', () => onFileUpload(file));
         };
 
         audio.onerror = () => {
@@ -140,6 +215,8 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
 
     return (
         <div className="space-y-6">
+           
+
             <Tabs defaultValue="record" className="w-full">
                 <TabsList className="grid grid-cols-3 mb-4">
                     <TabsTrigger value="record" className="flex items-center">
@@ -205,20 +282,28 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                                                 <>
                                                     <Button
                                                         type="button" 
-                                                        onClick={startRecording}
+                                                        onClick={handleStartRecording}
                                                         className="bg-primary hover:bg-primary/90"
+                                                        disabled={isLoadingCredits}
                                                     >
                                                         <Mic className="h-4 w-4 mr-2"/>
                                                         Start Recording
+                                                        <span className="ml-2 text-xs opacity-80">
+                                                            ({CREDITS_REQUIRED.RECORDING} credit)
+                                                        </span>
                                                     </Button>
                                                     <div className="flex flex-col items-center gap-2">
                                                         <Button
                                                             type="button" 
                                                             variant="outline"
                                                             onClick={() => fileInputRef.current?.click()}
+                                                            disabled={isLoadingCredits}
                                                         >
                                                             <Upload className="h-4 w-4 mr-2"/>
                                                             Upload Audio File
+                                                            <span className="ml-2 text-xs opacity-80">
+                                                                ({CREDITS_REQUIRED.FILE_UPLOAD} credits)
+                                                            </span>
                                                         </Button>
                                                         <input
                                                             type="file"
@@ -323,7 +408,16 @@ const EnhancedRecordingInterface: React.FC<EnhancedRecordingInterfaceProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* Credit Check Dialog */}
+            <CreditCheckDialog 
+                open={creditDialogOpen}
+                onOpenChange={setCreditDialogOpen}
+                currentBalance={creditInfo.balance}
+                requiredCredits={creditInfo.required}
+            />
         </div>
     );
 }
+
 export default EnhancedRecordingInterface;
