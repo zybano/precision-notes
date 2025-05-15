@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      consultation_packages: {
+        Row: {
+          created_at: string | null
+          discount_percentage: number
+          highlight: string | null
+          id: string
+          is_active: boolean
+          price: number
+          quantity: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percentage?: number
+          highlight?: string | null
+          id?: string
+          is_active?: boolean
+          price: number
+          quantity: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discount_percentage?: number
+          highlight?: string | null
+          id?: string
+          is_active?: boolean
+          price?: number
+          quantity?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       medical_documents: {
         Row: {
           created_at: string
@@ -57,6 +90,157 @@ export type Database = {
           transcript_data?: string | null
           type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      regional_consultation_pricing: {
+        Row: {
+          country_code: string
+          created_at: string | null
+          currency: string
+          currency_symbol: string
+          id: string
+          is_active: boolean
+          package_id: string | null
+          price: number
+          region: string
+          updated_at: string | null
+        }
+        Insert: {
+          country_code: string
+          created_at?: string | null
+          currency: string
+          currency_symbol: string
+          id?: string
+          is_active?: boolean
+          package_id?: string | null
+          price: number
+          region: string
+          updated_at?: string | null
+        }
+        Update: {
+          country_code?: string
+          created_at?: string | null
+          currency?: string
+          currency_symbol?: string
+          id?: string
+          is_active?: boolean
+          package_id?: string | null
+          price?: number
+          region?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regional_consultation_pricing_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regional_pricing: {
+        Row: {
+          country_code: string
+          created_at: string | null
+          currency: string
+          currency_symbol: string
+          id: string
+          is_active: boolean
+          plan_id: string | null
+          price_annual: number
+          price_monthly: number
+          region: string
+          updated_at: string | null
+        }
+        Insert: {
+          country_code: string
+          created_at?: string | null
+          currency: string
+          currency_symbol: string
+          id?: string
+          is_active?: boolean
+          plan_id?: string | null
+          price_annual: number
+          price_monthly: number
+          region: string
+          updated_at?: string | null
+        }
+        Update: {
+          country_code?: string
+          created_at?: string | null
+          currency?: string
+          currency_symbol?: string
+          id?: string
+          is_active?: boolean
+          plan_id?: string | null
+          price_annual?: number
+          price_monthly?: number
+          region?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regional_pricing_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          contact_sales: boolean
+          created_at: string | null
+          cta_label: string
+          cta_link: string
+          description: string | null
+          features: Json
+          highlight: string | null
+          id: string
+          is_active: boolean
+          name: string
+          popular: boolean
+          price_annual: number
+          price_monthly: number
+          tier: string
+          updated_at: string | null
+        }
+        Insert: {
+          contact_sales?: boolean
+          created_at?: string | null
+          cta_label: string
+          cta_link: string
+          description?: string | null
+          features?: Json
+          highlight?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          popular?: boolean
+          price_annual: number
+          price_monthly: number
+          tier: string
+          updated_at?: string | null
+        }
+        Update: {
+          contact_sales?: boolean
+          created_at?: string | null
+          cta_label?: string
+          cta_link?: string
+          description?: string | null
+          features?: Json
+          highlight?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          popular?: boolean
+          price_annual?: number
+          price_monthly?: number
+          tier?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

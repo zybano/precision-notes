@@ -1,3 +1,5 @@
 
 // Re-export from use-toast.tsx for compatibility
-export { useToast, ToastProvider, toast } from './use-toast.tsx';
+export { toast, useToast } from './use-toast.tsx';
+export { ToastProvider } from '@/components/ui/toaster';
+
