@@ -1,3 +1,4 @@
+
 import Stripe from 'stripe';
 
 // Initialize Stripe with your API key from environment variables
@@ -80,4 +81,21 @@ export const createPaymentIntent = async (
   amount: number, 
   currency: string, 
   customerId: string,
-  metadata: Recor
+  metadata: Record<string, string> = {}
+) => {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency,
+      customer: customerId,
+      metadata: {
+        ...metadata,
+        payment_provider: 'stripe',
+      },
+    });
+    return paymentIntent;
+  } catch (error) {
+    console.error('Error creating Stripe payment intent:', error);
+    throw error;
+  }
+};

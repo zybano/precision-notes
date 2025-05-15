@@ -1,4 +1,3 @@
 
-// Fix circular dependency by directly re-exporting from the toast hook
+// Forward exports from the hook file to avoid circular dependency
 export { useToast, toast } from "@/hooks/use-toast.tsx";
-
