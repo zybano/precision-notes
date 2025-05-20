@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,9 +13,9 @@ const PaymentSuccess = () => {
   // Support both Stripe's session_id and Paystack's reference
   const sessionId = searchParams.get('session_id') || searchParams.get('reference');
   // Determine payment provider - default to stripe if not specified
-  const paymentProvider = searchParams.get('provider') || 
-                          (searchParams.get('reference') ? 'paystack' : 'stripe');
-  
+  const paymentProvider = searchParams.get('provider') ||
+      (searchParams.get('reference') ? 'paystack' : 'stripe');
+
   const navigate = useNavigate();
   const { refreshSubscriptionInfo } = useAuth();
   const [verifyingPurchase, setVerifyingPurchase] = useState(true);
@@ -27,85 +26,140 @@ const PaymentSuccess = () => {
     quantity?: number;
   } | null>(null);
 
+  // Check if this payment has already been verified
   useEffect(() => {
-    const verifyPurchase = async () => {
-      if (!sessionId) {
-        setVerifyingPurchase(false);
-        toast.error("No session ID or reference found");
-        return;
-      }
+    const verificationKey = `payment_verified_${paymentProvider}_${sessionId}`;
+    const alreadyVerified = sessionStorage.getItem(verificationKey);
 
-      try {
-        setVerifyingPurchase(true);
-
-        // Check purchases table first for either provider
-        const referenceField = paymentProvider === 'paystack' 
-          ? 'payment_provider_reference' 
-          : 'payment_provider_reference';
-          
-        const { data: purchases, error: purchaseError } = await supabase
-            .from('consultation_purchases')
-            .select('quantity, payment_provider')
-            .eq(referenceField, sessionId)
-            .single();
-
-        if (!purchaseError && purchases) {
-          // This was a consultation top-up purchase
-          setPurchaseDetails({
-            type: 'consultation',
-            quantity: purchases.quantity
-          });
-          setVerified(true);
-        } else {
-          // Check if this was a subscription
-          const subscriptionField = paymentProvider === 'paystack'
-            ? 'payment_provider_subscription_id'
-            : 'payment_provider_subscription_id';
-            
-          const { data: subscription, error: subError } = await supabase
-              .from('user_subscriptions')
-              .select('subscription_tier, payment_provider')
-              .eq(subscriptionField, sessionId)
-              .single();
-
-          if (!subError && subscription) {
-            // This was a subscription
-            setPurchaseDetails({
-              type: 'subscription',
-              tier: subscription.subscription_tier
-            });
-            setVerified(true);
-          }
-          else {
-            // As a fallback, try the verification endpoint
-            const success = await verifyTopupPurchase(
-              sessionId,
-              (paymentProvider as 'stripe' | 'paystack')
-            );
-
-            if (success) {
-              setVerified(true);
-              setPurchaseDetails({
-                type: 'consultation'
-              });
-            } else {
-              toast.error("Could not verify your purchase. Please contact support.");
-            }
-          }
+    if (sessionId && !alreadyVerified) {
+      const verifyPurchase = async () => {
+        if (!sessionId) {
+          setVerifyingPurchase(false);
+          toast.error("No session ID or reference found");
+          return;
         }
 
-        // Refresh subscription info to update the UI
-        await refreshSubscriptionInfo();
-      } catch (error) {
-        console.error("Error verifying purchase:", error);
-        toast.error("An error occurred while verifying your purchase");
-      } finally {
-        setVerifyingPurchase(false);
-      }
-    };
+        try {
+          setVerifyingPurchase(true);
 
-    verifyPurchase();
+          // Check purchases table first for either provider
+          const referenceField = paymentProvider === 'paystack'
+              ? 'payment_provider_reference'
+              : 'payment_provider_reference';
+
+          const { data: purchases, error: purchaseError } = await supabase
+              .from('consultation_purchases')
+              .select('quantity, payment_provider')
+              .eq(referenceField, sessionId)
+              .single();
+
+          if (!purchaseError && purchases) {
+            // This was a consultation top-up purchase
+            setPurchaseDetails({
+              type: 'consultation',
+              quantity: purchases.quantity
+            });
+            setVerified(true);
+            // Mark as verified in session storage
+            sessionStorage.setItem(verificationKey, 'true');
+          } else {
+            // Check if this was a subscription
+            const subscriptionField = paymentProvider === 'paystack'
+                ? 'payment_provider_subscription_id'
+                : 'payment_provider_subscription_id';
+
+            const { data: subscription, error: subError } = await supabase
+                .from('user_subscriptions')
+                .select('subscription_tier, payment_provider')
+                .eq(subscriptionField, sessionId)
+                .single();
+
+            if (!subError && subscription) {
+              // This was a subscription
+              setPurchaseDetails({
+                type: 'subscription',
+                tier: subscription.subscription_tier
+              });
+              setVerified(true);
+              // Mark as verified in session storage
+              sessionStorage.setItem(verificationKey, 'true');
+            }
+            else {
+              // As a fallback, try the verification endpoint
+              const success = await verifyTopupPurchase(
+                  sessionId,
+                  (paymentProvider as 'stripe' | 'paystack')
+              );
+
+              if (success) {
+                setVerified(true);
+                setPurchaseDetails({
+                  type: 'consultation'
+                });
+                // Mark as verified in session storage
+                sessionStorage.setItem(verificationKey, 'true');
+              } else {
+                toast.error("Could not verify your purchase. Please contact support.");
+              }
+            }
+          }
+
+          // Refresh subscription info to update the UI
+          await refreshSubscriptionInfo();
+        } catch (error) {
+          console.error("Error verifying purchase:", error);
+          toast.error("An error occurred while verifying your purchase");
+        } finally {
+          setVerifyingPurchase(false);
+        }
+      };
+
+      verifyPurchase();
+    } else if (alreadyVerified) {
+      // If already verified, just set the state without making API calls
+      setVerified(true);
+      setVerifyingPurchase(false);
+
+      // Try to retrieve stored purchase details from session storage
+      try {
+        const storedDetails = sessionStorage.getItem(`payment_details_${paymentProvider}_${sessionId}`);
+        if (storedDetails) {
+          setPurchaseDetails(JSON.parse(storedDetails));
+        } else {
+          // Default if details not found
+          setPurchaseDetails({ type: 'consultation' });
+        }
+      } catch (e) {
+        console.error("Error parsing stored purchase details:", e);
+        setPurchaseDetails({ type: 'consultation' });
+      }
+    }
   }, [sessionId, paymentProvider, refreshSubscriptionInfo]);
+
+  // Auto-redirect after successful verification
+  useEffect(() => {
+    if (verified) {
+      const redirectTimer = setTimeout(() => {
+        navigate('/dashboard');
+      }, 8000); // 8 seconds delay
+
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [verified, navigate]);
+
+  // Store purchase details in session storage when available
+  useEffect(() => {
+    if (verified && purchaseDetails && sessionId) {
+      try {
+        sessionStorage.setItem(
+            `payment_details_${paymentProvider}_${sessionId}`,
+            JSON.stringify(purchaseDetails)
+        );
+      } catch (e) {
+        console.error("Error storing purchase details:", e);
+      }
+    }
+  }, [verified, purchaseDetails, sessionId, paymentProvider]);
 
   return (
       <div className="container max-w-md mx-auto py-12 px-4">
@@ -148,6 +202,10 @@ const PaymentSuccess = () => {
                     Create New Document
                   </Button>
                 </div>
+
+                <p className="text-sm text-muted-foreground">
+                  Redirecting to dashboard in a few seconds...
+                </p>
               </div>
           ) : (
               <div className="space-y-4">

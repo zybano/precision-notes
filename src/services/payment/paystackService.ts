@@ -166,76 +166,119 @@ export const createConsultationCheckout = async (
 /**
  * Verify a completed Paystack purchase
  */
+// Updated Paystack verification function to also update subscription type
 export const verifyTopupPurchase = async (reference: string): Promise<boolean> => {
   try {
-    // Verify the reference via Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('verify-paystack-checkout', {
-      body: JSON.stringify({ reference })
-    });
-
-    if (error) throw error;
-
-    // If verification successful, record the purchase in our database
-    if (data?.success && data?.transaction) {
-      const transaction = data.transaction;
-      const metadata = transaction.metadata || {};
-      const userId = metadata.user_id;
-      const packageId = metadata.package_id;
-      const quantity = parseInt(metadata.quantity || '0', 10);
-
-      if (userId) {
-        // Insert into consultation_purchases table
-        await supabase.from('consultation_purchases').insert({
-          user_id: userId,
-          package_id: packageId || null,
-          quantity,
-          amount_paid: transaction.amount ? transaction.amount / 100 : 0, // Convert from kobo
-          payment_provider: 'paystack',
-          payment_provider_reference: transaction.reference
-        });
-
-        // Record transaction
-        await supabase.from('transaction_history').insert({
-          user_id: userId,
-          amount: transaction.amount ? transaction.amount / 100 : 0,
-          currency: 'NGN',
-          payment_provider: 'paystack',
-          payment_provider_reference: transaction.reference,
-          transaction_type: 'topup',
-          status: 'completed',
-          metadata: {
-            quantity,
-            package_id: packageId
-          }
-        });
-
-        // Also add credits to the user
-        const { addCredits } = await import('./paymentService');
-        await addCredits(quantity);
-      }
+    // Check if we've already verified this transaction
+    const verificationKey = `paystack_verification_${reference}`;
+    if (localStorage.getItem(verificationKey) === 'verified') {
+      console.log(`Using cached verification for Paystack reference ${reference}`);
+      return true;
     }
 
-    return data?.success === true;
-  } catch (error) {
-    console.error("Error verifying Paystack purchase:", error);
-    return false;
-  }
-};
-
-// Function to verify a completed purchase
-export const verifyPaystackPurchase = async (reference: string): Promise<boolean> => {
-  try {
-    // Verify the session via Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('verify-paystack-checkout', {
-      body: JSON.stringify({ reference })
-    });
-
-    if (error) {
-      console.error("Error verifying Paystack purchase:", error);
+    // Add debounce protection
+    const inProgressKey = `paystack_verification_progress_${reference}`;
+    if (localStorage.getItem(inProgressKey) === 'true') {
+      console.log(`Verification already in progress for reference ${reference}`);
       return false;
     }
 
-    return data?.success === true;
+    // Mark verification as in progress
+    localStorage.setItem(inProgressKey, 'true');
+
+    try {
+      // Verify the reference via Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('verify-paystack-checkout', {
+        body: JSON.stringify({ reference })
+      });
+
+      if (error) throw error;
+
+      // If verification successful, record the purchase in our database
+      if (data?.success && data?.transaction) {
+        const transaction = data.transaction;
+        const metadata = transaction.metadata || {};
+        const userId = metadata.user_id;
+        const quantity = parseInt(metadata.quantity || '0', 10);
+
+        if (userId) {
+          // Record transaction
+          await supabase.from('transaction_history').insert({
+            user_id: userId,
+            amount: transaction.amount ? transaction.amount / 100 : 0, // Convert from kobo
+            currency: 'NGN',
+            payment_provider: 'paystack',
+            payment_provider_reference: transaction.reference,
+            transaction_type: 'topup',
+            status: 'completed',
+            metadata: {
+              quantity,
+              action: 'consultation_purchase'
+            }
+          });
+
+          // Add credits to the user
+          const { addCredits } = await import('./paymentService');
+          await addCredits(quantity);
+
+          // NEW: Update user subscription type to at least 'starter' if it's 'free'
+          try {
+            // Get current subscription info
+            const { data: subData, error: subError } = await supabase
+                .from('user_subscriptions')
+                .select('subscription_tier')
+                .eq('user_id', userId)
+                .single();
+
+            if (!subError && subData && subData.subscription_tier === 'free') {
+              // Update to starter tier if user has purchased credits
+              await supabase
+                  .from('user_subscriptions')
+                  .update({
+                    subscription_tier: 'starter',
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('user_id', userId);
+
+              console.log('Updated user subscription from free to starter');
+            } else if (subError && subError.code === 'PGRST116') {
+              // Create new subscription record if none exists
+              await supabase
+                  .from('user_subscriptions')
+                  .insert({
+                    user_id: userId,
+                    subscription_tier: 'starter',
+                    is_annual_billing: false,
+                    consultations_total: 50, // Starter tier default
+                    consultations_used: 0,
+                    payment_provider: 'paystack',
+                    payment_provider_subscription_id: reference
+                  });
+
+              console.log('Created new starter subscription for user');
+            }
+          } catch (subscriptionError) {
+            console.error("Error updating subscription tier:", subscriptionError);
+            // Continue execution as this is not critical
+          }
+
+          // Mark as verified in local storage
+          localStorage.setItem(verificationKey, 'verified');
+        }
+      }
+
+      const result = data?.success === true;
+
+      // If successful, cache the result
+      if (result) {
+        localStorage.setItem(verificationKey, 'verified');
+      }
+
+      return result;
+    } finally {
+      // Clear in-progress flag
+      localStorage.removeItem(inProgressKey);
+    }
   } catch (error) {
     console.error("Error verifying Paystack purchase:", error);
     return false;

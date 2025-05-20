@@ -315,34 +315,6 @@ export const createConsultationCheckout = async (
   }
 };
 
-/**
- * Verify a topup purchase from any payment provider
- */
-export const verifyTopupPurchase = async (
-    sessionId: string,
-    provider: 'stripe' | 'paystack' = 'stripe'
-): Promise<boolean> => {
-  try {
-    if (!sessionId) {
-      console.error("No session ID provided for verification");
-      return false;
-    }
-
-    // Verify with the appropriate payment provider
-    if (provider === 'paystack') {
-      // Import and use the verification function from paystackService
-      const { verifyTopupPurchase: verifyPaystackTopupPurchase } = await import('./paystackService');
-      return await verifyPaystackTopupPurchase(sessionId);
-    } else {
-      // Use Stripe verification
-      const { verifyTopupPurchase: verifyStripeTopupPurchase } = await import('./stripeService');
-      return await verifyStripeTopupPurchase(sessionId);
-    }
-  } catch (error) {
-    console.error("Error verifying topup purchase:", error);
-    return false;
-  }
-};
 
 /**
  * Create checkout session based on the user's region
@@ -369,5 +341,51 @@ export const createPlanCheckout = async (params: {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create checkout"
     };
+  }
+};
+
+// Function to prevent duplicate verification calls
+export const verifyTopupPurchase = async (
+    sessionId: string,
+    provider: 'stripe' | 'paystack' = 'stripe'
+): Promise<boolean> => {
+  try {
+    if (!sessionId) {
+      console.error("No session ID provided for verification");
+      return false;
+    }
+
+    // Check in local storage if we've already verified this transaction
+    const verificationKey = `verification_${provider}_${sessionId}`;
+    const previousVerification = localStorage.getItem(verificationKey);
+
+    // If we've already verified this transaction successfully, return cached result
+    if (previousVerification === 'verified') {
+      console.log(`Using cached verification for ${provider} session ${sessionId}`);
+      return true;
+    }
+
+    // Verify with the appropriate payment provider
+    let verificationResult = false;
+
+    if (provider === 'paystack') {
+      // Import and use the verification function from paystackService
+      const { verifyTopupPurchase: verifyPaystackTopupPurchase } = await import('./paystackService');
+      verificationResult = await verifyPaystackTopupPurchase(sessionId);
+    } else {
+      // Use Stripe verification
+      const { verifyTopupPurchase: verifyStripeTopupPurchase } = await import('./stripeService');
+      verificationResult = await verifyStripeTopupPurchase(sessionId);
+    }
+
+    // If verification was successful, cache the result
+    if (verificationResult) {
+      localStorage.setItem(verificationKey, 'verified');
+    }
+
+    return verificationResult;
+  } catch (error) {
+    console.error("Error verifying topup purchase:", error);
+    return false;
   }
 };
