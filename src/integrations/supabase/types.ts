@@ -322,6 +322,59 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          consultations_total: number
+          consultations_used: number
+          created_at: string
+          id: string
+          is_annual_billing: boolean
+          next_billing_date: string | null
+          payment_provider: string | null
+          payment_provider_subscription_id: string | null
+          plan_id: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consultations_total?: number
+          consultations_used?: number
+          created_at?: string
+          id?: string
+          is_annual_billing?: boolean
+          next_billing_date?: string | null
+          payment_provider?: string | null
+          payment_provider_subscription_id?: string | null
+          plan_id?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consultations_total?: number
+          consultations_used?: number
+          created_at?: string
+          id?: string
+          is_annual_billing?: boolean
+          next_billing_date?: string | null
+          payment_provider?: string | null
+          payment_provider_subscription_id?: string | null
+          plan_id?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -358,6 +411,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_total_used: {
+        Args: { user_id: string }
+        Returns: number
+      }
       get_user_documents: {
         Args: { user_id: string }
         Returns: {
@@ -376,6 +433,15 @@ export type Database = {
           type: string
           updated_at: string
         }[]
+      }
+      increment: {
+        Args: {
+          row_id: string
+          increment_amount: number
+          table_name?: string
+          column_name?: string
+        }
+        Returns: undefined
       }
       setup_database_schema: {
         Args: Record<PropertyKey, never>

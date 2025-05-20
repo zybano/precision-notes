@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { createPlanCheckout as createStripePlanCheckout } from "./stripeService";
 import { createPaystackCheckout } from "./paystackService";
 import { SubscriptionTier } from "@/services/subscriptionService";
@@ -21,13 +21,22 @@ export const getCredits = async (): Promise<{
 
     const { data, error } = await supabase
       .from('user_credits')
-      .select('balance')
+      .select('balance, expires_at')
       .eq('user_id', user.id)
       .single();
 
     if (error) {
       console.error("Error fetching credits:", error);
       return { success: false, error: "Failed to fetch credit balance" };
+    }
+
+    // Check if credits have expired
+    const now = new Date();
+    const expiresAt = data?.expires_at ? new Date(data.expires_at) : null;
+    
+    if (expiresAt && expiresAt < now) {
+      // Credits have expired, return 0 balance
+      return { success: true, balance: 0 };
     }
 
     return { success: true, balance: data?.balance || 0 };
@@ -90,22 +99,25 @@ export const deductCredits = async (amount: number = 1): Promise<{
       return { success: false, error: "Failed to update credit balance" };
     }
     
+    // Properly update the total_used using increment function
     try {
-      // Update the total_used with a separate direct call
-      const { error: totalUsedError } = await supabase
-        .from('user_credits')
-        .update({ 
-          total_used: supabase.rpc('get_total_used', { user_id: user.id }) + amount
-        })
-        .eq('user_id', user.id);
+      const { error: incrementError } = await supabase.rpc(
+        'increment',
+        { 
+          row_id: user.id, 
+          increment_amount: amount,
+          table_name: 'user_credits',
+          column_name: 'total_used' 
+        }
+      );
       
-      if (totalUsedError) {
-        console.error("Error updating total_used:", totalUsedError);
-        // Continue execution, as this is not critical
+      if (incrementError) {
+        console.error("Error incrementing total_used:", incrementError);
+        // Continue execution as this is not critical
       }
     } catch (err) {
-      console.error("Error updating total_used:", err);
-      // Continue execution, as this is not critical
+      console.error("Error calling increment function:", err);
+      // Continue execution as this is not critical
     }
 
     // Record transaction
@@ -129,6 +141,140 @@ export const deductCredits = async (amount: number = 1): Promise<{
     return { success: true, balance: newBalance };
   } catch (error) {
     console.error("Error in deductCredits:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+};
+
+/**
+ * Add credits to the user's balance
+ */
+export const addCredits = async (amount: number, expiryMonths: number = 12): Promise<{
+  success: boolean;
+  balance?: number;
+  error?: string;
+}> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Calculate expiration date
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + expiryMonths);
+
+    // Get current credits
+    const { data, error } = await supabase
+      .from('user_credits')
+      .select('balance, total_earned, expires_at')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error fetching credits:", error);
+      
+      // If user doesn't have a credits record, create one
+      if (error.code === 'PGRST116') {
+        const { error: insertError } = await supabase
+          .from('user_credits')
+          .insert({
+            user_id: user.id,
+            balance: amount,
+            total_earned: amount,
+            total_used: 0,
+            expires_at: expiresAt.toISOString()
+          });
+        
+        if (insertError) {
+          console.error("Error creating credits record:", insertError);
+          return { success: false, error: "Failed to create credits record" };
+        }
+
+        // Record transaction
+        await supabase.from('transaction_history').insert({
+          user_id: user.id,
+          amount: amount,
+          currency: 'CREDITS',
+          payment_provider: 'system',
+          transaction_type: 'credit',
+          status: 'completed',
+          metadata: {
+            action: 'initial_credit'
+          }
+        });
+        
+        return { success: true, balance: amount };
+      }
+      
+      return { success: false, error: "Failed to fetch credit balance" };
+    }
+
+    const currentBalance = data?.balance || 0;
+    const totalEarned = data?.total_earned || 0;
+    const newBalance = currentBalance + amount;
+    const newTotalEarned = totalEarned + amount;
+
+    // Determine the new expiration date (use the furthest one)
+    let newExpiresAt = expiresAt;
+    if (data?.expires_at) {
+      const currentExpiresAt = new Date(data.expires_at);
+      if (currentExpiresAt > expiresAt) {
+        newExpiresAt = currentExpiresAt;
+      }
+    }
+
+    // Update credits in the database
+    if (data) {
+      // User has existing credit record, update it
+      const { error: updateError } = await supabase
+        .from('user_credits')
+        .update({ 
+          balance: newBalance,
+          total_earned: newTotalEarned,
+          expires_at: newExpiresAt.toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error("Error updating credits:", updateError);
+        return { success: false, error: "Failed to add credits" };
+      }
+    } else {
+      // User doesn't have a credits record, create one
+      const { error: insertError } = await supabase
+        .from('user_credits')
+        .insert({
+          user_id: user.id,
+          balance: amount,
+          total_earned: amount,
+          total_used: 0,
+          expires_at: expiresAt.toISOString()
+        });
+      
+      if (insertError) {
+        console.error("Error creating credits record:", insertError);
+        return { success: false, error: "Failed to create credits record" };
+      }
+    }
+
+    // Record transaction
+    await supabase.from('transaction_history').insert({
+      user_id: user.id,
+      amount: amount,
+      currency: 'CREDITS',
+      payment_provider: 'system',
+      transaction_type: 'credit',
+      status: 'completed',
+      metadata: {
+        action: 'add_credits',
+        expires_at: newExpiresAt.toISOString()
+      }
+    });
+
+    return { success: true, balance: newBalance };
+  } catch (error) {
+    console.error("Error in addCredits:", error);
     return { success: false, error: "An unexpected error occurred" };
   }
 };
@@ -195,123 +341,6 @@ export const verifyTopupPurchase = async (
   } catch (error) {
     console.error("Error verifying topup purchase:", error);
     return false;
-  }
-};
-
-/**
- * Add credits to the user's balance
- */
-export const addCredits = async (amount: number): Promise<{
-  success: boolean;
-  balance?: number;
-  error?: string;
-}> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: "User not authenticated" };
-    }
-
-    // Get current credits
-    const { data, error } = await supabase
-      .from('user_credits')
-      .select('balance, total_earned')
-      .eq('user_id', user.id)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error("Error fetching credits:", error);
-      
-      // If user doesn't have a credits record, create one
-      if (error.code === 'PGRST116') {
-        const { error: insertError } = await supabase
-          .from('user_credits')
-          .insert({
-            user_id: user.id,
-            balance: amount,
-            total_earned: amount,
-            total_used: 0
-          });
-        
-        if (insertError) {
-          console.error("Error creating credits record:", insertError);
-          return { success: false, error: "Failed to create credits record" };
-        }
-
-        // Record transaction
-        await supabase.from('transaction_history').insert({
-          user_id: user.id,
-          amount: amount,
-          currency: 'CREDITS',
-          payment_provider: 'system',
-          transaction_type: 'credit',
-          status: 'completed',
-          metadata: {
-            action: 'initial_credit'
-          }
-        });
-        
-        return { success: true, balance: amount };
-      }
-      
-      return { success: false, error: "Failed to fetch credit balance" };
-    }
-
-    const currentBalance = data?.balance || 0;
-    const totalEarned = data?.total_earned || 0;
-    const newBalance = currentBalance + amount;
-    const newTotalEarned = totalEarned + amount;
-
-    // Update credits in the database
-    if (data) {
-      // User has existing credit record, update it
-      const { error: updateError } = await supabase
-        .from('user_credits')
-        .update({ 
-          balance: newBalance,
-          total_earned: newTotalEarned,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        console.error("Error updating credits:", updateError);
-        return { success: false, error: "Failed to add credits" };
-      }
-    } else {
-      // User doesn't have a credits record, create one
-      const { error: insertError } = await supabase
-        .from('user_credits')
-        .insert({
-          user_id: user.id,
-          balance: amount,
-          total_earned: amount,
-          total_used: 0
-        });
-      
-      if (insertError) {
-        console.error("Error creating credits record:", insertError);
-        return { success: false, error: "Failed to create credits record" };
-      }
-    }
-
-    // Record transaction
-    await supabase.from('transaction_history').insert({
-      user_id: user.id,
-      amount: amount,
-      currency: 'CREDITS',
-      payment_provider: 'system',
-      transaction_type: 'credit',
-      status: 'completed',
-      metadata: {
-        action: 'add_credits'
-      }
-    });
-
-    return { success: true, balance: newBalance };
-  } catch (error) {
-    console.error("Error in addCredits:", error);
-    return { success: false, error: "An unexpected error occurred" };
   }
 };
 

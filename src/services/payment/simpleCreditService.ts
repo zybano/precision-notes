@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -20,7 +21,7 @@ export const getCredits = async (): Promise<{
 
     const { data, error } = await supabase
       .from('user_credits')
-      .select('balance')
+      .select('balance, expires_at')
       .eq('user_id', user.id)
       .single();
 
@@ -29,19 +30,33 @@ export const getCredits = async (): Promise<{
       
       // If no record exists, create one with 0 balance
       if (error.code === 'PGRST116') {
+        // Set expiration to 1 year from now
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        
         await supabase
           .from('user_credits')
           .insert({
             user_id: user.id,
             balance: 0,
             total_earned: 0,
-            total_used: 0
+            total_used: 0,
+            expires_at: expiresAt.toISOString()
           });
         
         return { success: true, balance: 0 };
       }
       
       return { success: false, error: "Failed to fetch credit balance" };
+    }
+
+    // Check if credits have expired
+    const now = new Date();
+    const expiresAt = data?.expires_at ? new Date(data.expires_at) : null;
+    
+    if (expiresAt && expiresAt < now) {
+      // Credits have expired, return 0 balance
+      return { success: true, balance: 0 };
     }
 
     return { success: true, balance: data?.balance || 0 };
@@ -102,6 +117,25 @@ export const deductCredits = async (amount: number = 1): Promise<{
     if (updateError) {
       console.error("Error updating credits balance:", updateError);
       return { success: false, error: "Failed to update credit balance" };
+    }
+    
+    // Use the increment function to update total_used
+    try {
+      const { error: incrementError } = await supabase.rpc(
+        'increment',
+        { 
+          row_id: user.id, 
+          increment_amount: amount,
+          table_name: 'user_credits',
+          column_name: 'total_used' 
+        }
+      );
+      
+      if (incrementError) {
+        console.error("Error incrementing total_used:", incrementError);
+      }
+    } catch (err) {
+      console.error("Error calling increment function:", err);
     }
     
     // Record transaction - do this after the update succeeds

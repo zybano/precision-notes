@@ -11,8 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
+  // Support both Stripe's session_id and Paystack's reference
   const sessionId = searchParams.get('session_id') || searchParams.get('reference');
-  const paymentProvider = searchParams.get('provider') || 'stripe'; // Default to stripe
+  // Determine payment provider - default to stripe if not specified
+  const paymentProvider = searchParams.get('provider') || 
+                          (searchParams.get('reference') ? 'paystack' : 'stripe');
+  
   const navigate = useNavigate();
   const { refreshSubscriptionInfo } = useAuth();
   const [verifyingPurchase, setVerifyingPurchase] = useState(true);
@@ -34,11 +38,15 @@ const PaymentSuccess = () => {
       try {
         setVerifyingPurchase(true);
 
-        // First, check if this was a subscription or a consultation purchase
+        // Check purchases table first for either provider
+        const referenceField = paymentProvider === 'paystack' 
+          ? 'payment_provider_reference' 
+          : 'payment_provider_reference';
+          
         const { data: purchases, error: purchaseError } = await supabase
             .from('consultation_purchases')
             .select('quantity, payment_provider')
-            .eq(`payment_provider_reference`, sessionId)
+            .eq(referenceField, sessionId)
             .single();
 
         if (!purchaseError && purchases) {
@@ -49,11 +57,15 @@ const PaymentSuccess = () => {
           });
           setVerified(true);
         } else {
-          // This might be a subscription
+          // Check if this was a subscription
+          const subscriptionField = paymentProvider === 'paystack'
+            ? 'payment_provider_subscription_id'
+            : 'payment_provider_subscription_id';
+            
           const { data: subscription, error: subError } = await supabase
               .from('user_subscriptions')
               .select('subscription_tier, payment_provider')
-              .eq(`payment_provider_subscription_id`, sessionId)
+              .eq(subscriptionField, sessionId)
               .single();
 
           if (!subError && subscription) {
