@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import { SubscriptionTier } from "@/services/subscriptionService";
+
+// Define SubscriptionTier type for backward compatibility
+export type SubscriptionTier = 'free' | 'starter' | 'professional' | 'enterprise';
 
 export interface CheckoutParams {
   tier: SubscriptionTier;
@@ -31,7 +33,7 @@ export const createPlanCheckout = async (params: CheckoutParams): Promise<{ succ
     return { success: true, url: data.url };
   } catch (error) {
     console.error("Error creating plan checkout:", error);
-    return { success: false, error: error.message || "Failed to create checkout" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create checkout" };
   }
 };
 
@@ -45,7 +47,7 @@ export const verifySubscription = async (): Promise<{ success: boolean; data?: a
     return { success: true, data };
   } catch (error) {
     console.error("Error verifying subscription:", error);
-    return { success: false, error: error.message || "Failed to verify subscription" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to verify subscription" };
   }
 };
 
@@ -94,7 +96,7 @@ export const fetchSubscriptionPlans = async (regionCode?: string): Promise<{ suc
     return { success: true, plans: data };
   } catch (error) {
     console.error("Error fetching subscription plans:", error);
-    return { success: false, error: error.message || "Failed to fetch subscription plans" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to fetch subscription plans" };
   }
 };
 
@@ -140,7 +142,7 @@ export const fetchConsultationPackages = async (regionCode?: string): Promise<{ 
     return { success: true, packages: data };
   } catch (error) {
     console.error("Error fetching consultation packages:", error);
-    return { success: false, error: error.message || "Failed to fetch consultation packages" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to fetch consultation packages" };
   }
 };
 
@@ -157,7 +159,7 @@ export const fetchUserSubscription = async (userId: string): Promise<{ success: 
     return { success: true, subscription: data || null };
   } catch (error) {
     console.error("Error fetching user subscription:", error);
-    return { success: false, error: error.message || "Failed to fetch user subscription" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to fetch user subscription" };
   }
 };
 
@@ -174,7 +176,7 @@ export const fetchConsultationPurchases = async (userId: string): Promise<{ succ
     return { success: true, purchases: data || [] };
   } catch (error) {
     console.error("Error fetching consultation purchases:", error);
-    return { success: false, error: error.message || "Failed to fetch consultation purchases" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to fetch consultation purchases" };
   }
 };
 

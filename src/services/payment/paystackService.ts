@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionTier } from "@/services/subscriptionService";
 
@@ -47,6 +46,7 @@ export const createPaystackCheckout = async (params: {
       : (regionalPricing?.price_monthly || plan.price_monthly);
 
     amount = amount / 100;
+
     // Call the edge function to create a Paystack checkout
     const { data, error } = await supabase.functions.invoke('create-paystack-checkout', {
       body: JSON.stringify({
@@ -132,7 +132,7 @@ export const createConsultationCheckout = async (
         email: user.email,
         quantity,
         packageId: packages?.id,
-        amount: packagePrice, // in kobo (smallest currency unit for NGN)
+        amount: packagePrice,
         successUrl,
         cancelUrl,
         metadata: {
@@ -166,7 +166,6 @@ export const createConsultationCheckout = async (
 /**
  * Verify a completed Paystack purchase
  */
-// Updated Paystack verification function to also update subscription type
 export const verifyTopupPurchase = async (reference: string): Promise<boolean> => {
   try {
     // Check if we've already verified this transaction
@@ -193,79 +192,6 @@ export const verifyTopupPurchase = async (reference: string): Promise<boolean> =
       });
 
       if (error) throw error;
-
-      // If verification successful, record the purchase in our database
-      if (data?.success && data?.transaction) {
-        const transaction = data.transaction;
-        const metadata = transaction.metadata || {};
-        const userId = metadata.user_id;
-        const quantity = parseInt(metadata.quantity || '0', 10);
-
-        if (userId) {
-          // Record transaction
-          await supabase.from('transaction_history').insert({
-            user_id: userId,
-            amount: transaction.amount ? transaction.amount / 100 : 0, // Convert from kobo
-            currency: 'NGN',
-            payment_provider: 'paystack',
-            payment_provider_reference: transaction.reference,
-            transaction_type: 'topup',
-            status: 'completed',
-            metadata: {
-              quantity,
-              action: 'consultation_purchase'
-            }
-          });
-
-          // Add credits to the user
-          const { addCredits } = await import('./paymentService');
-          await addCredits(quantity);
-
-          // NEW: Update user subscription type to at least 'starter' if it's 'free'
-          try {
-            // Get current subscription info
-            const { data: subData, error: subError } = await supabase
-                .from('user_subscriptions')
-                .select('subscription_tier')
-                .eq('user_id', userId)
-                .single();
-
-            if (!subError && subData && subData.subscription_tier === 'free') {
-              // Update to starter tier if user has purchased credits
-              await supabase
-                  .from('user_subscriptions')
-                  .update({
-                    subscription_tier: 'starter',
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('user_id', userId);
-
-              console.log('Updated user subscription from free to starter');
-            } else if (subError && subError.code === 'PGRST116') {
-              // Create new subscription record if none exists
-              await supabase
-                  .from('user_subscriptions')
-                  .insert({
-                    user_id: userId,
-                    subscription_tier: 'starter',
-                    is_annual_billing: false,
-                    consultations_total: 50, // Starter tier default
-                    consultations_used: 0,
-                    payment_provider: 'paystack',
-                    payment_provider_subscription_id: reference
-                  });
-
-              console.log('Created new starter subscription for user');
-            }
-          } catch (subscriptionError) {
-            console.error("Error updating subscription tier:", subscriptionError);
-            // Continue execution as this is not critical
-          }
-
-          // Mark as verified in local storage
-          localStorage.setItem(verificationKey, 'verified');
-        }
-      }
 
       const result = data?.success === true;
 
