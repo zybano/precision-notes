@@ -182,123 +182,6 @@ export const transcribeWithAssemblyAI = async (
   }
 };
 
-/**
- * Transcribes audio using Google Speech-to-Text API
- */
-// export const transcribeWithGoogleSpeech = async (
-//     audioBlob: Blob,
-//     options: TranscriptionOptions = {}
-// ): Promise<TranscriptionResult> => {
-//   try {
-//     console.log("Starting Google Speech-to-Text transcription with options:", options);
-//
-//     // Check if credentials exist
-//     const apiKey = options.apiKey || import.meta.env.VITE_GOOGLE_API_KEY;
-//
-//     if (!apiKey) {
-//       throw new Error("No valid Google API key provided");
-//     }
-//
-//     // Convert audio blob to base64
-//     const audioContent = await blobToBase64(audioBlob);
-//
-//     // Create a client
-//     const client = new SpeechClient({
-//       credentials: JSON.parse(atob(apiKey)),
-//     });
-//
-//     // Determine audio encoding from the blob type
-//     let encoding = 'LINEAR16';
-//     if (audioBlob.type.includes('webm')) {
-//       encoding = 'WEBM_OPUS';
-//     } else if (audioBlob.type.includes('mp3')) {
-//       encoding = 'MP3';
-//     } else if (audioBlob.type.includes('flac')) {
-//       encoding = 'FLAC';
-//     }
-//
-//     // Create the request
-//     const request = {
-//       audio: {
-//         content: audioContent,
-//       },
-//       config: {
-//         encoding: encoding,
-//         sampleRateHertz: 48000,  // This should be changed based on your actual audio
-//         languageCode: options.languageCode || 'en-US',
-//         enableSpeakerDiarization: options.speakerLabels || true,
-//         diarizationSpeakerCount: options.speakerCount || 2,
-//         model: 'latest_long',
-//       },
-//     };
-//
-//     // Perform the transcription
-//     const [response] = await client.recognize(request);
-//     const transcription = response.results
-//         .map(result => result.alternatives[0].transcript)
-//         .join('\n');
-//
-//     console.log("Google Speech-to-Text transcription completed");
-//
-//     // Process the transcription for speaker diarization (simplified approach)
-//     const utterances: SpeakerUtterance[] = [];
-//
-//     // If the transcription has speaker tags
-//     if (response.results && response.results.length > 0) {
-//       let currentSpeaker = '';
-//       let currentText = '';
-//
-//       // This is a simplified approach - actual speaker diarization is more complex
-//       // and requires further processing of the Google Speech response
-//       response.results.forEach(result => {
-//         if (result.alternatives && result.alternatives[0]) {
-//           if (result.alternatives[0].words && result.alternatives[0].words.length > 0) {
-//             result.alternatives[0].words.forEach(wordInfo => {
-//               if (wordInfo.speakerTag !== undefined) {
-//                 const speaker = wordInfo.speakerTag === 1 ? "Doctor" : "Patient";
-//
-//                 if (currentSpeaker && currentSpeaker !== speaker && currentText) {
-//                   utterances.push({
-//                     speaker: currentSpeaker,
-//                     text: currentText.trim()
-//                   });
-//                   currentText = '';
-//                 }
-//
-//                 currentSpeaker = speaker;
-//                 currentText += ` ${wordInfo.word}`;
-//               }
-//             });
-//           }
-//         }
-//       });
-//
-//       // Add the last utterance
-//       if (currentSpeaker && currentText) {
-//         utterances.push({
-//           speaker: currentSpeaker,
-//           text: currentText.trim()
-//         });
-//       }
-//     } else {
-//       // If no speaker diarization, add entire transcription as unknown
-//       utterances.push({
-//         speaker: "Unknown",
-//         text: transcription
-//       });
-//     }
-//
-//     return {
-//       text: transcription,
-//       utterances: utterances,
-//       isMock: false,
-//       provider: TranscriptionProvider.GOOGLE_SPEECH
-//     };
-//   } catch (error) {
-//     console.error("Google Speech-to-Text transcription error:", error);
-//     throw new Error(`Failed to transcribe audio with Google Speech-to-Text: ${error instanceof Error ? error.message : String(error)}`);
-//   }
-// };
 
 /**
  * Generate formatted medical documentation using specified LLM provider
@@ -328,53 +211,14 @@ export const generateMedicalDocument = async (
     switch (provider) {
       case LLMProvider.OPENAI:
         return await generateWithOpenAI(promptTemplate, options);
-      case LLMProvider.GEMINI:
-        return await generateWithGemini(promptTemplate, options);
-      case LLMProvider.CLAUDE:
       default:
-        return await generateWithClaude(promptTemplate, options);
+        return await generateWithOpenAI(promptTemplate, options);
     }
   } catch (error) {
     console.error(`Error generating document with ${provider}:`, error);
 
     // Return a simple error message in document format
     return `# Error Generating Documentation\n\nThere was an error generating the document: ${error instanceof Error ? error.message : String(error)}\n\nPlease try again or switch to a different LLM provider.`;
-  }
-};
-
-/**
- * Generate document using Claude
- */
-const generateWithClaude = async (
-    prompt: string,
-    options: DocumentGenerationOptions
-): Promise<string> => {
-  try {
-    const apiKey = options.apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY;
-
-    if (!apiKey) {
-      throw new Error("No Claude API key provided");
-    }
-
-    const { Anthropic } = require('@anthropic-ai/sdk');
-    const anthropic = new Anthropic({ apiKey });
-
-    const message = await anthropic.messages.create({
-      model: options.modelName || "claude-3-sonnet-20240229",
-      max_tokens: 4000,
-      messages: [
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
-    });
-
-    return message.content[0].text;
-
-  } catch (error) {
-    console.error("Error with Claude:", error);
-    throw new Error(`Claude API error: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -425,63 +269,6 @@ const generateWithOpenAI = async (
   }
 };
 
-/**
- * Generate document using Google's Gemini
- */
-const generateWithGemini = async (
-    prompt: string,
-    options: DocumentGenerationOptions
-): Promise<string> => {
-  try {
-    const apiKey = options.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
-
-    if (!apiKey) {
-      throw new Error("No Gemini API key provided");
-    }
-
-    // Initialize the Gemini client
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: options.modelName || "gemini-pro",
-    });
-
-    // Configure generation
-    const generationConfig = {
-      temperature: 0.3,
-      maxOutputTokens: 4000,
-      topK: 40,
-      topP: 0.95,
-    };
-
-    // Create system instructions and prompt
-    const systemInstruction = "You are an expert medical professional specializing in creating accurate and comprehensive medical documentation from transcripts.";
-
-    // Build the chat session
-    const chat = model.startChat({
-      generationConfig,
-      history: [
-        {
-          role: "user",
-          parts: [{ text: systemInstruction }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "I understand. I will analyze medical transcripts and create professional medical documentation following standard formats and medical terminology. I'll ensure the documentation is comprehensive, accurate, and formatted according to healthcare documentation standards." }],
-        },
-      ],
-    });
-
-    // Send the prompt to generate the document
-    const result = await chat.sendMessage(prompt);
-    const response = result.response;
-
-    return response.text();
-
-  } catch (error) {
-    console.error("Error with Gemini:", error);
-    throw new Error(`Gemini API error: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
 
 /**
  * Get prompt template for specified document format
@@ -736,19 +523,3 @@ Format it professionally as would appear in an endocrinology Electronic Health R
   return promptTemplates[format] || promptTemplates[DocumentFormat.SOAP];
 };
 
-/**
- * Helper function to convert Blob to base64 (for Google Speech API)
- */
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      // Remove the data URL prefix (e.g., "data:audio/webm;base64,")
-      const base64 = base64String.split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
