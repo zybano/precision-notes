@@ -19,6 +19,7 @@ import ConsultationPurchase from "@/pages/ConsultationPurchase";
 import Features from './pages/Features';
 import Careers from './pages/Careers';
 import Integrations from './pages/Integrations';
+import OrganizationalDocumentationPage from './pages/OrganizationalDocumentationPage';
 import NotFound from './pages/NotFound';
 import Layout from '@/components/Layout';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
@@ -60,6 +61,7 @@ function App() {
                 <Route path="/features" element={<Features />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/integrations" element={<Integrations />} />
+                <Route path="/b2b" element={<OrganizationalDocumentationPage />} />
                 
                 {/* Admin routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
