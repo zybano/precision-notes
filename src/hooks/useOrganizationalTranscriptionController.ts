@@ -143,7 +143,7 @@ export const useOrganizationalTranscriptionController = ({
       const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-request", {
         method: "POST",
         headers: {
-          "x-api-key": "pn_demo_key_replace_with_actual", // TODO: Replace with actual organizational API key
+          "x-api-key": "pn_mZ8/VeJQPMQBvGQdjUEcL5avl2Un8g8x",
         },
         body: formData,
       });
