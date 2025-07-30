@@ -185,10 +185,8 @@ const SpecialtyTemplates = ({ onUseTemplate }: SpecialtyTemplatesProps) => {
 
   const handleUseTemplate = (template: SpecialtyTemplate) => {
     onUseTemplate(template);
-    toast({
-      title: `${template.title} Template Selected`,
+    toast(`${template.title} Template Selected`, {
       description: "Your new document has been created from this specialty template.",
-      duration: 3000,
     });
   };
 
@@ -207,11 +205,8 @@ const SpecialtyTemplates = ({ onUseTemplate }: SpecialtyTemplatesProps) => {
 
   const handleCreateCustomTemplate = () => {
     if (selectedSpecialties.length === 0) {
-      toast({
-        title: "No Specialties Selected",
+      toast("No Specialties Selected", {
         description: "Please select at least one specialty to create a custom template.",
-        variant: "destructive",
-        duration: 3000,
       });
       return;
     }
@@ -223,10 +218,8 @@ const SpecialtyTemplates = ({ onUseTemplate }: SpecialtyTemplatesProps) => {
     
     const specialtyNames = selectedTemplates.map(t => t.title).join(", ");
     
-    toast({
-      title: "Custom Template Created",
+    toast("Custom Template Created", {
       description: `Combined template with: ${specialtyNames}`,
-      duration: 3000,
     });
 
     // This would normally create a custom template, but for now we'll just use the first selected template

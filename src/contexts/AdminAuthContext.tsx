@@ -1,218 +1,23 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface AdminUser {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'super_admin';
-  permissions: {
-    organizations?: boolean;
-    analytics?: boolean;
-    settings?: boolean;
-    users?: boolean;
-  };
+  role: string;
+  permissions: Record<string, boolean>;
 }
 
 interface AdminAuthContextType {
-  adminUser: AdminUser | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<boolean>;
-  signOut: () => Promise<void>;
-  sessionToken: string | null;
-  hasPermission: (permission: string) => boolean;
+  user: AdminUser | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  validateSession: (token: string) => Promise<boolean>;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
-
-const ADMIN_SESSION_KEY = 'admin_session_token';
-
-export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
-
-  // Check for existing session on mount
-  useEffect(() => {
-    const checkExistingSession = async () => {
-      const storedToken = localStorage.getItem(ADMIN_SESSION_KEY);
-      if (storedToken) {
-        const isValid = await validateSession(storedToken);
-        if (!isValid) {
-          localStorage.removeItem(ADMIN_SESSION_KEY);
-        }
-      }
-      setIsLoading(false);
-    };
-
-    checkExistingSession();
-  }, []);
-
-  const validateSession = async (token: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('admin_user_sessions')
-        .select(`
-          admin_user_id,
-          admin_users!inner(id, name, email, role, permissions)
-        `)
-        .eq('session_token', token)
-        .gt('expires_at', new Date().toISOString())
-        .single();
-
-      if (error) {
-        console.error('Session validation error:', error);
-        return false;
-      }
-
-      if (data) {
-        const adminData = data[0];
-        setAdminUser({
-          id: adminData.admin_id,
-          name: adminData.name,
-          email: adminData.email,
-          role: adminData.role,
-          permissions: adminData.permissions
-        });
-        setSessionToken(token);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error validating session:', error);
-      return false;
-    }
-  };
-
-  const signIn = async (email: string, password: string): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-
-      // Check if admin functions are available
-      try {
-        // First, verify admin credentials
-        const { data: credentials, error: credError } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('email', email)
-          .eq('is_active', true)
-          .single();
-
-        if (credError) {
-          console.error('Credential verification error:', credError);
-          toast.error('Invalid credentials');
-          return false;
-        }
-
-        if (!credentials) {
-          toast.error('Invalid email or password');
-          return false;
-        }
-
-        const adminData = credentials[0];
-
-        if (!adminData.is_active) {
-          toast.error('Account is disabled');
-          return false;
-        }
-
-        // Generate session token without needing Supabase auth
-        const sessionTokenValue = `admin_${adminData.admin_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        // Create admin session with a placeholder auth user ID
-        const placeholderAuthId = `admin_${adminData.admin_id}_${Date.now()}`;
-
-        const { data: sessionData, error: sessionError } = await supabase.rpc('create_admin_session', {
-          p_admin_user_id: adminData.admin_id,
-          p_auth_user_id: placeholderAuthId,
-          p_session_token: sessionTokenValue,
-          p_ip_address: null, // Could be populated with actual IP
-          p_user_agent: navigator.userAgent
-        });
-
-        if (sessionError) {
-          console.error('Session creation error:', sessionError);
-          toast.error('Failed to create session');
-          return false;
-        }
-
-        // Store session token
-        localStorage.setItem(ADMIN_SESSION_KEY, sessionTokenValue);
-        setSessionToken(sessionTokenValue);
-
-        // Set admin user
-        setAdminUser({
-          id: adminData.admin_id,
-          name: adminData.name,
-          email: email,
-          role: adminData.role,
-          permissions: adminData.permissions
-        });
-
-        toast.success(`Welcome back, ${adminData.name}!`);
-        return true;
-
-      } catch (functionError) {
-        console.error('Admin function error:', functionError);
-        toast.error('Admin system not configured. Please contact administrator.');
-        return false;
-      }
-
-    } catch (error) {
-      console.error('Sign in error:', error);
-      toast.error('An error occurred during sign in');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      if (sessionToken) {
-        // Invalidate session in database
-        await supabase.rpc('logout_admin_session', {
-          p_session_token: sessionToken
-        });
-      }
-
-      // Clear local state (no need to sign out from Supabase auth since we didn't use it)
-      localStorage.removeItem(ADMIN_SESSION_KEY);
-      setAdminUser(null);
-      setSessionToken(null);
-
-      toast.success('Signed out successfully');
-    } catch (error) {
-      console.error('Sign out error:', error);
-      toast.error('Error signing out');
-    }
-  };
-
-  const hasPermission = (permission: string): boolean => {
-    if (!adminUser) return false;
-    
-    // Super admins have all permissions
-    if (adminUser.role === 'super_admin') return true;
-    
-    // Check specific permission
-    return adminUser.permissions[permission as keyof typeof adminUser.permissions] === true;
-  };
-
-  return (
-    <AdminAuthContext.Provider value={{
-      adminUser,
-      isLoading,
-      signIn,
-      signOut,
-      sessionToken,
-      hasPermission
-    }}>
-      {children}
-    </AdminAuthContext.Provider>
-  );
-};
 
 export const useAdminAuth = () => {
   const context = useContext(AdminAuthContext);
@@ -220,4 +25,142 @@ export const useAdminAuth = () => {
     throw new Error("useAdminAuth must be used within an AdminAuthProvider");
   }
   return context;
+};
+
+interface AdminAuthProviderProps {
+  children: ReactNode;
+}
+
+export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for existing session on mount
+    const token = localStorage.getItem('admin_session_token');
+    if (token) {
+      validateSession(token).then((isValid) => {
+        if (!isValid) {
+          localStorage.removeItem('admin_session_token');
+        }
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const validateSession = async (token: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.rpc('validate_admin_session', {
+        p_session_token: token
+      });
+
+      if (error || !data || data.length === 0) {
+        console.log('Session validation failed:', error);
+        return false;
+      }
+
+      const sessionData = data[0];
+      
+      setUser({
+        id: sessionData.admin_id,
+        name: sessionData.name,
+        email: sessionData.email,
+        role: sessionData.role,
+        permissions: sessionData.permissions,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Session validation error:', error);
+      return false;
+    }
+  };
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.rpc('verify_admin_credentials', {
+        p_email: email,
+        p_password: password
+      });
+
+      if (error || !data || data.length === 0) {
+        console.error('Login failed:', error);
+        return false;
+      }
+
+      const adminUser = data[0];
+
+      // Create session
+      const sessionToken = crypto.randomUUID();
+      const authUserId = crypto.randomUUID(); // This would be the actual auth user ID in production
+
+      const { error: sessionError } = await supabase.rpc('create_admin_session', {
+        p_admin_user_id: adminUser.admin_id,
+        p_auth_user_id: authUserId,
+        p_session_token: sessionToken,
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent,
+      });
+
+      if (sessionError) {
+        console.error('Session creation failed:', sessionError);
+        return false;
+      }
+
+      // Store session token
+      localStorage.setItem('admin_session_token', sessionToken);
+
+      setUser({
+        id: adminUser.admin_id,
+        name: adminUser.name,
+        email: adminUser.email,
+        role: adminUser.role,
+        permissions: adminUser.permissions,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem('admin_session_token');
+      if (token) {
+        const { error } = await supabase.rpc('logout_admin_session', {
+          p_session_token: token,
+        });
+
+        if (error) {
+          console.error('Logout error:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('admin_session_token');
+      setUser(null);
+    }
+  };
+
+  const value: AdminAuthContextType = {
+    user,
+    loading,
+    login,
+    logout,
+    validateSession,
+  };
+
+  return (
+    <AdminAuthContext.Provider value={value}>
+      {children}
+    </AdminAuthContext.Provider>
+  );
 };

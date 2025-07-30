@@ -127,11 +127,11 @@ export const ConsultationTopup = ({
             }
 
             // Use our unified payment service
-            const result = await createConsultationCheckout(
-                selectedPackage.quantity,
-                `${window.location.origin}/payment-success`,
-                `${window.location.origin}/payment-canceled`
-            );
+            const result = await createConsultationCheckout({
+                quantity: selectedPackage.quantity,
+                successUrl: `${window.location.origin}/payment-success`,
+                cancelUrl: `${window.location.origin}/payment-canceled`
+            });
 
             if (result.success && result.url) {
                 // Redirect to checkout

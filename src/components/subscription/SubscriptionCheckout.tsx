@@ -55,8 +55,6 @@ export const SubscriptionCheckout = ({
         isAnnual,
         successUrl: `${window.location.origin}/payment-success`,
         cancelUrl: `${window.location.origin}/payment-canceled`,
-        // Pass region info for server-side pricing adjustments
-        regionCode: regionInfo?.countryCode || 'US'
       });
 
       if (result.success && result.url) {

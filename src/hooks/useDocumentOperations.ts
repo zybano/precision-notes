@@ -107,19 +107,12 @@ const useDocumentOperations = ({
 
       if (error) {
         console.error("Error creating document:", error);
-        toast({
-          title: "Error",
-          description: "Failed to save document. Please try again.",
-          variant: "destructive"
-        });
+        toast.error("Failed to save document. Please try again.");
         return false;
       }
 
       // Show success message
-      toast({
-        title: "Success",
-        description: "Document saved successfully!",
-      });
+      toast.success("Document saved successfully!");
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({
@@ -136,11 +129,7 @@ const useDocumentOperations = ({
       return true;
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("An unexpected error occurred. Please try again.");
       return false;
     } finally {
       setIsLoading(false);
@@ -265,20 +254,13 @@ const useDocumentOperations = ({
         // Save PDF
         doc.save(`${elementTitle.replace(/\s+/g, '_')}.pdf`);
         
-        toast({
-          title: "PDF Exported",
-          description: "Document has been exported as PDF successfully."
-        });
+         toast.success("Document has been exported as PDF successfully.");
       } else {
         throw new Error("Content reference is not available");
       }
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export document as PDF.",
-        variant: "destructive"
-      });
+      toast.error("Failed to export document as PDF.");
     }
   };
 
