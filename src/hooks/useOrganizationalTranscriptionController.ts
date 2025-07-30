@@ -126,9 +126,7 @@ export const useOrganizationalTranscriptionController = ({
 
   const processOrganizationalRecording = async (audioChunks: Blob[], options: any) => {
     if (audioChunks.length === 0) {
-      toast.error("No audio data", {
-        description: "No audio data was captured for transcription.",
-      });
+      toast.error("No audio data was captured for transcription.");
       return;
     }
 

@@ -141,11 +141,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   const handleCopyTranscript = () => {
     navigator.clipboard.writeText(editMode ? editedTranscript : transcript);
-    toast({
-      title: "Transcript Copied",
-      description: "The transcript has been copied to your clipboard.",
-      duration: 3000,
-    });
+    toast.success("The transcript has been copied to your clipboard.");
   };
 
   const getSpeakerColor = (speaker: string) => {
@@ -187,19 +183,10 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
       extractClinicalResults(result);
 
-      toast({
-        title: "Note Generated",
-        description: `Your transcript has been converted to a structured ${formatName} using ${LLMProvider[llmProvider]}.`,
-        duration: 3000,
-      });
+      toast.success(`Your transcript has been converted to a structured ${formatName} using ${LLMProvider[llmProvider]}.`);
     } catch (error) {
       console.error("Error converting transcript:", error);
-      toast({
-        title: "Conversion Error",
-        description: "There was a problem converting your transcript. Please try again.",
-        duration: 3000,
-        variant: "destructive",
-      });
+      toast.error("There was a problem converting your transcript. Please try again.");
     } finally {
       setIsGeneratingNote(false);
     }
@@ -257,20 +244,12 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   const handleCopyStructuredNote = () => {
     navigator.clipboard.writeText(structuredNote);
-    toast({
-      title: "Note Copied",
-      description: "The structured note has been copied to your clipboard.",
-      duration: 3000,
-    });
+    toast.success("The structured note has been copied to your clipboard.");
   };
 
   const handleSaveDocumentUpdate = async () => {
     if (!documentId) {
-      toast({
-        title: "Cannot update document",
-        description: "No document ID provided for update.",
-        variant: "destructive"
-      });
+      toast.error("No document ID provided for update.");
       return;
     }
 
@@ -350,11 +329,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
     setStructuredNote(updatedNote);
 
-    toast({
-      title: "Content Added",
-      description: `Added selected text to ${sectionId} section.`,
-      duration: 2000,
-    });
+    toast.success(`Added selected text to ${sectionId} section.`);
   };
 
   useEffect(() => {

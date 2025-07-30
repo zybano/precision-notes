@@ -51,16 +51,22 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const validateSession = async (token: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.rpc('validate_admin_session', {
-        p_session_token: token
-      });
+      const { data, error } = await supabase
+        .from('admin_user_sessions')
+        .select(`
+          admin_user_id,
+          admin_users!inner(id, name, email, role, permissions)
+        `)
+        .eq('session_token', token)
+        .gt('expires_at', new Date().toISOString())
+        .single();
 
       if (error) {
         console.error('Session validation error:', error);
         return false;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         const adminData = data[0];
         setAdminUser({
           id: adminData.admin_id,
@@ -87,25 +93,20 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       // Check if admin functions are available
       try {
         // First, verify admin credentials
-        const { data: credentials, error: credError } = await supabase.rpc('verify_admin_credentials', {
-          p_email: email,
-          p_password: password
-        });
+        const { data: credentials, error: credError } = await supabase
+          .from('admin_users')
+          .select('*')
+          .eq('email', email)
+          .eq('is_active', true)
+          .single();
 
         if (credError) {
           console.error('Credential verification error:', credError);
-          
-          // Check if it's a function not found error
-          if (credError.message?.includes('function') && credError.message?.includes('does not exist')) {
-            toast.error('Admin authentication not set up. Please run the SQL setup script.');
-            return false;
-          }
-          
           toast.error('Invalid credentials');
           return false;
         }
 
-        if (!credentials || credentials.length === 0) {
+        if (!credentials) {
           toast.error('Invalid email or password');
           return false;
         }
