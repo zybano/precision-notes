@@ -135,7 +135,7 @@ export const useOrganizationalTranscriptionController = ({
     const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
     const formData = new FormData();
     formData.append("audio", audioBlob, "audio.webm");
-    formData.append("document_format", form.getValues("documentFormat"));
+    formData.append("document_format", form.getValues("documentFormat") || "soap");
     formData.append("languageCode", "en_us");
     formData.append("useSpeechModelNano", options.useSpeechModelNano.toString());
     formData.append("model_name", "gpt-4-turbo");
@@ -145,7 +145,7 @@ export const useOrganizationalTranscriptionController = ({
       const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-simple", {
         method: "POST",
         headers: {
-          "x-api-key": "your-api-key-here", // Replace with your actual API key
+          "x-api-key": "pn_demo_key_replace_with_actual", // TODO: Replace with actual organizational API key
         },
         body: formData,
       });
@@ -155,7 +155,30 @@ export const useOrganizationalTranscriptionController = ({
       }
 
       const result = await response.json();
-      handleTranscriptionComplete(result);
+      
+      // Handle the B2B function response format
+      if (result.success && result.transcription) {
+        // Extract transcription from B2B response
+        const transcriptionResult: TranscriptionResult = {
+          text: result.transcription.text,
+          utterances: result.transcription.utterances || [],
+          isMock: result.transcription.isMock || false,
+          provider: result.transcription.provider || TranscriptionProvider.ASSEMBLYAI
+        };
+        
+        // Call the completion handler with transcription result
+        handleTranscriptionComplete(transcriptionResult);
+        
+        // If there's a generated document, set it in the form
+        if (result.document) {
+          form.setValue("notes", result.document);
+          form.setValue("generatedDocument", result.document);
+        }
+        
+        toast.success("Audio processed successfully!");
+      } else {
+        throw new Error(result.error || "Failed to process audio");
+      }
     } catch (error) {
       console.error("Error processing organizational recording:", error);
       toast.error("Failed to process your audio recording.");

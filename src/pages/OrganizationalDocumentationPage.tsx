@@ -38,7 +38,7 @@ const OrganizationalDocumentationPage = () => {
       recordingTime: 0,
       patientName: "",
       patientInfo: null,
-      documentFormat: "",
+      documentFormat: "soap",
       infoVerified: false,
     },
   });
@@ -108,23 +108,34 @@ const OrganizationalDocumentationPage = () => {
 
             <TabsContent value="record" className="mt-0">
               <EnhancedRecordingInterface
+                form={form}
                 isRecording={transcriptionControls.isRecording}
                 isPaused={transcriptionControls.isPaused}
                 recordingTime={transcriptionControls.recordingTime}
-                isTranscribing={transcriptionControls.isTranscribing}
-                useSpeechModelNano={useSpeechModelNano}
-                setUseSpeechModelNano={setUseSpeechModelNano}
                 startRecording={transcriptionControls.startRecording}
                 pauseRecording={transcriptionControls.pauseRecording}
                 stopRecording={transcriptionControls.handleStopRecording}
                 formatTime={transcriptionControls.formatTime}
-                onDownloadPdf={handleDownloadPDF}
-                onCopyToEMR={handleCopyToEMR}
+                transcript={transcriptionControls.transcript}
+                transcriptSummary={transcriptionControls.transcriptSummary}
+                patientInfo={transcriptionControls.patientInfo}
+                isTranscribing={transcriptionControls.isTranscribing}
+                showSummary={transcriptionControls.showSummary}
+                setShowSummary={transcriptionControls.setShowSummary}
                 transcriptResult={transcriptionControls.transcriptResult}
+                onFileUpload={transcriptionControls.onFileUpload}
+                resetRecording={transcriptionControls.resetRecording}
+                resetTranscription={transcriptionControls.resetTranscription}
+                transcriptionProvider={transcriptionProvider}
+                setTranscriptionProvider={setTranscriptionProvider}
+                llmProvider={llmProvider}
+                setLlmProvider={setLlmProvider}
                 documentFormat={documentFormat}
                 setDocumentFormat={setDocumentFormat}
+                useSpeechModelNano={useSpeechModelNano}
+                setUseSpeechModelNano={setUseSpeechModelNano}
                 onDocumentGenerated={handleDocumentGenerated}
-                onFileUpload={transcriptionControls.onFileUpload}
+                showTemplateSelection={false}
               />
             </TabsContent>
 

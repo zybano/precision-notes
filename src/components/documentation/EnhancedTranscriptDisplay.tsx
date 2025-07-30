@@ -15,6 +15,7 @@ import {
   generateMedicalDocument,
   DocumentGenerationOptions
 } from "@/services/transcription";
+import { PatientInfo } from "@/components/documentation/DocumentTypes";
 import { updateDocument } from "@/services/supabaseSetup";
 
 interface TranscriptDisplayProps {
