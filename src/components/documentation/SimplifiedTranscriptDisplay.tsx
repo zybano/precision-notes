@@ -19,7 +19,11 @@ interface TranscriptDisplayProps {
   setShowSummary: (value: boolean) => void;
   form?: any; // Optional form from parent to update
   showSummarySection?: boolean; // Prop to control summary section visibility
-  onSaveFormat?: (formatName: string, content: string) => void; // Callback for saving format
+  onSaveFormat?: (formatName: string, content: string) => Promise<void>; // Callback for saving format
+  documentContext?: {
+    documentFormat?: string;
+    onRegenerateDocument?: (newFormat: string) => Promise<void>;
+  };
 }
 
 const SimplifiedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({

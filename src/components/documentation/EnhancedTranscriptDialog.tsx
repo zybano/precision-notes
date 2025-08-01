@@ -29,6 +29,9 @@ interface EnhancedTranscriptDialogProps {
   setShowSummary: (show: boolean) => void;
   form: UseFormReturn<any>;
   onEditDocument: (doc: Document) => void;
+  documentFormat?: string;
+  onSaveFormat?: (formatName: string, content: string) => Promise<void>;
+  onRefreshDocuments?: () => Promise<void>;
 }
 
 const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
@@ -42,7 +45,10 @@ const EnhancedTranscriptDialog: React.FC<EnhancedTranscriptDialogProps> = ({
                                                                              showSummary,
                                                                              setShowSummary,
                                                                              form,
-                                                                             onEditDocument
+                                                                             onEditDocument,
+                                                                             documentFormat,
+                                                                             onSaveFormat,
+                                                                             onRefreshDocuments
                                                                            }) => {
   // Extract patient info from transcript data if available
   const extractedPatientInfo: PatientInfo | null = useMemo(() => {

@@ -18,23 +18,31 @@ export enum LLMProvider {
   GEMINI = 'gemini',
 }
 
-// Define the document format types
+// Define the document format types (matching B2B API)
 export enum DocumentFormat {
-  SOAP = 'soap',
-  HISTORY_AND_PHYSICAL = 'h&p',
-  PROGRESS_NOTE = 'progress',
-  DISCHARGE_SUMMARY = 'discharge',
-  CONSULTATION = 'consultation',
-  PROCEDURE_NOTE = 'procedure',
-  PEDIATRICS = 'pediatrics',
-  CARDIOLOGY = 'cardiology',
-  ORTHOPEDICS = 'orthopedics',
-  PSYCHIATRY = 'psychiatry',
-  GERIATRICS = 'geriatrics',
-  OBSTETRICS = 'obstetrics',
-  ENDOCRINOLOGY = 'endocrinology',
   DICTATION = 'dictation',
-
+  SOAP = 'soap',
+  PROGRESS = 'progress',
+  HISTORY_AND_PHYSICAL = 'h&p',
+  CONSULTATION = 'consultation',
+  DISCHARGE = 'discharge',
+  PROCEDURE = 'procedure',
+  OPERATIVE = 'operative',
+  EMERGENCY = 'emergency',
+  PSYCHIATRIC = 'psychiatric',
+  THERAPY = 'therapy',
+  RADIOLOGY = 'radiology',
+  PATHOLOGY = 'pathology',
+  CARDIOLOGY = 'cardiology',
+  PULMONARY = 'pulmonary',
+  NEUROLOGY = 'neurology',
+  ONCOLOGY = 'oncology',
+  PEDIATRIC = 'pediatric',
+  PRENATAL = 'prenatal',
+  FOLLOWUP = 'followup',
+  REFERRAL = 'referral',
+  MEDICATION = 'medication',
+  CUSTOM = 'custom'
 }
 
 // Define the speaker utterance type

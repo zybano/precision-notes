@@ -79,18 +79,18 @@ const DocumentGenerationPanel: React.FC<DocumentGenerationPanelProps> = ({
         switch (format) {
             case DocumentFormat.SOAP: return "SOAP Note";
             case DocumentFormat.HISTORY_AND_PHYSICAL: return "History & Physical";
-            case DocumentFormat.PROGRESS_NOTE: return "Progress Note";
-            case DocumentFormat.DISCHARGE_SUMMARY: return "Discharge Summary";
+            case DocumentFormat.PROGRESS: return "Progress Note";
+            case DocumentFormat.DISCHARGE: return "Discharge Summary";
             case DocumentFormat.CONSULTATION: return "Consultation Note";
-            case DocumentFormat.PROCEDURE_NOTE: return "Procedure Note";
+            case DocumentFormat.PROCEDURE: return "Procedure Note";
             case DocumentFormat.CARDIOLOGY: return "Cardiology Note";
             case DocumentFormat.DICTATION: return "Dictation";
-            case DocumentFormat.ENDOCRINOLOGY: return "Endocrinology Note";
-            case DocumentFormat.GERIATRICS: return "Geriatrics Note";
-            case DocumentFormat.OBSTETRICS: return "Obstetrics Note";
-            case DocumentFormat.PSYCHIATRY: return "Psychiatry Note";
-            case DocumentFormat.ORTHOPEDICS: return "Orthopedics Note";
-            case DocumentFormat.PEDIATRICS: return "Pediatrics Note";
+            case DocumentFormat.ONCOLOGY: return "Oncology Note";
+            case DocumentFormat.PULMONARY: return "Pulmonary Note";
+            case DocumentFormat.PRENATAL: return "Prenatal Note";
+            case DocumentFormat.PSYCHIATRIC: return "Psychiatric Note";
+            case DocumentFormat.NEUROLOGY: return "Neurology Note";
+            case DocumentFormat.PEDIATRIC: return "Pediatric Note";
         }
     };
 

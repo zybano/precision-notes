@@ -105,17 +105,17 @@ const DocumentVerificationDialog: React.FC<DocumentVerificationDialogProps> = ({
             >
               <option value={DocumentFormat.SOAP}>SOAP Note</option>
               <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
-              <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
-              <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
+              <option value={DocumentFormat.PROGRESS}>Progress Note</option>
+              <option value={DocumentFormat.DISCHARGE}>Discharge Summary</option>
               <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
-              <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
-              <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
+              <option value={DocumentFormat.PROCEDURE}>Procedure Note</option>
+              <option value={DocumentFormat.PEDIATRIC}>Pediatric Note</option>
               <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
-              <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
-              <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
-              <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
-              <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
-              <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
+              <option value={DocumentFormat.PSYCHIATRIC}>Psychiatric Note</option>
+              <option value={DocumentFormat.PULMONARY}>Pulmonary Note</option>
+              <option value={DocumentFormat.PRENATAL}>Prenatal Note</option>
+              <option value={DocumentFormat.NEUROLOGY}>Neurology Note</option>
+              <option value={DocumentFormat.ONCOLOGY}>Oncology Note</option>
               <option value={DocumentFormat.DICTATION}>Dictation (Raw Transcript)</option>
             </select>
           </div>

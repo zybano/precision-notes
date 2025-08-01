@@ -1,102 +1,202 @@
-
-// Document templates for the documentation page
+// Document templates matching B2B API specification
 
 export interface DocumentTemplate {
   id: string;
   title: string;
   description: string;
   content: string;
-  category: 'basic' | 'advanced' | 'specialty';
+  category: 'general' | 'specialty' | 'reports';
+  documentFormat: string;
 }
 
 export const documentTemplates: DocumentTemplate[] = [
-  // Basic Templates (available to all tiers)
-  {
-    id: "soap-note",
-    title: "SOAP Note",
-    description: "Standard SOAP format (Subjective, Objective, Assessment, Plan)",
-    content: "",
-    category: "basic"
-  },
-  {
-    id: "history-physical",
-    title: "History & Physical",
-    description: "Comprehensive history and physical examination",
-    content: "",
-    category: "basic"
-  },
+  // General Templates
   {
     id: "dictation",
     title: "Dictation",
-    description: "Basic dictation format without structured sections",
+    description: "Raw transcription without formatting",
     content: "",
-    category: "basic"
-  },
-  
-  // Advanced Templates (available to Professional and Enterprise tiers)
-  {
-    id: "progress-note",
-    title: "Progress Note",
-    description: "Follow-up visit documentation with relevant updates",
-    content: "",
-    category: "advanced"
+    category: "general",
+    documentFormat: "dictation"
   },
   {
-    id: "discharge-summary",
+    id: "soap",
+    title: "SOAP Notes",
+    description: "Subjective, Objective, Assessment, Plan format",
+    content: "",
+    category: "general",
+    documentFormat: "soap"
+  },
+  {
+    id: "progress",
+    title: "Progress Notes",
+    description: "Patient progress and status updates",
+    content: "",
+    category: "general",
+    documentFormat: "progress"
+  },
+  {
+    id: "h&p",
+    title: "History & Physical",
+    description: "Comprehensive history and physical examination",
+    content: "",
+    category: "general",
+    documentFormat: "h&p"
+  },
+  {
+    id: "consultation",
+    title: "Consultation Notes",
+    description: "Specialist consultation documentation",
+    content: "",
+    category: "general",
+    documentFormat: "consultation"
+  },
+  {
+    id: "discharge",
     title: "Discharge Summary",
-    description: "Hospital discharge documentation with follow-up instructions",
+    description: "Hospital discharge documentation",
     content: "",
-    category: "advanced"
+    category: "general",
+    documentFormat: "discharge"
   },
   {
-    id: "consultation-note",
-    title: "Consultation Note",
-    description: "Specialist consultation with recommendations",
+    id: "procedure",
+    title: "Procedure Notes",
+    description: "Medical procedure documentation",
     content: "",
-    category: "advanced"
+    category: "general",
+    documentFormat: "procedure"
   },
   {
-    id: "procedure-note",
-    title: "Procedure Note",
-    description: "Documentation of medical procedures",
+    id: "operative",
+    title: "Operative Notes",
+    description: "Surgical procedure documentation",
     content: "",
-    category: "advanced"
-  },
-  
-  // Specialty Templates (available to Enterprise tier only)
-  {
-    id: "psychiatry-note",
-    title: "Psychiatry Evaluation",
-    description: "Mental health assessment with DSM-5 criteria",
-    content: "",
-    category: "specialty"
+    category: "general",
+    documentFormat: "operative"
   },
   {
-    id: "cardiology-note",
-    title: "Cardiology Assessment",
-    description: "Cardiovascular-focused evaluation template",
+    id: "emergency",
+    title: "Emergency Department Notes",
+    description: "Emergency room visit documentation",
     content: "",
-    category: "specialty"
+    category: "general",
+    documentFormat: "emergency"
   },
   {
-    id: "pediatric-note",
-    title: "Pediatric Examination",
-    description: "Age-specific pediatric visit documentation",
+    id: "followup",
+    title: "Follow-up Visit Notes",
+    description: "Routine follow-up visit documentation",
     content: "",
-    category: "specialty"
+    category: "general",
+    documentFormat: "followup"
   },
   {
-    id: "orthopedic-note",
-    title: "Orthopedic Evaluation",
-    description: "Musculoskeletal assessment template",
+    id: "referral",
+    title: "Referral Notes",
+    description: "Specialist referral documentation",
     content: "",
-    category: "specialty"
+    category: "general",
+    documentFormat: "referral"
   },
   {
-    id: "obstetrics-note",
-    title: "Obstetrics Assessment",
-    description: "Prenatal visit documentation template",
+    id: "medication",
+    title: "Medication Management",
+    description: "Drug therapy review documentation",
     content: "",
-    category: "specialty"
+    category: "general",
+    documentFormat: "medication"
+  },
+
+  // Specialty Templates
+  {
+    id: "psychiatric",
+    title: "Psychiatric Evaluation",
+    description: "Mental health assessment documentation",
+    content: "",
+    category: "specialty",
+    documentFormat: "psychiatric"
+  },
+  {
+    id: "therapy",
+    title: "Therapy Session Notes",
+    description: "Counseling/therapy session documentation",
+    content: "",
+    category: "specialty",
+    documentFormat: "therapy"
+  },
+  {
+    id: "cardiology",
+    title: "Cardiology Consultation",
+    description: "Heart-related specialist consultation",
+    content: "",
+    category: "specialty",
+    documentFormat: "cardiology"
+  },
+  {
+    id: "pulmonary",
+    title: "Pulmonary Consultation",
+    description: "Respiratory specialist consultation",
+    content: "",
+    category: "specialty",
+    documentFormat: "pulmonary"
+  },
+  {
+    id: "neurology",
+    title: "Neurology Consultation",
+    description: "Neurological specialist consultation",
+    content: "",
+    category: "specialty",
+    documentFormat: "neurology"
+  },
+  {
+    id: "oncology",
+    title: "Oncology Consultation",
+    description: "Cancer care specialist consultation",
+    content: "",
+    category: "specialty",
+    documentFormat: "oncology"
+  },
+  {
+    id: "pediatric",
+    title: "Pediatric Notes",
+    description: "Children's medical visit documentation",
+    content: "",
+    category: "specialty",
+    documentFormat: "pediatric"
+  },
+  {
+    id: "prenatal",
+    title: "Prenatal Visit Notes",
+    description: "Pregnancy care documentation",
+    content: "",
+    category: "specialty",
+    documentFormat: "prenatal"
+  },
+  {
+    id: "custom",
+    title: "Presenting Complaints",
+    description: "Structured presenting complaints assessment",
+    content: "",
+    category: "specialty",
+    documentFormat: "custom"
+  },
+
+  // Reports
+  {
+    id: "radiology",
+    title: "Radiology Reports",
+    description: "Medical imaging interpretation",
+    content: "",
+    category: "reports",
+    documentFormat: "radiology"
+  },
+  {
+    id: "pathology",
+    title: "Pathology Reports",
+    description: "Laboratory specimen analysis",
+    content: "",
+    category: "reports",
+    documentFormat: "pathology"
   }
 ];

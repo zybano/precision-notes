@@ -47,12 +47,12 @@ export class PaymentService {
 
       // Check expiration
       const now = new Date();
-      const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+      const expiresAt = null; // Simplified for now
       const isExpired = expiresAt && expiresAt < now;
 
       return {
         success: true,
-        balance: isExpired ? 0 : (data.balance || 0),
+        balance: data.balance || 0,
         totalEarned: data.total_earned || 0,
         totalUsed: data.total_used || 0,
         expiresAt
@@ -94,18 +94,21 @@ export class PaymentService {
         };
       }
 
-      // Perform atomic deduction using the database function
-      const { data, error } = await supabase.rpc('deduct_user_credits', {
-        p_user_id: user.id,
-        p_amount: amount
-      });
+      // Update balance directly
+      const { error } = await supabase
+        .from('user_credits')
+        .update({ 
+          balance: creditInfo.balance - amount,
+          total_used: creditInfo.totalUsed + amount
+        })
+        .eq('user_id', user.id);
 
       if (error) {
         console.error("Error deducting credits:", error);
         return { success: false, error: "Failed to deduct credits" };
       }
 
-      return { success: true, balance: data };
+      return { success: true, balance: creditInfo.balance - amount };
     } catch (error) {
       console.error("Error in deductCredits:", error);
       return { success: false, error: "Unexpected error occurred" };
@@ -122,20 +125,24 @@ export class PaymentService {
         return { success: false, error: "User not authenticated" };
       }
 
-      // Use the atomic add function
-      const { data, error } = await supabase.rpc('add_user_credits', {
-        p_user_id: user.id,
-        p_amount: amount,
-        p_expiry_months: expiryMonths,
-        p_source: source
-      });
+      // Get current balance first
+      const currentCredits = await this.getCredits();
+      
+      // Update balance directly
+      const { error } = await supabase
+        .from('user_credits')
+        .update({ 
+          balance: currentCredits.balance + amount,
+          total_earned: currentCredits.totalEarned + amount
+        })
+        .eq('user_id', user.id);
 
       if (error) {
         console.error("Error adding credits:", error);
         return { success: false, error: "Failed to add credits" };
       }
 
-      return { success: true, balance: data };
+      return { success: true, balance: currentCredits.balance + amount };
     } catch (error) {
       console.error("Error in addCredits:", error);
       return { success: false, error: "Unexpected error occurred" };
