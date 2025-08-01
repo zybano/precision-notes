@@ -81,32 +81,40 @@ const OrganizationalDocumentationPage = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (printRef.current && notesContent) {
-      try {
-        // Simple PDF export using jsPDF
-        const jsPDF = await import('jspdf');
-        const doc = new jsPDF.default();
-        
-        const documentTitle = `${documentFormat.toUpperCase()} Notes - ${new Date().toLocaleDateString()}`;
-        
-        // Add title
-        doc.setFontSize(16);
-        doc.text(documentTitle, 20, 20);
-        
-        // Add content
-        doc.setFontSize(12);
-        const splitText = doc.splitTextToSize(notesContent, 170);
-        doc.text(splitText, 20, 40);
-        
-        // Save the PDF
-        doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
-        toast.success("PDF downloaded successfully");
-      } catch (error) {
-        console.error('PDF export error:', error);
-        toast.error("Failed to export PDF");
-      }
-    } else {
+    const content = notesContent?.trim();
+    if (!content) {
       toast.error("No content available to export");
+      return;
+    }
+
+    try {
+      // Simple PDF export using jsPDF
+      const jsPDF = await import('jspdf');
+      const doc = new jsPDF.default();
+      
+      const documentTitle = `${documentFormat.toUpperCase()} Notes - ${new Date().toLocaleDateString()}`;
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(documentTitle, 20, 20);
+      
+      // Add content - clean markdown for PDF
+      doc.setFontSize(12);
+      const cleanContent = content
+        .replace(/#{1,6}\s/g, '') // Remove markdown headers
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
+        .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
+        .replace(/\n+/g, '\n'); // Clean up extra newlines
+      
+      const splitText = doc.splitTextToSize(cleanContent, 170);
+      doc.text(splitText, 20, 40);
+      
+      // Save the PDF
+      doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
+      toast.success("PDF downloaded successfully");
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast.error("Failed to export PDF");
     }
   };
 
@@ -245,6 +253,13 @@ const OrganizationalDocumentationPage = () => {
                     Back to Recording
                   </Button>
                   <div className="space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("template")}
+                    >
+                      Change Format
+                    </Button>
                     <Button
                       type="button"
                       className="flex items-center"
