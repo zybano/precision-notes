@@ -27,14 +27,14 @@ const formatOptions = [
     category: "General"
   },
   {
-    format: DocumentFormat.PROGRESS_NOTE,
+    format: DocumentFormat.PROGRESS,
     label: "Progress Note",
     description: "Follow-up notes documenting patient progress",
     icon: FileText,
     category: "General"
   },
   {
-    format: DocumentFormat.DISCHARGE_SUMMARY,
+    format: DocumentFormat.DISCHARGE,
     label: "Discharge Summary",
     description: "Summary of hospital stay and discharge instructions",
     icon: FileText,
@@ -48,7 +48,7 @@ const formatOptions = [
     category: "General"
   },
   {
-    format: DocumentFormat.PROCEDURE_NOTE,
+    format: DocumentFormat.PROCEDURE,
     label: "Procedure Note",
     description: "Documentation of medical procedures performed",
     icon: FileText,
@@ -62,44 +62,44 @@ const formatOptions = [
     category: "Specialty"
   },
   {
-    format: DocumentFormat.PEDIATRICS,
+    format: DocumentFormat.PEDIATRIC,
     label: "Pediatrics",
     description: "Child-focused medical documentation",
     icon: Baby,
     category: "Specialty"
   },
   {
-    format: DocumentFormat.PSYCHIATRY,
+    format: DocumentFormat.PSYCHIATRIC,
     label: "Psychiatry",
     description: "Mental health and psychiatric documentation",
     icon: Brain,
     category: "Specialty"
   },
   {
-    format: DocumentFormat.ORTHOPEDICS,
-    label: "Orthopedics",
-    description: "Musculoskeletal and bone-related documentation",
-    icon: Bone,
+    format: DocumentFormat.NEUROLOGY,
+    label: "Neurology",
+    description: "Neurological assessment and documentation",
+    icon: Brain,
     category: "Specialty"
   },
   {
-    format: DocumentFormat.OBSTETRICS,
-    label: "Obstetrics",
-    description: "Pregnancy and childbirth documentation",
+    format: DocumentFormat.PRENATAL,
+    label: "Prenatal",
+    description: "Pregnancy care documentation",
     icon: Baby,
     category: "Specialty"
   },
   {
-    format: DocumentFormat.GERIATRICS,
-    label: "Geriatrics",
-    description: "Elderly patient care documentation",
+    format: DocumentFormat.FOLLOWUP,
+    label: "Follow-up",
+    description: "Routine follow-up visit documentation",
     icon: Users,
     category: "Specialty"
   },
   {
-    format: DocumentFormat.ENDOCRINOLOGY,
-    label: "Endocrinology",
-    description: "Hormone and metabolic disorder documentation",
+    format: DocumentFormat.ONCOLOGY,
+    label: "Oncology",
+    description: "Cancer care specialist consultation",
     icon: Stethoscope,
     category: "Specialty"
   }

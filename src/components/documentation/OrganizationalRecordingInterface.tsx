@@ -45,17 +45,17 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
   const formatLabels = {
     [DocumentFormat.SOAP]: "SOAP Note",
     [DocumentFormat.HISTORY_AND_PHYSICAL]: "History & Physical",
-    [DocumentFormat.PROGRESS_NOTE]: "Progress Note",
-    [DocumentFormat.DISCHARGE_SUMMARY]: "Discharge Summary",
+    [DocumentFormat.PROGRESS]: "Progress Note",
+    [DocumentFormat.DISCHARGE]: "Discharge Summary",
     [DocumentFormat.CONSULTATION]: "Consultation",
-    [DocumentFormat.PROCEDURE_NOTE]: "Procedure Note",
+    [DocumentFormat.PROCEDURE]: "Procedure Note",
     [DocumentFormat.CARDIOLOGY]: "Cardiology",
-    [DocumentFormat.PEDIATRICS]: "Pediatrics",
-    [DocumentFormat.PSYCHIATRY]: "Psychiatry",
-    [DocumentFormat.ORTHOPEDICS]: "Orthopedics",
-    [DocumentFormat.OBSTETRICS]: "Obstetrics",
-    [DocumentFormat.GERIATRICS]: "Geriatrics",
-    [DocumentFormat.ENDOCRINOLOGY]: "Endocrinology",
+    [DocumentFormat.PEDIATRIC]: "Pediatrics",
+    [DocumentFormat.PSYCHIATRIC]: "Psychiatry",
+    [DocumentFormat.NEUROLOGY]: "Neurology",
+    [DocumentFormat.PRENATAL]: "Prenatal",
+    [DocumentFormat.FOLLOWUP]: "Follow-up",
+    [DocumentFormat.ONCOLOGY]: "Oncology",
     [DocumentFormat.DICTATION]: "Dictation"
   };
 

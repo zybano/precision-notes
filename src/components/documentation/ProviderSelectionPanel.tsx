@@ -33,27 +33,27 @@ const ProviderSelectionPanel: React.FC<ProviderSelectionPanelProps> = ({
     const formatDisplayMap: Record<string, FormatDisplayInfo> = {
         [DocumentFormat.SOAP]: { id: 'soap', label: 'SOAP Note' },
         [DocumentFormat.HISTORY_AND_PHYSICAL]: { id: 'hnp', label: 'H&P' },
-        [DocumentFormat.PROGRESS_NOTE]: { id: 'progress', label: 'Progress Note' },
-        [DocumentFormat.DISCHARGE_SUMMARY]: { id: 'discharge', label: 'Discharge Summary' },
+        [DocumentFormat.PROGRESS]: { id: 'progress', label: 'Progress Note' },
+        [DocumentFormat.DISCHARGE]: { id: 'discharge', label: 'Discharge Summary' },
         [DocumentFormat.CONSULTATION]: { id: 'consultation', label: 'Consultation' },
-        [DocumentFormat.PROCEDURE_NOTE]: { id: 'procedure', label: 'Procedure Note' },
+        [DocumentFormat.PROCEDURE]: { id: 'procedure', label: 'Procedure Note' },
         [DocumentFormat.CARDIOLOGY]: { id: 'cardiology', label: 'Cardiology' },
         [DocumentFormat.DICTATION]: { id: 'dictation', label: 'Dictation' },
-        [DocumentFormat.ENDOCRINOLOGY]: { id: 'endocrinology', label: 'Endocrinology' },
-        [DocumentFormat.GERIATRICS]: { id: 'geriatrics', label: 'Geriatrics' },
-        [DocumentFormat.OBSTETRICS]: { id: 'obstetrics', label: 'Obstetrics' },
-        [DocumentFormat.PSYCHIATRY]: { id: 'psychiatry', label: 'Psychiatry' },
-        [DocumentFormat.ORTHOPEDICS]: { id: 'orthopedics', label: 'Orthopedics' },
-        [DocumentFormat.PEDIATRICS]: { id: 'pediatrics', label: 'Pediatrics' }
+        [DocumentFormat.ONCOLOGY]: { id: 'oncology', label: 'Oncology' },
+        [DocumentFormat.FOLLOWUP]: { id: 'followup', label: 'Follow-up' },
+        [DocumentFormat.PRENATAL]: { id: 'prenatal', label: 'Prenatal' },
+        [DocumentFormat.PSYCHIATRIC]: { id: 'psychiatric', label: 'Psychiatry' },
+        [DocumentFormat.NEUROLOGY]: { id: 'neurology', label: 'Neurology' },
+        [DocumentFormat.PEDIATRIC]: { id: 'pediatric', label: 'Pediatrics' }
     };
 
     const formatValues = [
         DocumentFormat.SOAP,
         DocumentFormat.HISTORY_AND_PHYSICAL,
-        DocumentFormat.PROGRESS_NOTE,
-        DocumentFormat.DISCHARGE_SUMMARY,
+        DocumentFormat.PROGRESS,
+        DocumentFormat.DISCHARGE,
         DocumentFormat.CONSULTATION,
-        DocumentFormat.PROCEDURE_NOTE
+        DocumentFormat.PROCEDURE
     ];
 
     return (

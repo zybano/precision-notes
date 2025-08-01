@@ -29,6 +29,8 @@ interface TranscriptDisplayProps {
   form?: any; // Optional form from parent to update
   showSummarySection?: boolean; // Prop to control summary section visibility
   documentId?: string; // Document identification for updates
+  onSaveFormat?: (formatName: string, content: string) => Promise<void>;
+  documentContext?: any;
 }
 
 const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
@@ -196,18 +198,18 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
     switch (format) {
       case DocumentFormat.SOAP: return "SOAP Note";
       case DocumentFormat.HISTORY_AND_PHYSICAL: return "History & Physical";
-      case DocumentFormat.PROGRESS_NOTE: return "Progress Note";
-      case DocumentFormat.DISCHARGE_SUMMARY: return "Discharge Summary";
+      case DocumentFormat.PROGRESS: return "Progress Note";
+      case DocumentFormat.DISCHARGE: return "Discharge Summary";
       case DocumentFormat.CONSULTATION: return "Consultation Note";
-      case DocumentFormat.PROCEDURE_NOTE: return "Procedure Note";
+      case DocumentFormat.PROCEDURE: return "Procedure Note";
       case DocumentFormat.CARDIOLOGY: return "Cardiology Note";
       case DocumentFormat.DICTATION: return "Dictation";
-      case DocumentFormat.ENDOCRINOLOGY: return "Endocrinology Note";
-      case DocumentFormat.GERIATRICS: return "Geriatrics Note";
-      case DocumentFormat.OBSTETRICS: return "Obstetrics Note";
-      case DocumentFormat.PSYCHIATRY: return "Psychiatry Note";
-      case DocumentFormat.ORTHOPEDICS: return "Orthopedics Note";
-      case DocumentFormat.PEDIATRICS: return "Pediatrics Note";
+      case DocumentFormat.ONCOLOGY: return "Oncology Note";
+      case DocumentFormat.FOLLOWUP: return "Follow-up Note";
+      case DocumentFormat.PRENATAL: return "Prenatal Note";
+      case DocumentFormat.PSYCHIATRIC: return "Psychiatric Note";
+      case DocumentFormat.NEUROLOGY: return "Neurology Note";
+      case DocumentFormat.PEDIATRIC: return "Pediatric Note";
       default: return "Medical Note";
     }
   };
@@ -406,18 +408,18 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
               onChange={(e) => setSelectedFormat(e.target.value as DocumentFormat)}
             >
               <option value={DocumentFormat.SOAP}>SOAP Note</option>
-              <option value={DocumentFormat.PROGRESS_NOTE}>Progress Note</option>
+              <option value={DocumentFormat.PROGRESS}>Progress Note</option>
               <option value={DocumentFormat.CONSULTATION}>Consultation Note</option>
               <option value={DocumentFormat.HISTORY_AND_PHYSICAL}>History & Physical</option>
-              <option value={DocumentFormat.PROCEDURE_NOTE}>Procedure Note</option>
+              <option value={DocumentFormat.PROCEDURE}>Procedure Note</option>
               <option value={DocumentFormat.CARDIOLOGY}>Cardiology Note</option>
-              <option value={DocumentFormat.PSYCHIATRY}>Psychiatry Note</option>
-              <option value={DocumentFormat.GERIATRICS}>Geriatrics Note</option>
-              <option value={DocumentFormat.PEDIATRICS}>Pediatrics Note</option>
-              <option value={DocumentFormat.ORTHOPEDICS}>Orthopedics Note</option>
-              <option value={DocumentFormat.OBSTETRICS}>Obstetrics Note</option>
-              <option value={DocumentFormat.ENDOCRINOLOGY}>Endocrinology Note</option>
-              <option value={DocumentFormat.DISCHARGE_SUMMARY}>Discharge Summary</option>
+              <option value={DocumentFormat.PSYCHIATRIC}>Psychiatric Note</option>
+              <option value={DocumentFormat.FOLLOWUP}>Follow-up Note</option>
+              <option value={DocumentFormat.PEDIATRIC}>Pediatric Note</option>
+              <option value={DocumentFormat.NEUROLOGY}>Neurology Note</option>
+              <option value={DocumentFormat.PRENATAL}>Prenatal Note</option>
+              <option value={DocumentFormat.ONCOLOGY}>Oncology Note</option>
+              <option value={DocumentFormat.DISCHARGE}>Discharge Summary</option>
               <option value={DocumentFormat.DICTATION}>Dictation</option>
             </select>
             <Button

@@ -146,13 +146,13 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.PROGRESS_NOTE} id="progress-note" />
+                                <RadioGroupItem value={DocumentFormat.PROGRESS} id="progress-note" />
                                 <Label htmlFor="progress-note" className="cursor-pointer">
                                     Progress Note
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.DISCHARGE_SUMMARY} id="discharge" />
+                                <RadioGroupItem value={DocumentFormat.DISCHARGE} id="discharge" />
                                 <Label htmlFor="discharge" className="cursor-pointer">
                                     Discharge Summary
                                 </Label>
@@ -164,7 +164,7 @@ const ProviderSelectionDialog: React.FC<ProviderSelectionDialogProps> = ({
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value={DocumentFormat.PROCEDURE_NOTE} id="procedure" />
+                                <RadioGroupItem value={DocumentFormat.PROCEDURE} id="procedure" />
                                 <Label htmlFor="procedure" className="cursor-pointer">
                                     Procedure Note
                                 </Label>
