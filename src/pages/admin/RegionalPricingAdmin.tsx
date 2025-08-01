@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RegionalPricingTable } from "@/components/admin/RegionalPricingTable";
 import { toggleNigeriaMode, setCountryOverride } from "@/services/regionalPricingService";
-import { Globe, Refresh, Settings } from "lucide-react";
+import { Globe, RefreshCw, Settings } from "lucide-react";
 
 export default function RegionalPricingAdmin() {
   const [activeTab, setActiveTab] = useState("view");
@@ -46,7 +46,7 @@ export default function RegionalPricingAdmin() {
             onClick={() => window.location.reload()}
             title="Refresh data"
           >
-            <Refresh className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
       </div>

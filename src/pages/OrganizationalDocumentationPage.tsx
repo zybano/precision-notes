@@ -26,6 +26,7 @@ import { PatientSummaryResult } from "@/services/summaryUtils";
 
 const OrganizationalDocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("template");
+  const [templateSelected, setTemplateSelected] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 

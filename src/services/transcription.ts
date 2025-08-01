@@ -503,21 +503,21 @@ Please create comprehensive orthopedic notes from this conversation, addressing 
 Format it professionally as would appear in an orthopedic Electronic Health Record.`,
 
     [DocumentFormat.ENDOCRINOLOGY]: `
-I need you to analyze this endocrinology medical conversation transcript and convert it into properly formatted hormonal disorder notes.
-Please act as an expert endocrinologist with experience in metabolic documentation.
+I need you to analyze this medical conversation transcript and convert it into a detailed endocrinology consultation note.
 
 Here's the transcript:
 
 ${conversationText}
 
-Please create comprehensive endocrinology notes from this conversation, addressing these key areas:
-- Metabolic Control: Data on blood glucose, A1C, thyroid function, and other relevant metrics
-- Endocrine History: Details on diabetes, thyroid disorders, adrenal issues, and other conditions
-- Medication Management: Information on insulin, hormone therapy, and oral agents
-- Metabolic Complications: Assessment of micro/macrovascular complications and neuropathy
-- Lifestyle Modifications: Recommendations for diet, exercise, and monitoring
+Please create a comprehensive endocrinology note following this format:
+[Insert detailed endocrinology-specific template]
+`,
+    [DocumentFormat.DICTATION]: `
+The following is a direct transcription for dictation purposes:
 
-Format it professionally as would appear in an endocrinology Electronic Health Record.`
+${conversationText}
+
+This transcription is provided as dictated, with speaker labels for reference.`
   };
 
   return promptTemplates[format] || promptTemplates[DocumentFormat.SOAP];

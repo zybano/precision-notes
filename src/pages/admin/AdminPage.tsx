@@ -210,7 +210,7 @@ export default function AdminPage() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOut(sessionToken || "");
   };
 
   return (

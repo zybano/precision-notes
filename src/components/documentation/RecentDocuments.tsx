@@ -176,7 +176,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
           utterances: parsedData.utterances || [],
           isMock: parsedData.isMock || false,
           provider: parsedData.provider || "default",
-          patientInfo: parsedData.patientInfo || undefined
+          // Remove patientInfo as it's not part of TranscriptionResult interface
         });
 
         setTranscriptText(parsedData.text || "");

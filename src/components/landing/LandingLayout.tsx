@@ -13,7 +13,7 @@ type LandingLayoutProps = {
   pageTitle: string;
   pageSubtitle?: string;
   heroBackground?: string;
-  currentPage: 'about' | 'features' | 'pricing' | 'home';
+  currentPage: 'about' | 'features' | 'pricing' | 'home' | 'contact';
 };
 
 export function LandingLayout({

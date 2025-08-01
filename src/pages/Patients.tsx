@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Search, Plus, MoreVertical, Calendar, Clock, FileText, Filter } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,7 @@ const Patients = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const { toast } = useToast();
+  // Remove useToast hook since we're using sonner directly
   
   const patientData = [
     { 
@@ -83,47 +83,29 @@ const Patients = () => {
 
   const handleImport = () => {
     setIsImportDialogOpen(false);
-    toast({
-      title: "Import Started",
-      description: "Patient data import has begun. You'll be notified when complete.",
-    });
+    toast.success("Patient data import has begun. You'll be notified when complete.");
     
     // Simulate import completion after 2 seconds
     setTimeout(() => {
-      toast({
-        title: "Import Complete",
-        description: "5 patient records have been successfully imported.",
-      });
+      toast.success("5 patient records have been successfully imported.");
     }, 2000);
   };
 
   const handleAddPatient = () => {
     setIsAddPatientOpen(false);
-    toast({
-      title: "Patient Added",
-      description: "New patient has been successfully added to your records.",
-    });
+    toast.success("New patient has been successfully added to your records.");
   };
 
   const handleViewAppointments = () => {
-    toast({
-      title: "Appointments",
-      description: "Navigating to full appointment calendar.",
-    });
+    toast.success("Navigating to full appointment calendar.");
   };
 
   const handleViewRecords = (patientId: number) => {
-    toast({
-      title: "Medical Records",
-      description: `Viewing medical records for patient #${patientId}.`,
-    });
+    toast.success(`Viewing medical records for patient #${patientId}.`);
   };
 
   const handleScheduleAppointment = (patientId: number) => {
-    toast({
-      title: "Schedule Appointment",
-      description: `Opening scheduler for patient #${patientId}.`,
-    });
+    toast.success(`Opening scheduler for patient #${patientId}.`);
   };
   
   return (
@@ -314,25 +296,16 @@ const Patients = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => {
-                                  toast({
-                                    title: "Message Sent",
-                                    description: `Message sent to ${patient.name}.`,
-                                  });
+                                   toast.success(`Message sent to ${patient.name}.`);
                                 }}>Send Message</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => {
-                                  toast({
-                                    title: "Edit Patient",
-                                    description: `Editing ${patient.name}'s information.`,
-                                  });
+                                   toast.success(`Editing ${patient.name}'s information.`);
                                 }}>Edit Patient</DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => {
-                                    toast({
-                                      title: "Patient Archived",
-                                      description: `${patient.name} has been archived.`,
-                                    });
+                                     toast.success(`${patient.name} has been archived.`);
                                   }}
                                 >
                                   Archive Patient

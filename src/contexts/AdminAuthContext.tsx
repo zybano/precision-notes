@@ -18,6 +18,8 @@ interface AdminAuthContextType {
   signIn: (email: string, password: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  signOut: (sessionToken: string) => Promise<void>;
+  sessionToken: string | null;
   validateSession: (token: string) => Promise<boolean>;
 }
 
@@ -124,6 +126,12 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
     return user?.permissions?.[permission] === true;
   };
 
+  const signOut = async (sessionToken: string) => {
+    await logout();
+  };
+
+  const sessionToken = localStorage.getItem('admin_session_token');
+
   const value: AdminAuthContextType = {
     adminUser: user,
     user,
@@ -133,6 +141,8 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
     signIn: login,
     login,
     logout,
+    signOut,
+    sessionToken,
     validateSession,
   };
 
