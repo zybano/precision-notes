@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useAudioRecording } from "@/hooks/useAudioRecording";
 import { useTranscription } from "@/hooks/useTranscription";
 import { TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
@@ -32,6 +33,7 @@ interface OrganizationalTranscriptionControllerReturn {
   resetTranscription: () => void;
   isProcessing: boolean;
   setActiveTab?: (tab: string) => void;
+  isB2BProcessing: boolean;
 }
 
 export const useOrganizationalTranscriptionController = ({
@@ -45,6 +47,8 @@ export const useOrganizationalTranscriptionController = ({
   useSpeechModelNano: boolean;
   setActiveTab?: (tab: string) => void;
 }): OrganizationalTranscriptionControllerReturn => {
+  const [isB2BProcessing, setIsB2BProcessing] = useState(false);
+  
   const {
     isRecording,
     isPaused,
@@ -105,18 +109,22 @@ export const useOrganizationalTranscriptionController = ({
 
     if (chunks.length > 0) {
       try {
+        setIsB2BProcessing(true);
         await processOrganizationalRecording(chunks.map(chunk => new Blob([chunk])), {
           provider: transcriptionProvider,
           useSpeechModelNano,
         });
       } catch (error) {
         console.error("Error processing recording:", error);
+      } finally {
+        setIsB2BProcessing(false);
       }
     }
   };
 
   const onFileUpload = async (file: File) => {
     try {
+      setIsB2BProcessing(true);
       await processOrganizationalFile(file, {
         provider: transcriptionProvider,
         useSpeechModelNano,
@@ -126,6 +134,8 @@ export const useOrganizationalTranscriptionController = ({
     } catch (error) {
       console.error("Error uploading file:", error);
       return null;
+    } finally {
+      setIsB2BProcessing(false);
     }
   };
 
@@ -283,7 +293,7 @@ export const useOrganizationalTranscriptionController = ({
     isRecording,
     isPaused,
     recordingTime,
-    isTranscribing,
+    isTranscribing: isB2BProcessing || isTranscribing,
     startRecording,
     pauseRecording,
     handleStopRecording,
@@ -297,7 +307,8 @@ export const useOrganizationalTranscriptionController = ({
     onFileUpload,
     resetRecording,
     resetTranscription,
-    isProcessing: isTranscribing,
+    isProcessing: isB2BProcessing || isTranscribing,
     setActiveTab,
+    isB2BProcessing,
   };
 };
