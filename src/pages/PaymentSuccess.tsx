@@ -47,17 +47,19 @@ const PaymentSuccess = () => {
               ? 'payment_provider_reference'
               : 'payment_provider_reference';
 
-          const { data: purchases, error: purchaseError } = await supabase
-              .from('consultation_purchases')
-              .select('quantity, payment_provider')
-              .eq(referenceField, sessionId)
+          const { data: transactionData, error: transactionError } = await supabase
+              .from('transaction_history')
+              .select('*')
+              .eq('payment_provider_reference', sessionId)
+              .eq('transaction_type', 'credit')
               .single();
 
-          if (!purchaseError && purchases) {
+          if (!transactionError && transactionData) {
             // This was a consultation top-up purchase
+            const credits = Math.abs(transactionData.amount) || 0;
             setPurchaseDetails({
               type: 'consultation',
-              quantity: purchases.quantity
+              quantity: credits
             });
             setVerified(true);
             // Mark as verified in session storage

@@ -190,10 +190,10 @@ export const getSubscriptionPlansWithRegionalPricing = async (): Promise<Subscri
     if (error) throw new Error(error.message);
     if (!plans || plans.length === 0) return [];
     
-    // Process plans
+    // Process plans with proper type handling for features
     const processedPlans = plans.map(plan => ({
       ...plan,
-      features: Array.isArray(plan.features) ? plan.features : []
+      features: Array.isArray(plan.features) ? (plan.features as any[]).map(f => String(f)) : []
     }));
     
     // If user is not from Nigeria, return global pricing sorted by tier

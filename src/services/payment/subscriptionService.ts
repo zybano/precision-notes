@@ -166,9 +166,10 @@ export const fetchUserSubscription = async (userId: string): Promise<{ success: 
 export const fetchConsultationPurchases = async (userId: string): Promise<{ success: boolean; purchases?: any[]; error?: string }> => {
   try {
     const { data, error } = await supabase
-        .from('consultation_purchases')
-        .select('*, consultation_packages(*)')
+        .from('transaction_history')
+        .select('*')
         .eq('user_id', userId)
+        .eq('transaction_type', 'credit')
         .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);

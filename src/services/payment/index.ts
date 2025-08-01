@@ -30,7 +30,7 @@ export class PaymentService {
 
       const { data, error } = await supabase
         .from('user_credits')
-        .select('balance, total_earned, total_used, expires_at')
+        .select('balance, total_earned, total_used')
         .eq('user_id', user.id)
         .single();
 
@@ -424,15 +424,14 @@ export class PaymentService {
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-    await supabase
-      .from('user_credits')
-      .insert({
-        user_id: userId,
-        balance: 0,
-        total_earned: 0,
-        total_used: 0,
-        expires_at: expiresAt.toISOString()
-      });
+      await supabase
+        .from('user_credits')
+        .insert({
+          user_id: userId,
+          balance: 0,
+          total_earned: 0,
+          total_used: 0
+        });
   }
 }
 

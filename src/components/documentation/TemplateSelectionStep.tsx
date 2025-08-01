@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { DocumentFormat } from "@/services/transcription";
-import { FileText, Stethoscope, Heart, Baby, Brain, Users, Bone } from "lucide-react";
+import { FileText, Stethoscope, Heart, Baby, Brain, Users, Bone, Search } from "lucide-react";
 
 interface TemplateSelectionStepProps {
   selectedFormat: DocumentFormat;
@@ -110,8 +111,16 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
   onFormatSelect,
   onNext
 }) => {
-  const generalFormats = formatOptions.filter(opt => opt.category === "General");
-  const specialtyFormats = formatOptions.filter(opt => opt.category === "Specialty");
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const filteredOptions = formatOptions.filter(option => 
+    searchTerm === "" || 
+    option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    option.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const generalFormats = filteredOptions.filter(opt => opt.category === "General");
+  const specialtyFormats = filteredOptions.filter(opt => opt.category === "Specialty");
 
   return (
     <div className="space-y-6">
@@ -124,6 +133,15 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
           <CardDescription>
             Choose the document format before recording or uploading audio. This determines how your transcription will be structured.
           </CardDescription>
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search templates..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>

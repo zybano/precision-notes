@@ -75,7 +75,8 @@ export const getSubscriptionInfo = async (): Promise<SubscriptionInfo | null> =>
     // Get features from the plan or defaults
     let features: string[] = [];
     if (subscription.subscription_plans && subscription.subscription_plans.features) {
-      features = subscription.subscription_plans.features;
+      const planFeatures = subscription.subscription_plans.features;
+      features = Array.isArray(planFeatures) ? (planFeatures as any[]).map(f => String(f)) : [];
     } else {
       features = getTierDefaults(subscriptionTier).features;
     }
