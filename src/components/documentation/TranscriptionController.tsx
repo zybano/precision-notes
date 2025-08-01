@@ -3,9 +3,9 @@ import { useTranscription } from "@/hooks/useTranscription";
 import { TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
 import { PatientSummaryResult } from "@/services/summaryUtils";
 import { UseFormReturn } from "react-hook-form";
-import { hasEnoughCredits, deductCredits, getCredits } from "@/services/payment/paymentService";
+
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+
 
 interface TranscriptionControllerProps {
   form: UseFormReturn<any>;
@@ -31,8 +31,6 @@ interface TranscriptionControllerReturn {
   onFileUpload: (file: File) => Promise<TranscriptionResult | null>;
   resetRecording: () => void;
   resetTranscription: () => void;
-  creditBalance?: number;
-  checkingCredits: boolean;
 }
 
 export const useTranscriptionController = ({
@@ -56,8 +54,6 @@ export const useTranscriptionController = ({
     resetRecording
   } = useAudioRecording();
   
-  const [checkingCredits, setCheckingCredits] = useState(false);
-  const [creditBalance, setCreditBalance] = useState<number | undefined>(undefined);
 
   const handleTranscriptionComplete = (
     result: TranscriptionResult, 
@@ -84,13 +80,6 @@ export const useTranscriptionController = ({
       form.setValue("recordingTime", recordingTime);
     }
     
-    // Deduct 1 credit for the transcription
-    deductCredits(1).then(({ success, balance }) => {
-      if (success && balance !== undefined) {
-        setCreditBalance(balance);
-        toast.success(`1 credit used for transcription. ${balance} credits remaining.`);
-      }
-    });
   };
 
   const {
@@ -106,30 +95,8 @@ export const useTranscriptionController = ({
     resetTranscription
   } = useTranscription(handleTranscriptionComplete);
 
-  // Start recording with credit check
   const startRecording = async () => {
-    setCheckingCredits(true);
-    try {
-      const hasCredits = await hasEnoughCredits(1);
-      if (!hasCredits) {
-        toast.error("Insufficient credits", {
-          description: "You need at least 1 credit to create a new transcription.",
-          action: {
-            label: "Get Credits",
-            onClick: () => window.location.href = '/consultation-purchase',
-          },
-        });
-        return;
-      }
-      
-      // If we have credits, start recording
-      baseStartRecording();
-    } catch (error) {
-      console.error("Error checking credits:", error);
-      toast.error("Could not verify credits. Please try again.");
-    } finally {
-      setCheckingCredits(false);
-    }
+    baseStartRecording();
   };
 
   const handleStopRecording = async () => {
@@ -150,51 +117,18 @@ export const useTranscriptionController = ({
   };
 
   const onFileUpload = async (file: File) => {
-    // Check credits before processing the file
-    setCheckingCredits(true);
-    try {
-      const hasCredits = await hasEnoughCredits(1);
-      if (!hasCredits) {
-        toast.error("Insufficient credits", {
-          description: "You need at least 1 credit to process this audio file.",
-          action: {
-            label: "Get Credits",
-            onClick: () => window.location.href = '/consultation-purchase',
-          },
-        });
-        return null;
-      }
-      
-      const result = await baseHandleFileUpload(file, {
-        provider: transcriptionProvider,
-        useSpeechModelNano
-      });
-      
-      if (result) {
-        form.setValue("recordingTime", 0);
-      }
-      
-      return result;
-    } finally {
-      setCheckingCredits(false);
+    const result = await baseHandleFileUpload(file, {
+      provider: transcriptionProvider,
+      useSpeechModelNano
+    });
+    
+    if (result) {
+      form.setValue("recordingTime", 0);
     }
+    
+    return result;
   };
   
-  // Load credit balance on component mount
-  useEffect(() => {
-    const loadCredits = async () => {
-      try {
-        const { success, balance } = await getCredits();
-        if (success) {
-          setCreditBalance(balance);
-        }
-      } catch (error) {
-        console.error("Error loading credits:", error);
-      }
-    };
-    
-    loadCredits();
-  }, []);
 
   return {
     isRecording,
@@ -213,9 +147,7 @@ export const useTranscriptionController = ({
     transcriptResult,
     onFileUpload,
     resetRecording,
-    resetTranscription,
-    creditBalance,
-    checkingCredits
+    resetTranscription
   };
 };
 

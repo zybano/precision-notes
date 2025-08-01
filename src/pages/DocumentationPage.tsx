@@ -236,8 +236,6 @@ const DocumentationPage = () => {
               onFileUpload={transcriptionControls.onFileUpload}
               documentSaved={documentSaved}
               exportToPDF={exportToPDF}
-              creditBalance={creditBalance}
-              checkingCredits={transcriptionControls.checkingCredits}
           />
         </div>
       </DocumentationInitializer>
