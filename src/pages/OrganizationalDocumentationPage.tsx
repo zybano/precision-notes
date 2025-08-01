@@ -19,11 +19,13 @@ import {
   LLMProvider,
   DocumentFormat,
 } from "@/services/transcription";
-import EnhancedRecordingInterface from "@/components/documentation/EnhancedRecordingInterface";
+import OrganizationalRecordingInterface from "@/components/documentation/OrganizationalRecordingInterface";
+import TemplateSelectionStep from "@/components/documentation/TemplateSelectionStep";
+import B2BProcessingInfo from "@/components/documentation/B2BProcessingInfo";
 import { PatientSummaryResult } from "@/services/summaryUtils";
 
 const OrganizationalDocumentationPage = () => {
-  const [activeTab, setActiveTab] = useState("record");
+  const [activeTab, setActiveTab] = useState("template");
   const [isEditMode, setIsEditMode] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -62,11 +64,14 @@ const OrganizationalDocumentationPage = () => {
 
   const { register, watch, getValues, setValue } = form;
   const notesContent = watch("notes");
-  const documentTitle = watch("title") || "Medical Report";
+  const creditsUsed = watch("creditsUsed");
+  const processingTimeMs = watch("processingTimeMs");
+  const organizationId = watch("organizationId");
+  const requestId = watch("requestId");
 
   const handleCopyToEMR = () => {
     navigator.clipboard.writeText(getValues().notes);
-    toast.success("Notes Copied");
+    toast.success("Notes copied to clipboard");
   };
 
   const handleDownloadPDF = async () => {
@@ -81,7 +86,7 @@ const OrganizationalDocumentationPage = () => {
       setValue("documentFormat", formatName);
     }
     setActiveTab("notes");
-    toast.success("Document Generated, You can export or save");
+    toast.success("Document generated successfully");
   };
 
   const toggleEditMode = () => {
@@ -94,21 +99,31 @@ const OrganizationalDocumentationPage = () => {
       <div className="flex flex-col lg:flex-row h-full">
         <div className="lg:w-full p-6 pt-0 border-r">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-8">
-              <TabsTrigger value="record" className="flex items-center">
-                Transcription
+            <TabsList className="grid grid-cols-4 mb-8">
+              <TabsTrigger value="template" className="flex items-center">
+                Select Template
+              </TabsTrigger>
+              <TabsTrigger value="record" className="flex items-center" disabled={!documentFormat}>
+                Record/Upload
               </TabsTrigger>
               <TabsTrigger value="notes" className="flex items-center" disabled={!transcriptionControls.transcript}>
-                Notes
+                Review Notes
               </TabsTrigger>
               <TabsTrigger value="export" className="flex items-center" disabled={!transcriptionControls.transcript}>
                 Export
               </TabsTrigger>
             </TabsList>
 
+            <TabsContent value="template" className="mt-0">
+              <TemplateSelectionStep
+                selectedFormat={documentFormat}
+                onFormatSelect={setDocumentFormat}
+                onNext={() => setActiveTab("record")}
+              />
+            </TabsContent>
+
             <TabsContent value="record" className="mt-0">
-              <EnhancedRecordingInterface
-                form={form}
+              <OrganizationalRecordingInterface
                 isRecording={transcriptionControls.isRecording}
                 isPaused={transcriptionControls.isPaused}
                 recordingTime={transcriptionControls.recordingTime}
@@ -116,26 +131,12 @@ const OrganizationalDocumentationPage = () => {
                 pauseRecording={transcriptionControls.pauseRecording}
                 stopRecording={transcriptionControls.handleStopRecording}
                 formatTime={transcriptionControls.formatTime}
-                transcript={transcriptionControls.transcript}
-                transcriptSummary={transcriptionControls.transcriptSummary}
-                patientInfo={transcriptionControls.patientInfo}
                 isTranscribing={transcriptionControls.isTranscribing}
-                showSummary={transcriptionControls.showSummary}
-                setShowSummary={transcriptionControls.setShowSummary}
                 transcriptResult={transcriptionControls.transcriptResult}
                 onFileUpload={transcriptionControls.onFileUpload}
-                resetRecording={transcriptionControls.resetRecording}
-                resetTranscription={transcriptionControls.resetTranscription}
-                transcriptionProvider={transcriptionProvider}
-                setTranscriptionProvider={setTranscriptionProvider}
-                llmProvider={llmProvider}
-                setLlmProvider={setLlmProvider}
                 documentFormat={documentFormat}
-                setDocumentFormat={setDocumentFormat}
                 useSpeechModelNano={useSpeechModelNano}
                 setUseSpeechModelNano={setUseSpeechModelNano}
-                onDocumentGenerated={handleDocumentGenerated}
-                showTemplateSelection={false}
               />
             </TabsContent>
 
@@ -176,11 +177,18 @@ const OrganizationalDocumentationPage = () => {
                       {...register("notes")}
                     />
                   ) : (
-                    <div className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none">
-                      <ReactMarkdown>{notesContent}</ReactMarkdown>
-                    </div>
-                  )}
-                </div>
+                     <div className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none">
+                       <ReactMarkdown>{notesContent}</ReactMarkdown>
+                     </div>
+                   )}
+                 </div>
+
+                 <B2BProcessingInfo
+                   creditsUsed={creditsUsed}
+                   processingTimeMs={processingTimeMs}
+                   organizationId={organizationId}
+                   requestId={requestId}
+                 />
 
                 <div className="flex justify-between">
                   <Button

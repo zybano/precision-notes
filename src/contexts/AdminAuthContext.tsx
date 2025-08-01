@@ -10,8 +10,12 @@ interface AdminUser {
 }
 
 interface AdminAuthContextType {
+  adminUser: AdminUser | null;
   user: AdminUser | null;
+  isLoading: boolean;
   loading: boolean;
+  hasPermission: (permission: string) => boolean;
+  signIn: (email: string, password: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   validateSession: (token: string) => Promise<boolean>;
@@ -56,12 +60,12 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
         p_session_token: token
       });
 
-      if (error || !data || data.length === 0) {
+      if (error || !data || (Array.isArray(data) && data.length === 0)) {
         console.log('Session validation failed:', error);
         return false;
       }
 
-      const sessionData = data[0];
+      const sessionData = Array.isArray(data) ? data[0] : data;
       
       setUser({
         id: sessionData.admin_id,
@@ -86,12 +90,12 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
         p_password: password
       });
 
-      if (error || !data || data.length === 0) {
+      if (error || !data || (Array.isArray(data) && data.length === 0)) {
         console.error('Login failed:', error);
         return false;
       }
 
-      const adminUser = data[0];
+      const adminUser = Array.isArray(data) ? data[0] : data;
 
       // Create session
       const sessionToken = crypto.randomUUID();
@@ -150,9 +154,17 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
     }
   };
 
+  const hasPermission = (permission: string): boolean => {
+    return user?.permissions?.[permission] === true;
+  };
+
   const value: AdminAuthContextType = {
+    adminUser: user,
     user,
+    isLoading: loading,
     loading,
+    hasPermission,
+    signIn: login,
     login,
     logout,
     validateSession,

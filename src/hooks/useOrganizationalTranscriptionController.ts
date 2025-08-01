@@ -101,7 +101,7 @@ export const useOrganizationalTranscriptionController = ({
 
     if (chunks.length > 0) {
       try {
-        await processOrganizationalRecording(chunks, {
+        await processOrganizationalRecording(chunks.map(chunk => new Blob([chunk])), {
           provider: transcriptionProvider,
           useSpeechModelNano,
         });
@@ -173,7 +173,21 @@ export const useOrganizationalTranscriptionController = ({
           form.setValue("generatedDocument", result.document);
         }
         
-        toast.success("Audio processed successfully!");
+        // Store B2B processing metadata in form for display
+        if (result.credits_used) {
+          form.setValue("creditsUsed", result.credits_used);
+        }
+        if (result.processing_time_ms) {
+          form.setValue("processingTimeMs", result.processing_time_ms);
+        }
+        if (result.organization_id) {
+          form.setValue("organizationId", result.organization_id);
+        }
+        if (result.request_id) {
+          form.setValue("requestId", result.request_id);
+        }
+        
+        toast.success("Audio processed and document generated successfully!");
       } else {
         throw new Error(result.error || "Failed to process audio");
       }
