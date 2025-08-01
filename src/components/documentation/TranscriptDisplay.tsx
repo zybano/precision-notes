@@ -91,11 +91,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   
   const handleCopyTranscript = () => {
     navigator.clipboard.writeText(transcript);
-    toast({
-      title: "Transcript Copied",
-      description: "The transcript has been copied to your clipboard.",
-      duration: 3000,
-    });
+    toast.success("Transcript copied to clipboard");
   };
   
   const getSpeakerColor = (speaker: string) => {
@@ -148,19 +144,10 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       // Auto-extract clinical results from the note
       extractClinicalResults(result);
       
-      toast({
-        title: "Note Generated",
-        description: `Your transcript has been converted to a structured ${selectedFormat} using enhanced AI.`,
-        duration: 3000,
-      });
+      toast.success(`Transcript converted to structured ${selectedFormat} using enhanced AI`);
     } catch (error) {
       console.error("Error converting transcript:", error);
-      toast({
-        title: "Conversion Error",
-        description: "There was a problem converting your transcript. Please try again.",
-        duration: 3000,
-        variant: "destructive",
-      });
+      toast.error("There was a problem converting your transcript. Please try again.");
     } finally {
       setIsGeneratingNote(false);
     }
@@ -200,11 +187,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   const handleCopyStructuredNote = () => {
     navigator.clipboard.writeText(structuredNote);
-    toast({
-      title: "Note Copied",
-      description: "The structured note has been copied to your clipboard.",
-      duration: 3000,
-    });
+    toast.success("Structured note copied to clipboard");
   };
 
   const handleTextSelection = () => {
@@ -247,11 +230,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       
       setStructuredNote(updatedNote);
       
-      toast({
-        title: "Content Added",
-        description: `Added selected text to ${sectionId} section.`,
-        duration: 2000,
-      });
+      toast.success(`Added selected text to ${sectionId} section`);
     }
   };
 

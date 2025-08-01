@@ -30,16 +30,20 @@ interface OrganizationalTranscriptionControllerReturn {
   onFileUpload: (file: File) => Promise<TranscriptionResult | null>;
   resetRecording: () => void;
   resetTranscription: () => void;
+  isProcessing: boolean;
+  setActiveTab?: (tab: string) => void;
 }
 
 export const useOrganizationalTranscriptionController = ({
   form,
   transcriptionProvider,
   useSpeechModelNano,
+  setActiveTab,
 }: {
   form: UseFormReturn<any>;
   transcriptionProvider: TranscriptionProvider;
   useSpeechModelNano: boolean;
+  setActiveTab?: (tab: string) => void;
 }): OrganizationalTranscriptionControllerReturn => {
   const {
     isRecording,
@@ -119,6 +123,10 @@ export const useOrganizationalTranscriptionController = ({
 
     if (result) {
       form.setValue("recordingTime", 0);
+      // Auto-switch to notes tab after successful file upload processing
+      if (setActiveTab) {
+        setActiveTab("notes");
+      }
     }
 
     return result;
@@ -187,6 +195,11 @@ export const useOrganizationalTranscriptionController = ({
           form.setValue("requestId", result.request_id);
         }
         
+        // Auto-switch to notes tab after successful processing
+        if (setActiveTab) {
+          setActiveTab("notes");
+        }
+        
         toast.success("Audio processed and document generated successfully!");
       } else {
         throw new Error(result.error || "Failed to process audio");
@@ -215,5 +228,7 @@ export const useOrganizationalTranscriptionController = ({
     onFileUpload,
     resetRecording,
     resetTranscription,
+    isProcessing: isTranscribing,
+    setActiveTab,
   };
 };

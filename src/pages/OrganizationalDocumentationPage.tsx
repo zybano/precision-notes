@@ -42,6 +42,10 @@ const OrganizationalDocumentationPage = () => {
       patientInfo: null,
       documentFormat: "soap",
       infoVerified: false,
+      creditsUsed: 0,
+      processingTimeMs: 0,
+      organizationId: "",
+      requestId: "",
     },
   });
 
@@ -60,6 +64,7 @@ const OrganizationalDocumentationPage = () => {
     form,
     transcriptionProvider,
     useSpeechModelNano,
+    setActiveTab,
   });
 
   const { register, watch, getValues, setValue } = form;
@@ -75,8 +80,33 @@ const OrganizationalDocumentationPage = () => {
   };
 
   const handleDownloadPDF = async () => {
-    // PDF generation logic will be added later
-    toast.info("PDF download functionality is not yet implemented.");
+    if (printRef.current && notesContent) {
+      try {
+        // Simple PDF export using jsPDF
+        const jsPDF = await import('jspdf');
+        const doc = new jsPDF.default();
+        
+        const documentTitle = `${documentFormat.toUpperCase()} Notes - ${new Date().toLocaleDateString()}`;
+        
+        // Add title
+        doc.setFontSize(16);
+        doc.text(documentTitle, 20, 20);
+        
+        // Add content
+        doc.setFontSize(12);
+        const splitText = doc.splitTextToSize(notesContent, 170);
+        doc.text(splitText, 20, 40);
+        
+        // Save the PDF
+        doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
+        toast.success("PDF downloaded successfully");
+      } catch (error) {
+        console.error('PDF export error:', error);
+        toast.error("Failed to export PDF");
+      }
+    } else {
+      toast.error("No content available to export");
+    }
   };
 
 
@@ -103,13 +133,25 @@ const OrganizationalDocumentationPage = () => {
               <TabsTrigger value="template" className="flex items-center">
                 Select Template
               </TabsTrigger>
-              <TabsTrigger value="record" className="flex items-center" disabled={!documentFormat}>
+              <TabsTrigger 
+                value="record" 
+                className="flex items-center" 
+                disabled={!documentFormat || transcriptionControls.isProcessing}
+              >
                 Record/Upload
               </TabsTrigger>
-              <TabsTrigger value="notes" className="flex items-center" disabled={!transcriptionControls.transcript}>
+              <TabsTrigger 
+                value="notes" 
+                className="flex items-center" 
+                disabled={!notesContent || transcriptionControls.isProcessing}
+              >
                 Review Notes
               </TabsTrigger>
-              <TabsTrigger value="export" className="flex items-center" disabled={!transcriptionControls.transcript}>
+              <TabsTrigger 
+                value="export" 
+                className="flex items-center" 
+                disabled={!notesContent || transcriptionControls.isProcessing}
+              >
                 Export
               </TabsTrigger>
             </TabsList>
@@ -176,11 +218,14 @@ const OrganizationalDocumentationPage = () => {
                       className="min-h-[350px] font-mono text-sm resize-y"
                       {...register("notes")}
                     />
-                  ) : (
-                     <div className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none">
-                       <ReactMarkdown>{notesContent}</ReactMarkdown>
-                     </div>
-                   )}
+                   ) : (
+                      <div 
+                        ref={printRef}
+                        className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
+                      >
+                        <ReactMarkdown>{notesContent}</ReactMarkdown>
+                      </div>
+                    )}
                  </div>
 
                  <B2BProcessingInfo

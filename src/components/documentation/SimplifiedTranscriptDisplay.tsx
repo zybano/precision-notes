@@ -152,11 +152,7 @@ const SimplifiedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   
   const handleCopyTranscript = () => {
     navigator.clipboard.writeText(editMode ? editedTranscript : transcript);
-    toast({
-      title: "Transcript Copied",
-      description: "The transcript has been copied to your clipboard.",
-      duration: 3000,
-    });
+    toast.success("Transcript copied to clipboard");
   };
   
   const getSpeakerColor = (speaker: string) => {
@@ -227,19 +223,10 @@ const SimplifiedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       setStructuredNote(result);
       setConvertedNoteType(selectedFormat);
       
-      toast({
-        title: "Note Generated",
-        description: `Your transcript has been converted to a ${selectedFormat} format.`,
-        duration: 3000,
-      });
+      toast.success(`Transcript converted to ${selectedFormat} format`);
     } catch (error) {
       console.error("Error converting transcript:", error);
-      toast({
-        title: "Conversion Error",
-        description: "There was a problem converting your transcript. Please try again.",
-        duration: 3000,
-        variant: "destructive",
-      });
+      toast.error("There was a problem converting your transcript. Please try again.");
     } finally {
       setIsGeneratingNote(false);
     }
@@ -247,11 +234,7 @@ const SimplifiedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
 
   const handleCopyStructuredNote = () => {
     navigator.clipboard.writeText(structuredNote);
-    toast({
-      title: "Note Copied",
-      description: "The structured note has been copied to your clipboard.",
-      duration: 3000,
-    });
+    toast.success("Structured note copied to clipboard");
   };
 
   const handleSaveFormat = () => {
@@ -294,10 +277,7 @@ const SimplifiedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       };
       form.setValue("transcriptResult", updatedTranscriptResult);
       
-      toast({
-        title: "Transcript Updated",
-        description: "Your transcript edits have been saved."
-      });
+      toast.success("Transcript edits have been saved");
       
       // Exit edit mode
       setEditMode(false);

@@ -267,10 +267,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
       const res = await updateDocument(documentId, updatePayload);
 
       if (res.success) {
-        toast({
-          title: "Document Updated",
-          description: "Your changes were saved to Supabase."
-        });
+      toast.success("Document updated successfully");
         setEditMode(false);
         if (form) {
           form.setValue("transcript", editedTranscript);
@@ -282,11 +279,7 @@ const EnhancedTranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
         throw res.error;
       }
     } catch (error: any) {
-      toast({
-        title: "Update failed",
-        description: error?.message || "There was a problem saving changes.",
-        variant: "destructive"
-      });
+      toast.error(error?.message || "There was a problem saving changes.");
     }
     setIsSaving(false);
   };
