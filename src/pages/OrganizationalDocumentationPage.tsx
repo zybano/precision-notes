@@ -176,18 +176,20 @@ const OrganizationalDocumentationPage = () => {
     try {
       transcriptionControls.setIsB2BProcessing(true);
       
-      const formData = new FormData();
-      formData.append("transcript", transcriptResult.text);
-      formData.append("document_format", newFormat);
-      formData.append("model_name", "gpt-4-turbo");
-      formData.append("requestId", crypto.randomUUID());
+      const requestBody = {
+        transcript_text: transcriptResult.text,
+        document_format: newFormat,
+        model_name: "gpt-4-turbo",
+        request_id: crypto.randomUUID(),
+      };
 
-      const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-regenerate-document", {
+      const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-generate-document", {
         method: "POST",
         headers: {
-          "x-api-key": "pn_mZ8/VeJQPMQBvGQdjUEcL5avl2Un8g8x",
+          "Content-Type": "application/json",
+          "x-api-key": import.meta.env.VITE_B2B_API_KEY,
         },
-        body: formData,
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -199,6 +201,21 @@ const OrganizationalDocumentationPage = () => {
       if (result.success && result.document) {
         setValue("notes", result.document);
         setValue("documentFormat", newFormat);
+        
+        // Store B2B processing metadata in form for display
+        if (result.credits_used) {
+          setValue("creditsUsed", result.credits_used);
+        }
+        if (result.processing_time_ms) {
+          setValue("processingTimeMs", result.processing_time_ms);
+        }
+        if (result.organization_id) {
+          setValue("organizationId", result.organization_id);
+        }
+        if (result.request_id) {
+          setValue("requestId", result.request_id);
+        }
+        
         setActiveTab("notes");
         toast.success("Document regenerated with new format!");
       } else {

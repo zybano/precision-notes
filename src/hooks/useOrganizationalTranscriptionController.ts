@@ -153,7 +153,7 @@ export const useOrganizationalTranscriptionController = ({
       const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-request", {
         method: "POST",
         headers: {
-          "x-api-key": "pn_mZ8/VeJQPMQBvGQdjUEcL5avl2Un8g8x",
+          "x-api-key": import.meta.env.VITE_B2B_API_KEY,
         },
         body: formData,
       });
@@ -231,7 +231,7 @@ export const useOrganizationalTranscriptionController = ({
       const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-request", {
         method: "POST",
         headers: {
-          "x-api-key": "pn_mZ8/VeJQPMQBvGQdjUEcL5avl2Un8g8x",
+          "x-api-key": import.meta.env.VITE_B2B_API_KEY,
         },
         body: formData,
       });

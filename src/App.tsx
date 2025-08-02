@@ -51,7 +51,8 @@ function App() {
             <SidebarProvider>
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<OrganizationalDocumentationPage />} />
+                <Route path="/individual" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
