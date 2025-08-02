@@ -94,24 +94,62 @@ const OrganizationalDocumentationPage = () => {
       
       const documentTitle = `${documentFormat.toUpperCase()} Notes - ${new Date().toLocaleDateString()}`;
       
-      // Add title
-      doc.setFontSize(16);
-      doc.text(documentTitle, 20, 20);
+      // Add logo to header
+      try {
+        const logoImg = new Image();
+        logoImg.crossOrigin = "anonymous";
+        logoImg.onload = () => {
+          // Add logo in top right corner
+          doc.addImage(logoImg, 'JPEG', 170, 10, 20, 20);
+          
+          // Add title
+          doc.setFontSize(16);
+          doc.text(documentTitle, 20, 20);
+          
+          // Add content - clean markdown for PDF
+          doc.setFontSize(12);
+          const cleanContent = content
+            .replace(/#{1,6}\s/g, '') // Remove markdown headers
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
+            .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
+            .replace(/\n+/g, '\n'); // Clean up extra newlines
+          
+          const splitText = doc.splitTextToSize(cleanContent, 170);
+          doc.text(splitText, 20, 40);
+          
+          // Save the PDF
+          doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
+          toast.success("PDF downloaded successfully");
+        };
+        logoImg.onerror = () => {
+          // Fallback without logo
+          generatePDFWithoutLogo();
+        };
+        logoImg.src = '/lovable-uploads/precision.jpeg';
+      } catch (error) {
+        generatePDFWithoutLogo();
+      }
       
-      // Add content - clean markdown for PDF
-      doc.setFontSize(12);
-      const cleanContent = content
-        .replace(/#{1,6}\s/g, '') // Remove markdown headers
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
-        .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
-        .replace(/\n+/g, '\n'); // Clean up extra newlines
-      
-      const splitText = doc.splitTextToSize(cleanContent, 170);
-      doc.text(splitText, 20, 40);
-      
-      // Save the PDF
-      doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
-      toast.success("PDF downloaded successfully");
+      function generatePDFWithoutLogo() {
+        // Add title
+        doc.setFontSize(16);
+        doc.text(documentTitle, 20, 20);
+        
+        // Add content - clean markdown for PDF
+        doc.setFontSize(12);
+        const cleanContent = content
+          .replace(/#{1,6}\s/g, '') // Remove markdown headers
+          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
+          .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
+          .replace(/\n+/g, '\n'); // Clean up extra newlines
+        
+        const splitText = doc.splitTextToSize(cleanContent, 170);
+        doc.text(splitText, 20, 40);
+        
+        // Save the PDF
+        doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
+        toast.success("PDF downloaded successfully");
+      }
     } catch (error) {
       console.error('PDF export error:', error);
       toast.error("Failed to export PDF");
@@ -126,6 +164,52 @@ const OrganizationalDocumentationPage = () => {
     }
     setActiveTab("notes");
     toast.success("Document generated successfully");
+  };
+
+  const handleRegenerateWithNewFormat = async (newFormat: string) => {
+    const transcriptResult = watch("transcriptResult");
+    if (!transcriptResult?.text) {
+      toast.error("No transcript available to regenerate");
+      return;
+    }
+
+    try {
+      transcriptionControls.setIsB2BProcessing(true);
+      
+      const formData = new FormData();
+      formData.append("transcript", transcriptResult.text);
+      formData.append("document_format", newFormat);
+      formData.append("model_name", "gpt-4-turbo");
+      formData.append("requestId", crypto.randomUUID());
+
+      const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-regenerate-document", {
+        method: "POST",
+        headers: {
+          "x-api-key": "pn_mZ8/VeJQPMQBvGQdjUEcL5avl2Un8g8x",
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.document) {
+        setValue("notes", result.document);
+        setValue("documentFormat", newFormat);
+        setActiveTab("notes");
+        toast.success("Document regenerated with new format!");
+      } else {
+        throw new Error(result.error || "Failed to regenerate document");
+      }
+    } catch (error) {
+      console.error("Error regenerating document:", error);
+      toast.error("Failed to regenerate document. Please try recording again.");
+    } finally {
+      transcriptionControls.setIsB2BProcessing(false);
+    }
   };
 
   const toggleEditMode = () => {
@@ -169,7 +253,16 @@ const OrganizationalDocumentationPage = () => {
               <TemplateSelectionStep
                 selectedFormat={documentFormat}
                 onFormatSelect={setDocumentFormat}
-                onNext={() => setActiveTab("record")}
+                onNext={() => {
+                  const transcriptResult = watch("transcriptResult");
+                  if (transcriptResult?.text) {
+                    // Regenerate with new format
+                    handleRegenerateWithNewFormat(documentFormat);
+                  } else {
+                    // No transcript, go to record
+                    setActiveTab("record");
+                  }
+                }}
               />
             </TabsContent>
 
@@ -256,7 +349,14 @@ const OrganizationalDocumentationPage = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setActiveTab("template")}
+                      onClick={() => {
+                        const transcriptResult = watch("transcriptResult");
+                        if (transcriptResult?.text) {
+                          setActiveTab("template");
+                        } else {
+                          toast.error("No transcript available. Please record or upload again.");
+                        }
+                      }}
                     >
                       Change Format
                     </Button>

@@ -34,6 +34,7 @@ interface OrganizationalTranscriptionControllerReturn {
   isProcessing: boolean;
   setActiveTab?: (tab: string) => void;
   isB2BProcessing: boolean;
+  setIsB2BProcessing: (value: boolean) => void;
 }
 
 export const useOrganizationalTranscriptionController = ({
@@ -310,5 +311,6 @@ export const useOrganizationalTranscriptionController = ({
     isProcessing: isB2BProcessing || isTranscribing,
     setActiveTab,
     isB2BProcessing,
+    setIsB2BProcessing,
   };
 };
