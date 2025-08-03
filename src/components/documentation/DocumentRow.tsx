@@ -1,11 +1,10 @@
-
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Trash, MessageSquare, FileText, RotateCw } from "lucide-react";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { formatDistanceToNow } from "date-fns";
-import { Document, parseTranscriptData } from "./DocumentTypes";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {Button} from "@/components/ui/button";
+import {FileText, RotateCw, Trash} from "lucide-react";
+import {TableCell, TableRow} from "@/components/ui/table";
+import {formatDistanceToNow} from "date-fns";
+import {Document, parseTranscriptData} from "./DocumentTypes";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
 
 interface DocumentRowProps {
   doc: Document;

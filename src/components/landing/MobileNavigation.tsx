@@ -1,17 +1,10 @@
-
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { ContactDialog } from "@/components/ContactDialog";
-import { Menu, X, ArrowLeft } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import {useState} from "react";
+import {Link, useNavigate} from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {useAuth} from "@/contexts/AuthContext";
+import {ContactDialog} from "@/components/ContactDialog";
+import {ArrowLeft, Menu} from "lucide-react";
+import {Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,} from "@/components/ui/sheet";
 
 export function MobileNavigation() {
   const { user } = useAuth();

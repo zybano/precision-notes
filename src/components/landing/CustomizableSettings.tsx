@@ -1,6 +1,5 @@
-
-import { FadeIn } from "@/components/ui/motion";
-import { Settings, Sliders, Database } from "lucide-react";
+import {FadeIn} from "@/components/ui/motion";
+import {Database, Settings, Sliders} from "lucide-react";
 
 interface SettingItem {
   title: string;

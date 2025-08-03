@@ -1,5 +1,4 @@
-
-import { Navigate } from "react-router-dom";
+import {Navigate} from "react-router-dom";
 
 const SignupPage = () => {
   // Redirect to SignUp page

@@ -1,17 +1,15 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, FileType, Check, RefreshCw } from "lucide-react";
+import React, {useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader} from "@/components/ui/card";
+import {Check, Loader2, RefreshCw} from "lucide-react";
 import {
-    TranscriptionResult,
-    LLMProvider,
     DocumentFormat,
+    DocumentGenerationOptions,
     generateMedicalDocument,
-    DocumentGenerationOptions
+    LLMProvider,
+    TranscriptionResult
 } from "@/services/transcription";
-import { toast } from "sonner";
+import {toast} from "sonner";
 
 interface DocumentGenerationPanelProps {
     transcriptResult: TranscriptionResult | null;

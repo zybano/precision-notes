@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
-import { Link } from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
+import {Link} from "react-router-dom";
 import Logo from "@/components/Logo.tsx";
 
 const Privacy = () => {

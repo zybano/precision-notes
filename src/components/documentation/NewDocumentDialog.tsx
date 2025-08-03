@@ -1,29 +1,20 @@
 // UpdatedNewDocumentDialog.tsx - Modified version
 
-import React, { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Check, LayoutDashboard, FileText, Eye, FileCog, Copy, Download, Printer, Brain, Edit, Coins } from "lucide-react";
-import { toast } from "sonner";
+import React, {useEffect, useRef, useState} from "react";
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Textarea} from "@/components/ui/textarea";
+import {Label} from "@/components/ui/label";
+import {Switch} from "@/components/ui/switch";
+import {Check, Coins, Copy, Download, Edit, Eye, FileCog, FileText} from "lucide-react";
+import {toast} from "sonner";
 import ReactMarkdown from "react-markdown";
-import { useReactToPrint } from "react-to-print";
-import {
-  TranscriptionResult,
-  TranscriptionProvider,
-  LLMProvider,
-  DocumentFormat
-} from "@/services/transcription";
+import {DocumentFormat, LLMProvider, TranscriptionProvider, TranscriptionResult} from "@/services/transcription";
 import EnhancedRecordingInterface from "@/components/documentation/EnhancedRecordingInterface";
-import DrugMonograph from "@/components/documentation/DrugMonograph";
-import EnhancedContextPanel from "@/components/documentation/EnhancedContextPanel";
 import DocumentVerificationDialog from "@/components/documentation/DocumentVerificationDialog";
-import { PatientSummaryResult } from "@/services/summaryUtils";
-import { hasEnoughCredits, deductCredits, getCredits } from "@/services/payment/simpleCreditService";
+import {PatientSummaryResult} from "@/services/summaryUtils";
+import {deductCredits, getCredits, hasEnoughCredits} from "@/services/payment/simpleCreditService";
 
 interface UpdatedNewDocumentDialogProps {
   open: boolean;

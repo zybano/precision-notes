@@ -1,14 +1,7 @@
-
-import { FadeIn } from "@/components/ui/motion";
-import { Star } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import {FadeIn} from "@/components/ui/motion";
+import {Star} from "lucide-react";
+import {Card, CardContent} from "@/components/ui/card";
+import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,} from "@/components/ui/carousel";
 
 interface TestimonialItem {
   quote: string;

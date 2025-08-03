@@ -1,9 +1,8 @@
-
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { SubscriptionInfo, getSubscriptionInfo } from "@/services/subscriptionService";
+import {createContext, ReactNode, useContext, useEffect, useState} from "react";
+import {Session, User} from "@supabase/supabase-js";
+import {supabase} from "@/integrations/supabase/client";
+import {toast} from "sonner";
+import {getSubscriptionInfo, SubscriptionInfo} from "@/services/subscriptionService";
 
 interface AuthContextType {
   session: Session | null;

@@ -1,22 +1,29 @@
-
-import { useState } from "react";
-import { FadeIn } from "@/components/ui/motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Search, Plus, MoreVertical, Calendar, Clock, FileText, Filter } from "lucide-react";
-import { toast } from "sonner";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+import {useState} from "react";
+import {FadeIn} from "@/components/ui/motion";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Separator} from "@/components/ui/separator";
+import {Calendar, Clock, FileText, MoreVertical, Plus, Search} from "lucide-react";
+import {toast} from "sonner";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog";
 
 const Patients = () => {
   const [searchQuery, setSearchQuery] = useState("");

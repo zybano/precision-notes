@@ -1,7 +1,6 @@
-
 import React from "react";
-import { Stethoscope, HeartHandshake, Globe, Users, Lightbulb } from "lucide-react";
-import { FadeIn } from "@/components/ui/motion";
+import {Globe, HeartHandshake, Stethoscope, Users} from "lucide-react";
+import {FadeIn} from "@/components/ui/motion";
 
 export function StorySection() {
   return (

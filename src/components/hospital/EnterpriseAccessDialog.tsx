@@ -1,15 +1,14 @@
-
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Building2, Crown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {Building2, Crown} from "lucide-react";
+import {useNavigate} from "react-router-dom";
 
 interface EnterpriseAccessDialogProps {
   open: boolean;

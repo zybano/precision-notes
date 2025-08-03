@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, FileText, Copy, Wand2, Zap, List, ArrowRightLeft, X, Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Textarea } from "@/components/ui/textarea";
+import React, {useEffect, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {Switch} from "@/components/ui/switch";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Label} from "@/components/ui/label";
+import {ChevronDown, Copy, FileText, List, Save, Wand2} from "lucide-react";
+import {useToast} from "@/hooks/use-toast";
+import {ResizableHandle, ResizablePanel, ResizablePanelGroup} from "@/components/ui/resizable";
+import {Textarea} from "@/components/ui/textarea";
 import {
-  TranscriptionResult,
-  LLMProvider,
-  DocumentFormat,
-  generateMedicalDocument,
-  DocumentGenerationOptions
+    DocumentFormat,
+    DocumentGenerationOptions,
+    generateMedicalDocument,
+    LLMProvider,
+    TranscriptionResult
 } from "@/services/transcription";
-import { PatientInfo } from "@/components/documentation/DocumentTypes";
-import { updateDocument } from "@/services/supabaseSetup";
+import {PatientInfo} from "@/components/documentation/DocumentTypes";
+import {updateDocument} from "@/services/supabaseSetup";
 
 interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult;

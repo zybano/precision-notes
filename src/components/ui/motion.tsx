@@ -1,4 +1,3 @@
-
 import React from "react";
 
 // Define the types for our motion components

@@ -1,20 +1,18 @@
-
-import { Outlet, Navigate, Link } from "react-router-dom";
+import {Link, Navigate, Outlet, useLocation} from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useAuth } from "@/contexts/AuthContext";
-import { Stethoscope, LogOut, Home } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+import {SidebarTrigger} from "@/components/ui/sidebar";
+import {useAuth} from "@/contexts/AuthContext";
+import {Home, LogOut, Stethoscope} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
-import { useLocation } from "react-router-dom";
+import {toast} from "sonner";
 
 const Layout = () => {
   const { user, signOut } = useAuth();

@@ -1,28 +1,18 @@
-
-import { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
-import { documentTemplates } from "@/data/documentTemplates";
-import { useDocumentFormat } from "@/hooks/useDocumentFormat";
+import {useRef, useState} from "react";
+import {useForm} from "react-hook-form";
+import {useDocumentFormat} from "@/hooks/useDocumentFormat";
 import DocumentationHeader from "@/components/documentation/DocumentationHeader";
-import { useOrganizationalTranscriptionController } from "@/hooks/useOrganizationalTranscriptionController";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Eye, FileCog, Copy, Download } from "lucide-react";
-import { toast } from "sonner";
+import {useOrganizationalTranscriptionController} from "@/hooks/useOrganizationalTranscriptionController";
+import {Button} from "@/components/ui/button";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Textarea} from "@/components/ui/textarea";
+import {Label} from "@/components/ui/label";
+import {Copy, Download, Eye, FileCog, Loader2} from "lucide-react";
+import {toast} from "sonner";
 import ReactMarkdown from "react-markdown";
-import {
-  TranscriptionResult,
-  TranscriptionProvider,
-  LLMProvider,
-  DocumentFormat,
-} from "@/services/transcription";
 import OrganizationalRecordingInterface from "@/components/documentation/OrganizationalRecordingInterface";
 import TemplateSelectionStep from "@/components/documentation/TemplateSelectionStep";
 import B2BProcessingInfo from "@/components/documentation/B2BProcessingInfo";
-import { PatientSummaryResult } from "@/services/summaryUtils";
 
 const OrganizationalDocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("template");
@@ -166,9 +156,21 @@ const OrganizationalDocumentationPage = () => {
     toast.success("Document generated successfully");
   };
 
+  const handleTranscriptChange = (newTranscript: string) => {
+    // Update the transcript in the form and transcriptResult
+    setValue("transcript", newTranscript);
+    const currentResult = watch("transcriptResult");
+    if (currentResult) {
+      setValue("transcriptResult", {
+        ...currentResult,
+        text: newTranscript
+      });
+    }
+  };
+
   const handleRegenerateWithNewFormat = async (newFormat: string) => {
-    const transcriptResult = watch("transcriptResult");
-    if (!transcriptResult?.text) {
+    const transcriptText = watch("transcript");
+    if (!transcriptText) {
       toast.error("No transcript available to regenerate");
       return;
     }
@@ -177,7 +179,7 @@ const OrganizationalDocumentationPage = () => {
       transcriptionControls.setIsB2BProcessing(true);
       
       const requestBody = {
-        transcript_text: transcriptResult.text,
+        transcript_text: transcriptText,
         document_format: newFormat,
         model_name: "gpt-4-turbo",
         request_id: crypto.randomUUID(),
@@ -234,35 +236,35 @@ const OrganizationalDocumentationPage = () => {
   };
 
   return (
-    <div className={"container mx-auto py-6 space-y-8 w-full"}>
+    <div className="container mx-auto py-4 md:py-6 px-4 md:px-6 space-y-6 md:space-y-8 w-full max-w-7xl">
       <DocumentationHeader />
-      <div className="flex flex-col lg:flex-row h-full">
-        <div className="lg:w-full p-6 pt-0 border-r">
+      <div className="flex flex-col h-full">
+        <div className="w-full">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 mb-8">
-              <TabsTrigger value="template" className="flex items-center">
-                Select Template
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-6 md:mb-8 h-auto p-1">
+              <TabsTrigger value="template" className="flex flex-col md:flex-row items-center justify-center p-2 md:p-3 text-xs md:text-sm">
+                <span className="text-center leading-tight">Select<br className="md:hidden" /> Template</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="record" 
-                className="flex items-center" 
+                className="flex flex-col md:flex-row items-center justify-center p-2 md:p-3 text-xs md:text-sm" 
                 disabled={!documentFormat || transcriptionControls.isProcessing}
               >
-                Record/Upload
+                <span className="text-center leading-tight">Record/<br className="md:hidden" />Upload</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="notes" 
-                className="flex items-center" 
+                className="flex flex-col md:flex-row items-center justify-center p-2 md:p-3 text-xs md:text-sm" 
                 disabled={!notesContent || transcriptionControls.isProcessing}
               >
-                Review Notes
+                <span className="text-center leading-tight">Review<br className="md:hidden" /> Notes</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="export" 
-                className="flex items-center" 
+                className="flex flex-col md:flex-row items-center justify-center p-2 md:p-3 text-xs md:text-sm" 
                 disabled={!notesContent || transcriptionControls.isProcessing}
               >
-                Export
+                <span className="text-center leading-tight">Export</span>
               </TabsTrigger>
             </TabsList>
 
@@ -270,6 +272,8 @@ const OrganizationalDocumentationPage = () => {
               <TemplateSelectionStep
                 selectedFormat={documentFormat}
                 onFormatSelect={setDocumentFormat}
+                isRegenerateMode={!!watch("transcriptResult")?.text}
+                isLoading={transcriptionControls.isB2BProcessing}
                 onNext={() => {
                   const transcriptResult = watch("transcriptResult");
                   if (transcriptResult?.text) {
@@ -302,45 +306,85 @@ const OrganizationalDocumentationPage = () => {
             </TabsContent>
 
             <TabsContent value="notes" className="mt-0">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="notes" className="text-lg font-medium">
+              <div className="space-y-4 md:space-y-6">
+                {/* Transcript Editing Section - Show if transcript exists */}
+                {watch("transcript") && (
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <Label htmlFor="transcript" className="text-lg font-medium">
+                        Review Transcript
+                      </Label>
+                      <div className="text-sm text-muted-foreground">
+                        Edit transcript before regenerating with a new format
+                      </div>
+                    </div>
+                    <Textarea
+                      id="transcript"
+                      value={watch("transcript")}
+                      onChange={(e) => handleTranscriptChange(e.target.value)}
+                      placeholder="Your transcript will appear here..."
+                      className="min-h-[200px] font-mono text-sm"
+                      disabled={transcriptionControls.isB2BProcessing}
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <Label htmlFor="notes" className="text-lg font-medium flex items-center">
                       Generated Notes
+                      {transcriptionControls.isB2BProcessing && (
+                        <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      )}
                     </Label>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-end">
                       <Button
                         type="button"
                         onClick={toggleEditMode}
                         variant="outline"
                         size="sm"
                         className="flex items-center"
+                        disabled={transcriptionControls.isB2BProcessing}
                       >
                         {isEditMode ? (
                           <>
                             <Eye className="h-4 w-4 mr-2" />
-                            Preview
+                            <span className="hidden sm:inline">Preview</span>
+                            <span className="sm:hidden">Preview</span>
                           </>
                         ) : (
                           <>
                             <Eye className="h-4 w-4 mr-2" />
-                            Edit
+                            <span className="hidden sm:inline">Edit</span>
+                            <span className="sm:hidden">Edit</span>
                           </>
                         )}
                       </Button>
                     </div>
                   </div>
 
-                  {isEditMode ? (
+                  {transcriptionControls.isB2BProcessing ? (
+                    <div className="border rounded-md p-3 md:p-4 min-h-[300px] md:min-h-[400px] flex items-center justify-center bg-muted/30">
+                      <div className="text-center space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                        <div className="space-y-2">
+                          <p className="text-lg font-medium">Generating Document...</p>
+                          <p className="text-sm text-muted-foreground">
+                            Processing your transcript with the new format
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : isEditMode ? (
                     <Textarea
                       id="notes"
-                      className="min-h-[350px] font-mono text-sm resize-y"
+                      className="min-h-[300px] md:min-h-[400px] font-mono text-sm resize-y"
                       {...register("notes")}
                     />
                    ) : (
                       <div 
                         ref={printRef}
-                        className="border rounded-md p-4 min-h-[350px] overflow-y-auto prose prose-sm max-w-none"
+                        className="border rounded-md p-3 md:p-4 min-h-[300px] md:min-h-[400px] overflow-y-auto prose prose-sm max-w-none"
                       >
                         <ReactMarkdown>{notesContent}</ReactMarkdown>
                       </div>
@@ -354,15 +398,17 @@ const OrganizationalDocumentationPage = () => {
                    requestId={requestId}
                  />
 
-                <div className="flex justify-between">
+                <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setActiveTab("record")}
+                    className="w-full sm:w-auto"
+                    disabled={transcriptionControls.isB2BProcessing}
                   >
                     Back to Recording
                   </Button>
-                  <div className="space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -374,16 +420,19 @@ const OrganizationalDocumentationPage = () => {
                           toast.error("No transcript available. Please record or upload again.");
                         }
                       }}
+                      className="w-full sm:w-auto"
+                      disabled={transcriptionControls.isB2BProcessing}
                     >
                       Change Format
                     </Button>
                     <Button
                       type="button"
-                      className="flex items-center"
+                      className="flex items-center justify-center w-full sm:w-auto"
                       onClick={() => setActiveTab("export")}
+                      disabled={transcriptionControls.isB2BProcessing}
                     >
-                      Export Options
-                      <FileCog className="ml-2 h-4 w-4" />
+                      <span className="mr-2">Export Options</span>
+                      <FileCog className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -391,19 +440,19 @@ const OrganizationalDocumentationPage = () => {
             </TabsContent>
 
             <TabsContent value="export" className="mt-0">
-              <div className="space-y-6">
-                <div className="rounded-lg border p-6">
+              <div className="space-y-4 md:space-y-6">
+                <div className="rounded-lg border p-4 md:p-6">
                   <h3 className="text-lg font-medium mb-4 flex items-center">
                     <FileCog className="h-5 w-5 mr-2" />
                     Export Options
                   </h3>
 
                   <div className="space-y-4">
-                    <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
-                      <div className="bg-accent rounded-full p-1 mt-0.5">
+                    <div className="bg-accent/20 p-4 rounded-md flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
+                      <div className="bg-accent rounded-full p-1 w-fit mx-auto sm:mx-0 sm:mt-0.5">
                         <FileCog className="h-5 w-5 text-accent-foreground" />
                       </div>
-                      <div>
+                      <div className="flex-1 text-center sm:text-left">
                         <h4 className="font-medium">Copy to EMR</h4>
                         <p className="text-sm text-muted-foreground mb-3">
                           Copy the formatted notes to paste directly into your
@@ -413,6 +462,7 @@ const OrganizationalDocumentationPage = () => {
                           type="button"
                           onClick={handleCopyToEMR}
                           size="sm"
+                          className="w-full sm:w-auto"
                         >
                           <Copy className="h-4 w-4 mr-2" />
                           Copy to Clipboard
@@ -420,11 +470,11 @@ const OrganizationalDocumentationPage = () => {
                       </div>
                     </div>
 
-                    <div className="bg-accent/20 p-4 rounded-md flex items-start space-x-4">
-                      <div className="bg-accent rounded-full p-1 mt-0.5">
+                    <div className="bg-accent/20 p-4 rounded-md flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
+                      <div className="bg-accent rounded-full p-1 w-fit mx-auto sm:mx-0 sm:mt-0.5">
                         <Download className="h-5 w-5 text-accent-foreground" />
                       </div>
-                      <div>
+                      <div className="flex-1 text-center sm:text-left">
                         <h4 className="font-medium">Download PDF</h4>
                         <p className="text-sm text-muted-foreground mb-3">
                           Save the consultation notes as a PDF document
@@ -433,6 +483,7 @@ const OrganizationalDocumentationPage = () => {
                           type="button"
                           onClick={handleDownloadPDF}
                           size="sm"
+                          className="w-full sm:w-auto"
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Download PDF
@@ -442,11 +493,12 @@ const OrganizationalDocumentationPage = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-center sm:justify-start">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setActiveTab("notes")}
+                    className="w-full sm:w-auto"
                   >
                     Back to Notes
                   </Button>

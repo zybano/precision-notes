@@ -1,26 +1,24 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
-import { Globe } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { SubscriptionCheckout } from "@/components/subscription/SubscriptionCheckout";
-import { useAuth } from "@/contexts/AuthContext";
-import { 
-  getSubscriptionPlansWithRegionalPricing, 
-  getRegionInfo,
-  formatPrice,
-  getConsultationPackagesWithRegionalPricing,
-  toggleNigeriaMode,
-  sortPlansByTier,
-  TIER_ORDER
+import {useEffect, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
+import {Globe} from "lucide-react";
+import {Dialog, DialogContent} from "@/components/ui/dialog";
+import {SubscriptionCheckout} from "@/components/subscription/SubscriptionCheckout";
+import {useAuth} from "@/contexts/AuthContext";
+import {
+    formatPrice,
+    getConsultationPackagesWithRegionalPricing,
+    getRegionInfo,
+    getSubscriptionPlansWithRegionalPricing,
+    TIER_ORDER,
+    toggleNigeriaMode
 } from "@/services/regionalPricingService";
-import { PricingPlan } from "@/components/landing/PricingPlan";
-import { TopupOptions } from "@/components/landing/TopupOptions";
-import { BillingToggle } from "@/components/landing/BillingToggle";
-import { PricingLoadingState } from "@/components/landing/PricingLoadingState";
-import { BillingCycle, PricingPlan as PricingPlanType, TopupOption, RegionInfo } from "@/types/subscription";
-import { SubscriptionTier } from "@/services/subscriptionService";
+import {PricingPlan} from "@/components/landing/PricingPlan";
+import {TopupOptions} from "@/components/landing/TopupOptions";
+import {BillingToggle} from "@/components/landing/BillingToggle";
+import {PricingLoadingState} from "@/components/landing/PricingLoadingState";
+import {BillingCycle, PricingPlan as PricingPlanType, RegionInfo, TopupOption} from "@/types/subscription";
+import {SubscriptionTier} from "@/services/subscriptionService";
 
 export function Pricing() {
   const { user, refreshSubscriptionInfo } = useAuth();

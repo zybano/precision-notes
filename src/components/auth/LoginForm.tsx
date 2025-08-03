@@ -1,23 +1,15 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {z} from "zod";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
+import {Input} from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {toast} from "sonner";
+import {supabase} from "@/integrations/supabase/client";
+import {Eye, EyeOff} from "lucide-react";
+import {Separator} from "@/components/ui/separator";
 
 const loginSchema = z.object({
   email: z.string().email({

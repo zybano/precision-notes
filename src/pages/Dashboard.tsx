@@ -1,17 +1,16 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { CalendarCheck2, FileText, Plus } from "lucide-react";
-import { DocumentTables } from "@/components/dashboard/DocumentTables";
-import { FadeIn } from "@/components/ui/motion";
-import { Link, useNavigate } from "react-router-dom";
-import { ActivityChart } from "@/components/dashboard/ActivityChart";
-import { MetricsDisplay, MetricProps } from "@/components/dashboard/MetricsDisplay";
-import { useAuth } from "@/contexts/AuthContext";
-import { SubscriptionUsage } from "@/components/subscription/SubscriptionUsage";
-import { ConsultationStats } from "@/components/subscription/ConsultationStats";
-import { toast } from "sonner";
-import { fetchUserDocuments } from "@/services/supabaseSetup";
-import { DocumentType, calculateUserMetrics, getActivityData } from "@/services/dashboardService";
+import {useEffect, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {FileText, Plus} from "lucide-react";
+import {DocumentTables} from "@/components/dashboard/DocumentTables";
+import {FadeIn} from "@/components/ui/motion";
+import {Link, useNavigate} from "react-router-dom";
+import {ActivityChart} from "@/components/dashboard/ActivityChart";
+import {MetricProps, MetricsDisplay} from "@/components/dashboard/MetricsDisplay";
+import {useAuth} from "@/contexts/AuthContext";
+import {SubscriptionUsage} from "@/components/subscription/SubscriptionUsage";
+import {toast} from "sonner";
+import {fetchUserDocuments} from "@/services/supabaseSetup";
+import {calculateUserMetrics, DocumentType, getActivityData} from "@/services/dashboardService";
 
 const Dashboard = () => {
   const navigate = useNavigate();

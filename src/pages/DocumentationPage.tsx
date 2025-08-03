@@ -1,22 +1,20 @@
-
-import { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { documentTemplates } from "@/data/documentTemplates";
-import { useDocumentFormat } from "@/hooks/useDocumentFormat";
+import {useEffect, useRef, useState} from "react";
+import {useForm} from "react-hook-form";
+import {documentTemplates} from "@/data/documentTemplates";
+import {useDocumentFormat} from "@/hooks/useDocumentFormat";
 import DocumentationHeader from "@/components/documentation/DocumentationHeader";
 import DocumentationSearch from "@/components/documentation/DocumentationSearch";
 import DocumentationTabs from "@/components/documentation/DocumentationTabs";
 import UpdatedNewDocumentDialog from "@/components/documentation/NewDocumentDialog";
 import DocumentationInitializer from "@/components/documentation/DocumentationInitializer";
 import useDocumentOperations from "@/hooks/useDocumentOperations";
-import { useTranscriptionController } from "@/components/documentation/TranscriptionController";
-import { toast } from "sonner";
-import { getCredits } from "@/services/payment/paymentService";
-import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
-import { Badge } from "@/components/ui/badge";
-import { Coins, CreditCard } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {useTranscriptionController} from "@/components/documentation/TranscriptionController";
+import {getCredits} from "@/services/payment/paymentService";
+import {Card, CardContent} from "@/components/ui/card";
+import {useAuth} from "@/contexts/AuthContext";
+import {Badge} from "@/components/ui/badge";
+import {Coins, CreditCard} from "lucide-react";
+import {Button} from "@/components/ui/button";
 
 const DocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("saved");

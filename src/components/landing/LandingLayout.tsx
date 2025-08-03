@@ -1,10 +1,6 @@
-
-import React, { ReactNode } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import Logo from "@/components/Logo";
-import { HeroSection } from "@/components/about/HeroSection";
-import { Footer } from "@/components/landing/Footer";
+import React, {ReactNode} from "react";
+import {HeroSection} from "@/components/about/HeroSection";
+import {Footer} from "@/components/landing/Footer";
 import {ChatWidget} from "@/components/ChatWidget.tsx";
 import {Navigation} from "@/components/landing/Navigation.tsx";
 

@@ -1,11 +1,10 @@
-
 import React from "react";
-import { TranscriptionProvider, LLMProvider, DocumentFormat } from "@/services/transcription";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Laptop, Mic, FileText } from "lucide-react";
+import {DocumentFormat, LLMProvider, TranscriptionProvider} from "@/services/transcription";
+import {Label} from "@/components/ui/label";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import {Separator} from "@/components/ui/separator";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {FileText, Laptop, Mic} from "lucide-react";
 
 interface ProviderSelectionPanelProps {
     transcriptionProvider: TranscriptionProvider;

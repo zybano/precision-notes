@@ -1,5 +1,4 @@
-
-import { Navigate } from "react-router-dom";
+import {Navigate} from "react-router-dom";
 
 const BlogPage = () => {
   // Redirect to Blog page

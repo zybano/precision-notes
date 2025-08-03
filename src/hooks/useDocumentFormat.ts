@@ -1,6 +1,5 @@
-
-import { useState } from "react";
-import { LLMProvider, DocumentFormat, TranscriptionProvider } from "@/services/transcription";
+import {useState} from "react";
+import {DocumentFormat, LLMProvider, TranscriptionProvider} from "@/services/transcription";
 
 export const useDocumentFormat = () => {
   const [transcriptionProvider, setTranscriptionProvider] = useState<TranscriptionProvider>(

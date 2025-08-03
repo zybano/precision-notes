@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Lock, CheckCircle, Server, Database, AlertTriangle, Instagram } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
+import {Link} from "react-router-dom";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {AlertTriangle, CheckCircle, Database, Instagram, Lock, Server, Shield} from "lucide-react";
 import Logo from "@/components/Logo.tsx";
 
 const Security = () => {

@@ -1,13 +1,10 @@
-
-import { useState, RefObject } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import {RefObject, useState} from 'react';
+import {supabase} from '@/integrations/supabase/client';
+import {useToast} from "@/hooks/use-toast";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "@/contexts/AuthContext";
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { formatDate } from '@/lib/utils';
-import { useQueryClient } from "@tanstack/react-query";
+import {useQueryClient} from "@tanstack/react-query";
 
 interface DocumentOperationsProps {
   form: any;

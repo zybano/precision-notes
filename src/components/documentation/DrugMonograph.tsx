@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, AlertTriangle, Info, Shield, Pill, Heart, Loader2 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import React, {useEffect, useState} from "react";
+import {Input} from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Badge} from "@/components/ui/badge";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {AlertTriangle, Heart, Info, Loader2, Pill, Search, Shield} from "lucide-react";
+import {Separator} from "@/components/ui/separator";
 
 interface Drug {
   id: string;

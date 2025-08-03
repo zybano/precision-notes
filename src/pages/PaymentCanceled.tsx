@@ -1,7 +1,6 @@
-
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { XCircle } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {useNavigate} from "react-router-dom";
+import {XCircle} from "lucide-react";
 
 const PaymentCanceled = () => {
   const navigate = useNavigate();

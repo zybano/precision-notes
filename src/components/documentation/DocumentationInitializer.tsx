@@ -1,7 +1,6 @@
-
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { setupSupabaseFunctions, checkCreatorIdColumn } from "@/services/database/dbInitializer";
+import {useEffect, useState} from "react";
+import {useAuth} from "@/contexts/AuthContext";
+import {checkCreatorIdColumn, setupSupabaseFunctions} from "@/services/database/dbInitializer";
 
 interface DocumentationInitializerProps {
   children: React.ReactNode;

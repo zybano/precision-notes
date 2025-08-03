@@ -1,10 +1,9 @@
-
 import React from "react";
-import { LandingLayout } from "@/components/landing/LandingLayout";
-import { StatsSection } from "@/components/about/StatsSection";
-import { StorySection } from "@/components/about/StorySection";
-import { CallToAction } from "@/components/about/CallToAction";
-import { FadeIn } from "@/components/ui/motion";
+import {LandingLayout} from "@/components/landing/LandingLayout";
+import {StatsSection} from "@/components/about/StatsSection";
+import {StorySection} from "@/components/about/StorySection";
+import {CallToAction} from "@/components/about/CallToAction";
+import {FadeIn} from "@/components/ui/motion";
 
 const About = () => {
   return (

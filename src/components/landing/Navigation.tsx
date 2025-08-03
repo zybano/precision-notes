@@ -1,11 +1,9 @@
-
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { ContactDialog } from "@/components/ContactDialog";
-import { MobileNavigation } from "./MobileNavigation";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft } from "lucide-react";
+import {Link, useNavigate} from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {useAuth} from "@/contexts/AuthContext";
+import {ContactDialog} from "@/components/ContactDialog";
+import {MobileNavigation} from "./MobileNavigation";
+import {useIsMobile} from "@/hooks/use-mobile";
 import Logo from "@/components/Logo.tsx";
 import React from "react";
 

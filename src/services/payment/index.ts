@@ -1,13 +1,7 @@
 // src/services/payment/index.ts - Main payment service orchestrator
-import { supabase } from "@/integrations/supabase/client";
-import { getRegionInfo } from "@/services/regionalPricingService";
-import type { 
-  PaymentResult, 
-  CreditBalance, 
-  CheckoutParams, 
-  ConsultationCheckoutParams,
-  SubscriptionTier 
-} from "./types";
+import {supabase} from "@/integrations/supabase/client";
+import {getRegionInfo} from "@/services/regionalPricingService";
+import type {CheckoutParams, ConsultationCheckoutParams, CreditBalance, PaymentResult} from "./types";
 
 /**
  * Main Payment Service - handles payment provider selection and orchestration

@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { toast } from "sonner";
+import {useRef, useState} from "react";
+import {toast} from "sonner";
 
 export const useAudioRecording = () => {
   const [isRecording, setIsRecording] = useState(false);

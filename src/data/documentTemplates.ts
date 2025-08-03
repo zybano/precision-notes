@@ -5,7 +5,7 @@ export interface DocumentTemplate {
   title: string;
   description: string;
   content: string;
-  category: 'general' | 'specialty' | 'reports';
+  category: 'general' | 'specialty' | 'reports' | 'custom';
   documentFormat: string;
 }
 
@@ -178,7 +178,7 @@ export const documentTemplates: DocumentTemplate[] = [
     title: "Presenting Complaints",
     description: "Structured presenting complaints assessment",
     content: "",
-    category: "specialty",
+    category: "custom",
     documentFormat: "custom"
   },
 

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { getRegionalPricingWithPlanDetails, formatPrice } from "@/services/regionalPricingService";
+import {useEffect, useState} from 'react';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Badge} from "@/components/ui/badge";
+import {getRegionalPricingWithPlanDetails} from "@/services/regionalPricingService";
 
 export const RegionalPricingTable = () => {
   const [regionalPricing, setRegionalPricing] = useState<any[]>([]);

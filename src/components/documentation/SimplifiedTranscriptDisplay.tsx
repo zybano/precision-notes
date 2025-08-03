@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { FileText, Copy, Wand2, Save, Edit, Check } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { TranscriptionResult, DocumentFormat } from "@/services/transcription";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Textarea } from "@/components/ui/textarea";
-import { convertTranscriptToSOAP, convertTranscriptToProgressNote, convertTranscriptToConsultNote, convertTranscriptToHistoryAndPhysical, convertTranscriptToProcedureNote } from "@/services/noteConversion";
+import React, {useEffect, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {Switch} from "@/components/ui/switch";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Label} from "@/components/ui/label";
+import {Check, Copy, Edit, FileText, Save, Wand2} from "lucide-react";
+import {useToast} from "@/hooks/use-toast";
+import {TranscriptionResult} from "@/services/transcription";
+import {ResizableHandle, ResizablePanel, ResizablePanelGroup} from "@/components/ui/resizable";
+import {Textarea} from "@/components/ui/textarea";
+import {
+    convertTranscriptToConsultNote,
+    convertTranscriptToHistoryAndPhysical,
+    convertTranscriptToProcedureNote,
+    convertTranscriptToProgressNote,
+    convertTranscriptToSOAP
+} from "@/services/noteConversion";
 
 interface TranscriptDisplayProps {
   transcriptResult: TranscriptionResult;

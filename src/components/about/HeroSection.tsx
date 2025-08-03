@@ -1,8 +1,4 @@
-
 import React from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 
 export function HeroSection({ title, subtitle, bgColorClass = "from-medical-50 to-medical-100" }: {
   title: string;

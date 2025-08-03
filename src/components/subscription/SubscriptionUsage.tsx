@@ -1,16 +1,21 @@
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon, Clock, CreditCard, InfoIcon, PlusCircle, RefreshCw } from "lucide-react";
-import { getSubscriptionTierName } from "@/services/subscriptionService";
-import { format } from "date-fns";
-import { Link } from "react-router-dom";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
-import { SubscriptionCheckout } from "@/components/subscription/SubscriptionCheckout";
-import { fetchSubscriptionPlans } from "@/services/payment/subscriptionService";
-import { getCreditInfo, formatExpiryDate, isAlmostExpired, getDaysRemaining } from "@/services/payment/simpleCreditService.ts";
+import {useAuth} from "@/contexts/AuthContext";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Progress} from "@/components/ui/progress";
+import {Button} from "@/components/ui/button";
+import {CalendarIcon, Clock, CreditCard, InfoIcon, PlusCircle, RefreshCw} from "lucide-react";
+import {getSubscriptionTierName} from "@/services/subscriptionService";
+import {format} from "date-fns";
+import {Link} from "react-router-dom";
+import {Dialog, DialogContent} from "@/components/ui/dialog";
+import {useEffect, useState} from "react";
+import {SubscriptionCheckout} from "@/components/subscription/SubscriptionCheckout";
+import {fetchSubscriptionPlans} from "@/services/payment/subscriptionService";
+import {
+  formatExpiryDate,
+  getCreditInfo,
+  getDaysRemaining,
+  isAlmostExpired
+} from "@/services/payment/simpleCreditService.ts";
 
 export const SubscriptionUsage = () => {
   const { subscriptionInfo, refreshSubscriptionInfo } = useAuth();

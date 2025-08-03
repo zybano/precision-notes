@@ -1,10 +1,15 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Calendar, ChartPieIcon, Clock, PlusCircle, RefreshCw } from "lucide-react";
-import { Link } from "react-router-dom";
-import { getCreditInfo, formatExpiryDate, isAlmostExpired, getDaysRemaining } from "@/services/payment/simpleCreditService.ts";
+import {useEffect, useState} from "react";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Progress} from "@/components/ui/progress";
+import {Button} from "@/components/ui/button";
+import {ChartPieIcon, Clock, PlusCircle, RefreshCw} from "lucide-react";
+import {Link} from "react-router-dom";
+import {
+  formatExpiryDate,
+  getCreditInfo,
+  getDaysRemaining,
+  isAlmostExpired
+} from "@/services/payment/simpleCreditService.ts";
 
 export const ConsultationStats = () => {
   const [isLoading, setIsLoading] = useState(true);

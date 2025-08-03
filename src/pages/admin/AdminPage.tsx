@@ -1,35 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { OrganizationList } from "@/components/admin/OrganizationList";
-import { CreateOrganizationDialog } from "@/components/admin/CreateOrganizationDialog";
-import { ManageCreditsDialog } from "@/components/admin/ManageCreditsDialog";
-import { UsageStatsDialog } from "@/components/admin/UsageStatsDialog";
-import { RotateKeyDialog } from "@/components/admin/RotateKeyDialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdminProtectedRoute } from "@/components/admin/AdminProtectedRoute";
-import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { adminApiService } from "@/services/adminApiService";
+import React, {useEffect, useState} from 'react';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {OrganizationList} from "@/components/admin/OrganizationList";
+import {CreateOrganizationDialog} from "@/components/admin/CreateOrganizationDialog";
+import {ManageCreditsDialog} from "@/components/admin/ManageCreditsDialog";
+import {UsageStatsDialog} from "@/components/admin/UsageStatsDialog";
+import {RotateKeyDialog} from "@/components/admin/RotateKeyDialog";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {AdminProtectedRoute} from "@/components/admin/AdminProtectedRoute";
+import {useAdminAuth} from "@/contexts/AdminAuthContext";
+import {adminApiService} from "@/services/adminApiService";
 import {
-  Plus,
-  Users,
-  CreditCard,
-  BarChart,
-  RefreshCw,
-  Building,
   Activity,
-  TrendingUp,
   AlertCircle,
-  Server,
-  Shield,
-  Settings,
+  BarChart,
+  Building,
   Database,
   LogOut,
+  Plus,
+  RefreshCw,
+  Server,
+  Settings,
+  Shield,
+  TrendingUp,
   User
 } from "lucide-react";
-import { toast } from "sonner";
+import {toast} from "sonner";
 
 interface Organization {
   id: string;

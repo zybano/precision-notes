@@ -1,17 +1,9 @@
-
 import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import {Table, TableBody, TableHead, TableHeader, TableRow,} from "@/components/ui/table";
+import {Button} from "@/components/ui/button";
 import DocumentRow from "./DocumentRow";
-import { Document } from "./DocumentTypes";
-import { FileText } from "lucide-react";
+import {Document} from "./DocumentTypes";
+import {FileText} from "lucide-react";
 
 interface DocumentTableProps {
   documents: Document[];

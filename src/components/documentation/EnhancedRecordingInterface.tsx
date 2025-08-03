@@ -1,14 +1,13 @@
-import React, { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, Pause, StopCircle, Play, FileText, Loader2, Upload } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import React, {useRef, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardDescription, CardHeader} from "@/components/ui/card";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {FileText, Loader2, Mic, Pause, Play, StopCircle, Upload} from "lucide-react";
+import {Switch} from "@/components/ui/switch";
+import {Label} from "@/components/ui/label";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import DocumentGenerationPanel from "./DocumentGenerationPanel";
-import { DocumentFormat, LLMProvider, TranscriptionResult } from "@/services/transcription";
-import SpecialtyTemplates from "@/components/SpecialtyTemplates.tsx";
+import {DocumentFormat, LLMProvider, TranscriptionResult} from "@/services/transcription";
 
 interface EnhancedRecordingInterfaceProps {
     isRecording: boolean;

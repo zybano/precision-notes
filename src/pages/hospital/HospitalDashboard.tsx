@@ -1,27 +1,26 @@
-
-import { Tabs } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import {Tabs} from "@/components/ui/tabs";
+import {useEffect, useState} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
+import {useAuth} from "@/contexts/AuthContext";
+import {toast} from "sonner";
 
 // Components
-import { DashboardHeader } from "@/components/hospital/dashboard/DashboardHeader";
-import { DashboardCard } from "@/components/hospital/dashboard/DashboardCards";
-import { DashboardTabsList, DashboardTab } from "@/components/hospital/dashboard/DashboardTabs";
-import { OverviewTab } from "@/components/hospital/dashboard/OverviewTab";
+import {DashboardHeader} from "@/components/hospital/dashboard/DashboardHeader";
+import {DashboardCard} from "@/components/hospital/dashboard/DashboardCards";
+import {DashboardTab, DashboardTabsList} from "@/components/hospital/dashboard/DashboardTabs";
+import {OverviewTab} from "@/components/hospital/dashboard/OverviewTab";
 import EnterpriseAccessDialog from "@/components/hospital/EnterpriseAccessDialog";
 
 // Modules
-import { DoctorsModule } from "@/components/hospital/DoctorsModule";
-import { NursesModule } from "@/components/hospital/NursesModule";
-import { PatientsModule } from "@/components/hospital/PatientsModule";
-import { InpatientModule } from "@/components/hospital/InpatientModule";
-import { PharmacyModule } from "@/components/hospital/PharmacyModule";
-import { LaboratoryModule } from "@/components/hospital/LaboratoryModule";
-import { InventoryModule } from "@/components/hospital/InventoryModule";
-import { BillingModule } from "@/components/hospital/BillingModule";
-import { EmergencyModule } from "@/components/hospital/EmergencyModule";
+import {DoctorsModule} from "@/components/hospital/DoctorsModule";
+import {NursesModule} from "@/components/hospital/NursesModule";
+import {PatientsModule} from "@/components/hospital/PatientsModule";
+import {InpatientModule} from "@/components/hospital/InpatientModule";
+import {PharmacyModule} from "@/components/hospital/PharmacyModule";
+import {LaboratoryModule} from "@/components/hospital/LaboratoryModule";
+import {InventoryModule} from "@/components/hospital/InventoryModule";
+import {BillingModule} from "@/components/hospital/BillingModule";
+import {EmergencyModule} from "@/components/hospital/EmergencyModule";
 
 const HospitalDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");

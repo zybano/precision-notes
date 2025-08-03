@@ -1,9 +1,8 @@
-
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ConsultationTopup } from "@/components/subscription/ConsultationTopup";
-import { FadeIn } from "@/components/ui/motion";
-import { FileText, MessageCircle, PenSquare } from "lucide-react";
+import {useState} from 'react';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {ConsultationTopup} from "@/components/subscription/ConsultationTopup";
+import {FadeIn} from "@/components/ui/motion";
+import {FileText, MessageCircle, PenSquare} from "lucide-react";
 
 const ConsultationPurchase = () => {
   const [isProcessing, setIsProcessing] = useState(false);

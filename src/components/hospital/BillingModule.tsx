@@ -1,22 +1,26 @@
-
-import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, FileText, CreditCard, Download, DollarSign, PieChart } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import {useState} from "react";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {CreditCard, DollarSign, Download, FileText, PieChart, Search} from "lucide-react";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Badge} from "@/components/ui/badge";
+import {toast} from "sonner";
 
 // Import chart components
-import { PieChart as RePieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip } from "recharts";
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Legend,
+    Pie,
+    PieChart as RePieChart,
+    ResponsiveContainer,
+    Tooltip as ReTooltip,
+    XAxis,
+    YAxis
+} from "recharts";
 
 export const BillingModule = () => {
   const [invoiceSearch, setInvoiceSearch] = useState("");

@@ -1,10 +1,10 @@
-import React, { useEffect, MutableRefObject } from "react";
-import { FadeIn } from "@/components/ui/motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, {MutableRefObject} from "react";
+import {FadeIn} from "@/components/ui/motion";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import RecentDocuments from "@/components/documentation/RecentDocuments";
 import SharedDocuments from "@/components/documentation/SharedDocuments";
-import { UseFormReturn } from "react-hook-form";
-import { useIsMobile } from "@/hooks/use-mobile";
+import {UseFormReturn} from "react-hook-form";
+import {useIsMobile} from "@/hooks/use-mobile";
 
 interface DocumentationTabsProps {
   activeTab: string;

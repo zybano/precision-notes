@@ -1,10 +1,9 @@
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, FileText, Calendar, Clock, Clipboard } from "lucide-react";
+import {useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Calendar, Clipboard, Clock, FileText, Search} from "lucide-react";
 
 const inpatients = [
   { id: 1, name: "Emily Johnson", room: "203A", admitted: "05/15/2023", doctor: "Dr. Garcia", diagnosis: "Pneumonia", duration: "7 days" },

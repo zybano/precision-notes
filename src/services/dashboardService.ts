@@ -1,6 +1,5 @@
-
-import { Clock, Clipboard, Users, BarChart, LucideIcon } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import {BarChart, Clipboard, Clock, LucideIcon, Users} from 'lucide-react';
+import {supabase} from '@/integrations/supabase/client';
 
 // Interface for metrics
 export interface Metric {

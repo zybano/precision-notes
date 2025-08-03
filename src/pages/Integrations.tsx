@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database, FileText, BarChart, Stethoscope, Calendar, Users, Instagram } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
+import {Link} from "react-router-dom";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {BarChart, Calendar, Database, FileText, Instagram, Stethoscope, Users} from "lucide-react";
 import Logo from "@/components/Logo.tsx";
 
 const Integrations = () => {

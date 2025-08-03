@@ -1,7 +1,7 @@
 // Simplified credit service - now uses the new unified payment service
 // This file maintains backward compatibility
 
-import { paymentService } from './index';
+import {paymentService} from './index';
 
 export interface CreditInfo {
   balance: number;

@@ -1,35 +1,31 @@
-
-import { useState } from "react";
-import { 
-  Card, 
-  CardContent 
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { 
-  Brain, 
-  Heart, 
-  Baby, 
-  PersonStanding, 
-  Stethoscope, 
-  Users, 
-  BadgePlus, 
-  Bone, 
-  Pill, 
-  ListFilter,
-  Copy
+import {useState} from "react";
+import {Card, CardContent} from "@/components/ui/card";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Button} from "@/components/ui/button";
+import {
+    Baby,
+    BadgePlus,
+    Bone,
+    Brain,
+    Copy,
+    Heart,
+    ListFilter,
+    PersonStanding,
+    Pill,
+    Stethoscope,
+    Users
 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+import {Separator} from "@/components/ui/separator";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import {Checkbox} from "@/components/ui/checkbox";
+import {useToast} from "@/hooks/use-toast";
 
 // Define specialty template types
 type SpecialtyParameter = {

@@ -1,16 +1,15 @@
-
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { LucideIcon } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {LucideIcon} from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
-import { TemplateParameter } from "./TemplateCard";
+import {TemplateParameter} from "./TemplateCard";
 
 interface TemplateDetailsDialogProps {
   open: boolean;

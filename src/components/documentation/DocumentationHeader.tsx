@@ -1,7 +1,6 @@
-
 import React from "react";
-import { FadeIn } from "@/components/ui/motion";
-import { useIsMobile } from "@/hooks/use-mobile";
+import {FadeIn} from "@/components/ui/motion";
+import {useIsMobile} from "@/hooks/use-mobile";
 
 interface DocumentationHeaderProps {
   title?: string;

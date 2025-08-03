@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import {Route, Routes} from 'react-router-dom';
 import Index from './pages/Index';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
@@ -12,7 +11,7 @@ import Blog from './pages/Blog';
 import About from './pages/About';
 import ForgotPassword from './pages/ForgotPassword';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { AuthProvider } from '@/contexts/AuthContext';
+import {AuthProvider} from '@/contexts/AuthContext';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCanceled from './pages/PaymentCanceled';
 import ConsultationPurchase from "@/pages/ConsultationPurchase";
@@ -25,11 +24,11 @@ import Layout from '@/components/Layout';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AdminPage from './pages/admin/AdminPage.tsx';
-import { AdminAuthProvider } from '@/contexts/AdminAuthContext';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { Toaster } from 'sonner'; // Update to use Sonner directly
-import { ToastProvider } from '@/providers/ToastProvider'; // Import from our new provider
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {AdminAuthProvider} from '@/contexts/AdminAuthContext';
+import {SidebarProvider} from '@/components/ui/sidebar';
+import {Toaster} from 'sonner'; // Update to use Sonner directly
+import {ToastProvider} from '@/providers/ToastProvider'; // Import from our new provider
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 
 // Create a client
 const queryClient = new QueryClient({

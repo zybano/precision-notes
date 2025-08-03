@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { createConsultationCheckout } from "@/services/payment/paymentService";
-import { getConsultationPackagesWithRegionalPricing, getRegionInfo, formatPrice } from "@/services/regionalPricingService";
-import { toast } from "sonner";
+import {useEffect, useState} from 'react';
+import {Button} from "@/components/ui/button";
+import {Card} from "@/components/ui/card";
+import {createConsultationCheckout} from "@/services/payment/paymentService";
+import {
+    formatPrice,
+    getConsultationPackagesWithRegionalPricing,
+    getRegionInfo
+} from "@/services/regionalPricingService";
+import {toast} from "sonner";
 
 interface PackageOption {
     id: string;

@@ -1,7 +1,6 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FadeIn } from "@/components/ui/motion";
-import { Clock, Check, Shield, UserCheck } from "lucide-react";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {FadeIn} from "@/components/ui/motion";
+import {Check, Clock, Shield, UserCheck} from "lucide-react";
 
 interface AdvantageItem {
   title: string;

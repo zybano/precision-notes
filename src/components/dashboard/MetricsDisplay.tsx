@@ -1,7 +1,6 @@
-
-import { FadeIn } from "@/components/ui/motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
+import {FadeIn} from "@/components/ui/motion";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {LucideIcon} from "lucide-react";
 
 export type MetricProps = {
   title: string;

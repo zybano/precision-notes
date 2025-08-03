@@ -1,11 +1,10 @@
-
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { createPlanCheckout } from "@/services/payment/paymentService";
-import { SubscriptionTier } from "@/services/subscriptionService";
-import { getRegionInfo } from "@/services/regionalPricingService";
+import {useEffect, useState} from 'react';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {toast} from "sonner";
+import {createPlanCheckout} from "@/services/payment/paymentService";
+import {SubscriptionTier} from "@/services/subscriptionService";
+import {getRegionInfo} from "@/services/regionalPricingService";
 
 interface SubscriptionCheckoutProps {
   tier: SubscriptionTier;

@@ -1,21 +1,20 @@
-
-import React, { useMemo } from "react";
+import React, {useMemo} from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Edit, FileText } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Edit} from "lucide-react";
 import EnhancedTranscriptDisplay from "./EnhancedTranscriptDisplay";
-import { Document, PatientInfo } from "./DocumentTypes";
-import { TranscriptionResult } from "@/services/transcription";
-import { UseFormReturn } from "react-hook-form";
-import { updateDocument } from "@/services/supabaseSetup";
-import { toast } from "sonner";
+import {Document, PatientInfo} from "./DocumentTypes";
+import {TranscriptionResult} from "@/services/transcription";
+import {UseFormReturn} from "react-hook-form";
+import {updateDocument} from "@/services/supabaseSetup";
+import {toast} from "sonner";
 
 interface EnhancedTranscriptDialogProps {
   open: boolean;

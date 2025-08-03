@@ -1,22 +1,17 @@
-
 import React from "react";
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
-    DialogTitle,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
-import {
-    TranscriptionProvider,
-    LLMProvider,
-    DocumentFormat,
-} from "@/services/transcription";
+import {Button} from "@/components/ui/button";
+import {Label} from "@/components/ui/label";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
+import {Switch} from "@/components/ui/switch";
+import {DocumentFormat, LLMProvider, TranscriptionProvider,} from "@/services/transcription";
 
 interface ProviderSelectionDialogProps {
     open: boolean;

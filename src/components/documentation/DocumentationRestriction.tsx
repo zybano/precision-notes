@@ -1,9 +1,8 @@
-
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, Lock } from "lucide-react";
-import { Link } from 'react-router-dom';
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {AlertTriangle, Lock} from "lucide-react";
+import {Link} from 'react-router-dom';
 
 interface DocumentationRestrictionProps {
   type: 'consultations' | 'template';

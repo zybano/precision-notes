@@ -1,13 +1,11 @@
-
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { AlertCircle, ListFilter, Copy, Star, LucideIcon, Lock } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { isTemplateAvailableForTier, getRequiredTierForTemplate } from "@/services/subscriptionService";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
+import {Card, CardContent} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Separator} from "@/components/ui/separator";
+import {AlertCircle, Copy, ListFilter, Lock, LucideIcon, Star} from "lucide-react";
+import {useAuth} from "@/contexts/AuthContext";
+import {getRequiredTierForTemplate, isTemplateAvailableForTier} from "@/services/subscriptionService";
+import {Badge} from "@/components/ui/badge";
 
 export interface TemplateParameter {
   name: string;

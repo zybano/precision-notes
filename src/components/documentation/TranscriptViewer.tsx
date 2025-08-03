@@ -1,14 +1,17 @@
-
-import React, { useState } from 'react';
-import { TranscriptData, parseTranscriptData, extractSpeakers } from './DocumentTypes';
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, FileText, MessageSquare, FileDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { convertTranscriptToSOAP, convertTranscriptToProgressNote, convertTranscriptToConsultNote } from "@/services/noteConversion";
-import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React, {useState} from 'react';
+import {extractSpeakers, parseTranscriptData} from './DocumentTypes';
+import {Button} from "@/components/ui/button";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {FileDown, FileText, MessageSquare, Mic} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+import {
+    convertTranscriptToConsultNote,
+    convertTranscriptToProgressNote,
+    convertTranscriptToSOAP
+} from "@/services/noteConversion";
+import {toast} from "sonner";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 interface TranscriptViewerProps {
   transcriptData: string | null;

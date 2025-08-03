@@ -1,5 +1,5 @@
 // types/subscription.ts
-import { SubscriptionTier } from "@/services/subscriptionService";
+import {SubscriptionTier} from "@/services/subscriptionService";
 
 export type BillingCycle = "monthly" | "annual";
 

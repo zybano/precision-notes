@@ -1,6 +1,5 @@
-
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
 
 interface DashboardHeaderProps {
   title: string;

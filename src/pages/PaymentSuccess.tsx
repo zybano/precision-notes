@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { CheckCircle2 } from "lucide-react";
-import { verifyTopupPurchase } from "@/services/payment/paymentService";
-import { supabase } from "@/integrations/supabase/client";
+import {useEffect, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {toast} from "sonner";
+import {useAuth} from "@/contexts/AuthContext";
+import {CheckCircle2} from "lucide-react";
+import {verifyTopupPurchase} from "@/services/payment/paymentService";
+import {supabase} from "@/integrations/supabase/client";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();

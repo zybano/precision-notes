@@ -1,11 +1,10 @@
-
-import { useState } from "react";
-import { useAudioRecording } from "@/hooks/useAudioRecording";
-import { useTranscription } from "@/hooks/useTranscription";
-import { TranscriptionProvider, TranscriptionResult } from "@/services/transcription";
-import { PatientSummaryResult } from "@/services/summaryUtils";
-import { UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
+import {useState} from "react";
+import {useAudioRecording} from "@/hooks/useAudioRecording";
+import {useTranscription} from "@/hooks/useTranscription";
+import {TranscriptionProvider, TranscriptionResult} from "@/services/transcription";
+import {PatientSummaryResult} from "@/services/summaryUtils";
+import {UseFormReturn} from "react-hook-form";
+import {toast} from "sonner";
 
 interface OrganizationalTranscriptionControllerProps {
   form: UseFormReturn<any>;

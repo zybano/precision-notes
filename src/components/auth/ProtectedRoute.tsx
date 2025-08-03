@@ -1,11 +1,9 @@
-
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
-import { EnterpriseAccessDialog } from "@/components/hospital/EnterpriseAccessDialog";
-import { useState } from "react";
-import { hasSubscriptionAccess } from "@/services/subscriptionService";
+import {Navigate, Outlet, useLocation} from "react-router-dom";
+import {useAuth} from "@/contexts/AuthContext";
+import {Spinner} from "@/components/ui/spinner";
+import {EnterpriseAccessDialog} from "@/components/hospital/EnterpriseAccessDialog";
+import {useState} from "react";
+import {hasSubscriptionAccess} from "@/services/subscriptionService";
 
 const ProtectedRoute = () => {
   const { user, isLoading, subscriptionInfo } = useAuth();

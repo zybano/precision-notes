@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, PlusCircle, FileText, FileEdit, Trash2 } from "lucide-react";
+import {useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {FileEdit, FileText, PlusCircle, Search, Trash2} from "lucide-react";
 
 const patients = [
   { id: 1, name: "John Smith", age: 45, gender: "Male", doctor: "Dr. Roberts", diagnosis: "Hypertension", status: "Active" },

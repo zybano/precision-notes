@@ -1,17 +1,17 @@
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
-import { Play } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import {Link} from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
+import {Play} from "lucide-react";
+import {useAuth} from "@/contexts/AuthContext";
+import {useState} from "react";
+import {useIsMobile} from "@/hooks/use-mobile";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import precisionNote from '/lovable-uploads/PrecisionNote.jpeg';
 

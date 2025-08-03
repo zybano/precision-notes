@@ -1,9 +1,6 @@
-
 import React from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Instagram } from "lucide-react";
-import precisionLogo from "*.jpeg";
+import {Link} from "react-router-dom";
+import {Instagram} from "lucide-react";
 import Logo from "@/components/Logo.tsx";
 
 export function Footer() {

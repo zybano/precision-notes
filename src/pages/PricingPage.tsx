@@ -1,14 +1,11 @@
-
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { SEO } from "@/components/SEO";
-import { LandingLayout } from "@/components/landing/LandingLayout";
-import { Check, HelpCircle, Mail } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import React, {useEffect, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {SEO} from "@/components/SEO";
+import {LandingLayout} from "@/components/landing/LandingLayout";
+import {Check, HelpCircle, Mail} from "lucide-react";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
+import {Card, CardContent} from "@/components/ui/card";
+import {useAuth} from "@/contexts/AuthContext";
 import {Pricing} from "@/components/landing/Pricing.tsx";
 
 type BillingCycle = "monthly" | "annual";

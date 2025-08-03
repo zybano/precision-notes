@@ -1,10 +1,9 @@
-
-import { useState } from "react";
-import { TriageSummary } from "./emergency/TriageSummary";
-import { EmergencyPatientList, EmergencyPatient } from "./emergency/EmergencyPatientList";
-import { AmbulanceManager, AmbulanceUnit } from "./emergency/AmbulanceManager";
-import { TriageDialog } from "./emergency/TriageDialog";
-import { DischargeDialog, AdmitDialog } from "./emergency/PatientActionDialogs";
+import {useState} from "react";
+import {TriageSummary} from "./emergency/TriageSummary";
+import {EmergencyPatient, EmergencyPatientList} from "./emergency/EmergencyPatientList";
+import {AmbulanceManager, AmbulanceUnit} from "./emergency/AmbulanceManager";
+import {TriageDialog} from "./emergency/TriageDialog";
+import {AdmitDialog, DischargeDialog} from "./emergency/PatientActionDialogs";
 
 export const EmergencyModule = () => {
   const [searchTerm, setSearchTerm] = useState("");

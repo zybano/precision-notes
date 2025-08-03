@@ -1,15 +1,9 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { documentTemplates } from "@/data/documentTemplates";
-import { Wand2, Loader2 } from "lucide-react";
+import React, {useState} from "react";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {documentTemplates} from "@/data/documentTemplates";
+import {Loader2, Wand2} from "lucide-react";
 
 interface TemplateRegenerationDialogProps {
   open: boolean;

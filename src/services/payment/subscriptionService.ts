@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import {supabase} from "@/integrations/supabase/client";
 
 // Define SubscriptionTier type for backward compatibility
 export type SubscriptionTier = 'free' | 'starter' | 'professional' | 'enterprise';

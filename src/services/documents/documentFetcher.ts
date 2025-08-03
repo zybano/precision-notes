@@ -1,5 +1,4 @@
-
-import { supabase } from "@/integrations/supabase/client";
+import {supabase} from "@/integrations/supabase/client";
 
 // Function to fetch user documents
 export const fetchUserDocuments = async (userId: string) => {

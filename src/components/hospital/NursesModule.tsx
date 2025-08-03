@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserRound, Phone, Mail, Calendar, Search, PlusCircle, FileEdit, Trash2 } from "lucide-react";
+import {useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Calendar, FileEdit, Mail, Phone, PlusCircle, Search, Trash2} from "lucide-react";
 
 const nurses = [
   { id: 1, name: "Emma Thompson", department: "Emergency", shift: "Morning", phone: "(555) 111-2233", email: "e.thompson@hospital.com" },

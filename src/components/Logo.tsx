@@ -1,4 +1,3 @@
-
 import precisionLogo from "/lovable-uploads/precision.jpeg";
 
 const Logo = () => {

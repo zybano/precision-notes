@@ -1,12 +1,12 @@
-import React, { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, Pause, StopCircle, Play, Upload, Loader2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { TranscriptionResult, DocumentFormat } from "@/services/transcription";
+import React, {useRef, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Loader2, Mic, Pause, Play, StopCircle, Upload} from "lucide-react";
+import {Switch} from "@/components/ui/switch";
+import {Label} from "@/components/ui/label";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {Badge} from "@/components/ui/badge";
+import {DocumentFormat, TranscriptionResult} from "@/services/transcription";
 
 interface OrganizationalRecordingInterfaceProps {
   isRecording: boolean;

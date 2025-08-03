@@ -1,21 +1,13 @@
-import React, { useMemo, useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Document, PatientInfo, parseTranscriptData } from "./DocumentTypes";
-import { TranscriptionResult } from "@/services/transcription";
-import { UseFormReturn } from "react-hook-form";
+import React, {useEffect, useState} from "react";
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Document} from "./DocumentTypes";
+import {TranscriptionResult} from "@/services/transcription";
+import {UseFormReturn} from "react-hook-form";
 import EnhancedTranscriptDisplay from "./EnhancedTranscriptDisplay";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { FileText, Copy, Edit, AlertCircle } from "lucide-react";
+import {supabase} from "@/integrations/supabase/client";
+import {toast} from "sonner";
+import {AlertCircle, FileText} from "lucide-react";
 
 interface SimplifiedTranscriptDialogProps {
   open: boolean;

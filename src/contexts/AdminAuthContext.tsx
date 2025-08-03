@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import React, {createContext, ReactNode, useContext, useEffect, useState} from "react";
 
 interface AdminUser {
   id: string;

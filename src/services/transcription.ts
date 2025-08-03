@@ -1,9 +1,7 @@
 // src/services/transcription.ts
 
-import { AssemblyAI } from 'assemblyai';
-import { SpeechClient } from '@google-cloud/speech';
+import {AssemblyAI} from 'assemblyai';
 import OpenAI from 'openai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Define transcription provider types
 export enum TranscriptionProvider {

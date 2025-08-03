@@ -1,5 +1,4 @@
-
-import { supabase } from "@/integrations/supabase/client";
+import {supabase} from "@/integrations/supabase/client";
 
 // Define subscription tiers and their features
 export type SubscriptionTier = 'free' | 'starter' | 'professional' | 'enterprise';

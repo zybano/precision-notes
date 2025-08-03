@@ -1,10 +1,22 @@
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FadeIn } from "@/components/ui/motion";
-import { Check, Zap, Shield, Clock, FileText, UserCheck, Code, Smartphone, Globe, HeartPulse, Stethoscope, Brain } from "lucide-react";
-import { Link } from "react-router-dom";
-import { LandingLayout } from "@/components/landing/LandingLayout";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {FadeIn} from "@/components/ui/motion";
+import {
+    Brain,
+    Check,
+    Clock,
+    Code,
+    FileText,
+    Globe,
+    HeartPulse,
+    Shield,
+    Smartphone,
+    Stethoscope,
+    UserCheck,
+    Zap
+} from "lucide-react";
+import {Link} from "react-router-dom";
+import {LandingLayout} from "@/components/landing/LandingLayout";
 import React from "react";
 
 const Features = () => {

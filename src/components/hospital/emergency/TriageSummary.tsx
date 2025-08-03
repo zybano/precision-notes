@@ -1,7 +1,6 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmergencyPatient } from "./EmergencyPatientList";
-import { cn } from "@/lib/utils";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {EmergencyPatient} from "./EmergencyPatientList";
+import {cn} from "@/lib/utils";
 
 interface TriageSummaryProps {
   patients: EmergencyPatient[];

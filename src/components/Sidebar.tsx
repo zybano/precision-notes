@@ -1,20 +1,10 @@
-
-import { NavLink, useNavigate } from "react-router-dom";
-import { 
-  File, 
-  FileText, 
-  Settings, 
-  Menu,
-  X,
-  Heart,
-  ChevronDown,
-  ChevronRight
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {NavLink, useNavigate} from "react-router-dom";
+import {ChevronDown, ChevronRight, File, FileText, Heart, Menu, Settings, X} from "lucide-react";
+import {useEffect, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {useIsMobile} from "@/hooks/use-mobile";
+import {Sheet, SheetContent, SheetTrigger} from "@/components/ui/sheet";
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible";
 import Logo from "@/components/Logo.tsx";
 
 const Sidebar = () => {

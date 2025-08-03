@@ -1,8 +1,7 @@
-
 import React from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, XCircle, AlertCircle, CheckCircle } from "lucide-react";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {Badge} from "@/components/ui/badge";
+import {AlertCircle, AlertTriangle, CheckCircle, XCircle} from "lucide-react";
 
 interface MedicationAlert {
   id: string;

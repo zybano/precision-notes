@@ -1,9 +1,8 @@
-
-import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { toast } from "sonner";
-import { getActivityData } from "@/services/dashboardService";
-import { useAuth } from "@/contexts/AuthContext";
+import {useEffect, useState} from "react";
+import {Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
+import {toast} from "sonner";
+import {getActivityData} from "@/services/dashboardService";
+import {useAuth} from "@/contexts/AuthContext";
 
 export const ActivityChart = () => {
   const [activityData, setActivityData] = useState<any[]>([]);

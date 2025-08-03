@@ -1,5 +1,4 @@
-
-import { FadeIn } from "@/components/ui/motion";
+import {FadeIn} from "@/components/ui/motion";
 
 interface FeatureItem {
   title: string;

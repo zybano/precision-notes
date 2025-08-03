@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RegionalPricingTable } from "@/components/admin/RegionalPricingTable";
-import { toggleNigeriaMode, setCountryOverride } from "@/services/regionalPricingService";
-import { Globe, RefreshCw, Settings } from "lucide-react";
+import {useState} from 'react';
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {RegionalPricingTable} from "@/components/admin/RegionalPricingTable";
+import {setCountryOverride, toggleNigeriaMode} from "@/services/regionalPricingService";
+import {Globe, RefreshCw} from "lucide-react";
 
 export default function RegionalPricingAdmin() {
   const [activeTab, setActiveTab] = useState("view");

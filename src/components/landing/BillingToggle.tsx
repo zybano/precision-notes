@@ -1,5 +1,5 @@
 // BillingToggle.tsx
-import { BillingCycle } from "@/types/subscription";
+import {BillingCycle} from "@/types/subscription";
 
 interface BillingToggleProps {
   billingCycle: BillingCycle;

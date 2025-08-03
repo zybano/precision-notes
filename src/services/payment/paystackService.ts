@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import { SubscriptionTier } from "@/services/subscriptionService";
+import {supabase} from "@/integrations/supabase/client";
+import {SubscriptionTier} from "@/services/subscriptionService";
 
 // Function to create a Paystack checkout session for plan subscription
 export const createPaystackCheckout = async (params: {

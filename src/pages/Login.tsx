@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import {Link} from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import precisionLogo from '/lovable-uploads/precision.jpeg'; // Adjust path as needed
 import precisionNote from '/lovable-uploads/PrecisionNote.jpeg'; // Adjust path as needed
 

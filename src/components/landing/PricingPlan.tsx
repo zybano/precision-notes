@@ -1,8 +1,8 @@
 // PricingPlan.tsx
-import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
-import { Link } from "react-router-dom";
-import { SubscriptionTier } from "@/services/subscriptionService";
+import {Button} from "@/components/ui/button";
+import {Check} from "lucide-react";
+import {Link} from "react-router-dom";
+import {SubscriptionTier} from "@/services/subscriptionService";
 
 interface PricingPlanProps {
   plan: {

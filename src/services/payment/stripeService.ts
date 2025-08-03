@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import { SubscriptionTier } from "@/services/subscriptionService";
+import {supabase} from "@/integrations/supabase/client";
+import {SubscriptionTier} from "@/services/subscriptionService";
 
 /**
  * Create Stripe checkout for subscription plans

@@ -1,8 +1,7 @@
-
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
-import { UserCheck, Shield } from "lucide-react";
+import {Link} from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
+import {Shield, UserCheck} from "lucide-react";
 
 export function PatientCare() {
   return (

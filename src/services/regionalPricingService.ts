@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import {supabase} from "@/integrations/supabase/client";
 
 // Define country code for Nigeria
 const NIGERIA_COUNTRY_CODE = 'NG';

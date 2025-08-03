@@ -1,14 +1,13 @@
-import React, { useEffect, useState, MutableRefObject } from "react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { UseFormReturn } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
-import { Document, RawDocumentData } from "./DocumentTypes";
+import React, {MutableRefObject, useEffect, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {toast} from "sonner";
+import {UseFormReturn} from "react-hook-form";
+import {supabase} from "@/integrations/supabase/client";
+import {Document} from "./DocumentTypes";
 import DocumentTable from "./DocumentTable";
-import SimplifiedTranscriptDialog from "./SimplifiedTranscriptDialog";
-import { TranscriptionResult } from "@/services/transcription";
-import { useAuth } from "@/contexts/AuthContext";
-import { fetchUserDocuments } from "@/services/supabaseSetup";
+import {TranscriptionResult} from "@/services/transcription";
+import {useAuth} from "@/contexts/AuthContext";
+import {fetchUserDocuments} from "@/services/supabaseSetup";
 import EnhancedTranscriptDialog from "@/components/documentation/EnhancedTranscriptDialog.tsx";
 
 interface RecentDocumentsProps {

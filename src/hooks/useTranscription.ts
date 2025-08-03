@@ -1,16 +1,7 @@
-
-import { useState } from "react";
-import { toast } from "sonner";
-import {
-  TranscriptionProvider,
-  transcribeAudio,
-  TranscriptionResult
-} from "@/services/transcription";
-import {
-  generateBriefSummary, 
-  generatePatientSummary,
-  PatientSummaryResult
-} from "@/services/summaryUtils";
+import {useState} from "react";
+import {toast} from "sonner";
+import {transcribeAudio, TranscriptionProvider, TranscriptionResult} from "@/services/transcription";
+import {generatePatientSummary, PatientSummaryResult} from "@/services/summaryUtils";
 
 
 interface TranscriptionOptions {

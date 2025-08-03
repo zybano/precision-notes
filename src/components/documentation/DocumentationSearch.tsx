@@ -1,12 +1,10 @@
-
 import React from "react";
-import { FadeIn } from "@/components/ui/motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Mic } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
-import { useIsMobile } from "@/hooks/use-mobile";
-import {Link} from "react-router-dom";
+import {FadeIn} from "@/components/ui/motion";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Mic, Search} from "lucide-react";
+import {UseFormReturn} from "react-hook-form";
+import {useIsMobile} from "@/hooks/use-mobile";
 
 interface DocumentationSearchProps {
   setNewDocumentOpen: (open: boolean) => void;

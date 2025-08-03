@@ -1,5 +1,5 @@
 // src/services/summaryUtils.ts
-import { LLMProvider } from './transcription';
+import OpenAI from 'openai';
 
 /**
  * Generates a brief summary of the transcription text.
@@ -54,8 +54,6 @@ export const generateBriefSummary = (text: string): string => {
     sentences[sentences.length - 1]
   ].join('. ') + '.';
 };
-
-import OpenAI from 'openai';
 
 export interface SummaryGenerationOptions {
   apiKey?: string;

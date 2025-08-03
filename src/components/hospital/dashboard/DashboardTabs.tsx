@@ -1,6 +1,5 @@
-
-import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ReactNode } from "react";
+import {TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {ReactNode} from "react";
 
 export interface DashboardTabProps {
   value: string;

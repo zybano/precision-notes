@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Clock, Users, HeartHandshake } from "lucide-react";
+import {Clock, HeartHandshake, Users} from "lucide-react";
 
 export function StatsSection() {
   return (

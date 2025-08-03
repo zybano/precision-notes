@@ -1,5 +1,4 @@
-
-import { supabase } from "@/integrations/supabase/client";
+import {supabase} from "@/integrations/supabase/client";
 
 // Function to save a document with all the required fields
 export const saveDocument = async (documentData: {

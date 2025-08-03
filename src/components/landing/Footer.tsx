@@ -1,6 +1,5 @@
-
-import { Link } from "react-router-dom";
-import { Instagram, Twitter, Linkedin, Mail, CheckCircle } from "lucide-react";
+import {Link} from "react-router-dom";
+import {CheckCircle, Instagram, Linkedin, Mail, Twitter} from "lucide-react";
 import Logo from "@/components/Logo";
 
 export function Footer() {

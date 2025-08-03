@@ -1,8 +1,6 @@
-
-import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/motion";
-import { Link } from "react-router-dom";
-import { LandingLayout } from "@/components/landing/LandingLayout";
+import {Button} from "@/components/ui/button";
+import {FadeIn} from "@/components/ui/motion";
+import {LandingLayout} from "@/components/landing/LandingLayout";
 
 const ContactPage = () => {
   return (
