@@ -11,7 +11,7 @@ import DocumentFormatModal from "./DocumentFormatModal";
 interface TemplateSelectionStepProps {
   selectedFormat: DocumentFormat;
   onFormatSelect: (format: DocumentFormat) => void;
-  onNext: () => void;
+  onNext: (selectedFormat?: DocumentFormat) => void;
   isRegenerateMode?: boolean;
   isLoading?: boolean;
 }
@@ -263,7 +263,7 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
               {selectedFormat ? `Selected: ${documentTemplates.find(template => template.documentFormat === selectedFormat)?.title}` : "Please select a template"}
             </div>
             <Button 
-              onClick={onNext} 
+              onClick={() => onNext(selectedFormat)} 
               disabled={!selectedFormat || isLoading}
               className="ml-4"
             >

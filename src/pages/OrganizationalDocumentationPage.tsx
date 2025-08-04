@@ -274,11 +274,11 @@ const OrganizationalDocumentationPage = () => {
                 onFormatSelect={setDocumentFormat}
                 isRegenerateMode={!!watch("transcriptResult")?.text}
                 isLoading={transcriptionControls.isB2BProcessing}
-                onNext={() => {
+                onNext={(selectedFormat) => {
                   const transcriptResult = watch("transcriptResult");
                   if (transcriptResult?.text) {
-                    // Regenerate with new format
-                    handleRegenerateWithNewFormat(documentFormat);
+                    // Regenerate with new format - use the selected format parameter
+                    handleRegenerateWithNewFormat(selectedFormat || documentFormat);
                   } else {
                     // No transcript, go to record
                     setActiveTab("record");
