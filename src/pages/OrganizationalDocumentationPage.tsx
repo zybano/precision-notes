@@ -31,7 +31,7 @@ const OrganizationalDocumentationPage = () => {
       recordingTime: 0,
       patientName: "",
       patientInfo: null,
-      documentFormat: "soap",
+      documentFormat: "soap", // This should match the selected template format
       infoVerified: false,
       creditsUsed: 0,
       processingTimeMs: 0,
@@ -271,7 +271,10 @@ const OrganizationalDocumentationPage = () => {
             <TabsContent value="template" className="mt-0">
               <TemplateSelectionStep
                 selectedFormat={documentFormat}
-                onFormatSelect={setDocumentFormat}
+                onFormatSelect={(format) => {
+                  setDocumentFormat(format);
+                  setValue("documentFormat", format); // Also update the form field
+                }}
                 isRegenerateMode={!!watch("transcriptResult")?.text}
                 isLoading={transcriptionControls.isB2BProcessing}
                 onNext={(selectedFormat) => {
