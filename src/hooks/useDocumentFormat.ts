@@ -1,6 +1,12 @@
 import {useState} from "react";
 import {DocumentFormat, LLMProvider, TranscriptionProvider} from "@/services/transcription";
 
+export enum TranscriptionLanguage {
+  ENGLISH = 'en_us',
+  YORUBA = 'yo',
+  HAUSA = 'ha'
+}
+
 export const useDocumentFormat = () => {
   const [transcriptionProvider, setTranscriptionProvider] = useState<TranscriptionProvider>(
     TranscriptionProvider.ASSEMBLYAI
@@ -8,6 +14,7 @@ export const useDocumentFormat = () => {
   const [llmProvider, setLlmProvider] = useState<LLMProvider>(LLMProvider.OPENAI);
   const [documentFormat, setDocumentFormat] = useState<DocumentFormat>(DocumentFormat.SOAP);
   const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
+  const [transcriptionLanguage, setTranscriptionLanguage] = useState<TranscriptionLanguage>(TranscriptionLanguage.ENGLISH);
 
   return {
     transcriptionProvider,
@@ -17,6 +24,8 @@ export const useDocumentFormat = () => {
     documentFormat,
     setDocumentFormat,
     useSpeechModelNano,
-    setUseSpeechModelNano
+    setUseSpeechModelNano,
+    transcriptionLanguage,
+    setTranscriptionLanguage
   };
 };

@@ -3,9 +3,12 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Input} from "@/components/ui/input";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Label} from "@/components/ui/label";
 import {DocumentFormat} from "@/services/transcription";
+import {TranscriptionLanguage} from "@/hooks/useDocumentFormat";
 import {DocumentTemplate, documentTemplates} from "@/data/documentTemplates";
-import {Baby, Brain, Eye, FileText, Heart, Loader2, Search, Stethoscope, Users} from "lucide-react";
+import {Baby, Brain, Eye, FileText, Heart, Languages, Loader2, Search, Stethoscope, Users} from "lucide-react";
 import DocumentFormatModal from "./DocumentFormatModal";
 
 interface TemplateSelectionStepProps {
@@ -14,6 +17,8 @@ interface TemplateSelectionStepProps {
   onNext: (selectedFormat?: DocumentFormat) => void;
   isRegenerateMode?: boolean;
   isLoading?: boolean;
+  transcriptionLanguage: TranscriptionLanguage;
+  onLanguageSelect: (language: TranscriptionLanguage) => void;
 }
 
 // Icon mapping for templates
@@ -57,7 +62,9 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
   onFormatSelect,
   onNext,
   isRegenerateMode = false,
-  isLoading = false
+  isLoading = false,
+  transcriptionLanguage,
+  onLanguageSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,9 +96,28 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
           <CardDescription>
             {isRegenerateMode 
               ? "Choose a new document format to regenerate your existing transcript."
-              : "Choose the document format before recording or uploading audio. This determines how your transcription will be structured."
+              : "Choose the document format and language before recording or uploading audio."
             }
           </CardDescription>
+          
+          {/* Language Selector */}
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="language-select" className="text-sm font-medium flex items-center">
+              <Languages className="h-4 w-4 mr-2" />
+              Transcription Language
+            </Label>
+            <Select value={transcriptionLanguage} onValueChange={onLanguageSelect}>
+              <SelectTrigger id="language-select">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TranscriptionLanguage.ENGLISH}>English</SelectItem>
+                <SelectItem value={TranscriptionLanguage.YORUBA}>Yoruba</SelectItem>
+                <SelectItem value={TranscriptionLanguage.HAUSA}>Hausa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input

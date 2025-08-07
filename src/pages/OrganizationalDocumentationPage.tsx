@@ -54,12 +54,15 @@ const OrganizationalDocumentationPage = () => {
     setDocumentFormat,
     useSpeechModelNano,
     setUseSpeechModelNano,
+    transcriptionLanguage,
+    setTranscriptionLanguage,
   } = useDocumentFormat();
 
   const transcriptionControls = useOrganizationalTranscriptionController({
     form,
     transcriptionProvider,
     useSpeechModelNano,
+    transcriptionLanguage,
     setActiveTab,
   });
 
@@ -332,6 +335,8 @@ const OrganizationalDocumentationPage = () => {
                   setDocumentFormat(format);
                   setValue("documentFormat", format); // Also update the form field
                 }}
+                transcriptionLanguage={transcriptionLanguage}
+                onLanguageSelect={setTranscriptionLanguage}
                 isRegenerateMode={!!watch("transcriptResult")?.text}
                 isLoading={transcriptionControls.isB2BProcessing}
                 onNext={(selectedFormat) => {
@@ -360,6 +365,7 @@ const OrganizationalDocumentationPage = () => {
                 transcriptResult={transcriptionControls.transcriptResult}
                 onFileUpload={transcriptionControls.onFileUpload}
                 documentFormat={documentFormat}
+                transcriptionLanguage={transcriptionLanguage}
                 useSpeechModelNano={useSpeechModelNano}
                 setUseSpeechModelNano={setUseSpeechModelNano}
               />
