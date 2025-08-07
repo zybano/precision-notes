@@ -13,6 +13,9 @@ import ReactMarkdown from "react-markdown";
 import OrganizationalRecordingInterface from "@/components/documentation/OrganizationalRecordingInterface";
 import TemplateSelectionStep from "@/components/documentation/TemplateSelectionStep";
 import B2BProcessingInfo from "@/components/documentation/B2BProcessingInfo";
+import UtterancesDisplay from "@/components/documentation/UtterancesDisplay";
+import ConsultationSummary from "@/components/documentation/ConsultationSummary";
+import UsageInfo from "@/components/documentation/UsageInfo";
 
 const OrganizationalDocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("template");
@@ -37,6 +40,8 @@ const OrganizationalDocumentationPage = () => {
       processingTimeMs: 0,
       organizationId: "",
       requestId: "",
+      consultationSummary: "",
+      usage: null,
     },
   });
 
@@ -64,15 +69,42 @@ const OrganizationalDocumentationPage = () => {
   const processingTimeMs = watch("processingTimeMs");
   const organizationId = watch("organizationId");
   const requestId = watch("requestId");
+  const consultationSummary = watch("consultationSummary");
+  const transcriptResult = watch("transcriptResult");
+  const usage = watch("usage");
 
   const handleCopyToEMR = () => {
-    navigator.clipboard.writeText(getValues().notes);
-    toast.success("Notes copied to clipboard");
+    const notes = getValues().notes;
+    const summary = getValues().consultationSummary;
+    
+    let fullContent = "";
+    
+    // Add summary if available
+    if (summary && summary.trim()) {
+      fullContent += "CONSULTATION SUMMARY\n";
+      fullContent += "===================\n\n";
+      fullContent += summary.replace(/\*\*/g, '').replace(/\*/g, ''); // Remove markdown formatting
+      fullContent += "\n\n";
+    }
+    
+    // Add documentation
+    if (notes && notes.trim()) {
+      fullContent += "CLINICAL DOCUMENTATION\n";
+      fullContent += "=====================\n\n";
+      fullContent += notes.replace(/\*\*/g, '').replace(/\*/g, ''); // Remove markdown formatting
+    }
+    
+    const contentToCopy = fullContent || notes || "No content available";
+    
+    navigator.clipboard.writeText(contentToCopy);
+    toast.success("Complete documentation copied to clipboard");
   };
 
   const handleDownloadPDF = async () => {
-    const content = notesContent?.trim();
-    if (!content) {
+    const notes = getValues().notes;
+    const summary = getValues().consultationSummary;
+    
+    if (!notes?.trim() && !summary?.trim()) {
       toast.error("No content available to export");
       return;
     }
@@ -84,60 +116,77 @@ const OrganizationalDocumentationPage = () => {
       
       const documentTitle = `${documentFormat.toUpperCase()} Notes - ${new Date().toLocaleDateString()}`;
       
+      // Helper function to clean markdown
+      const cleanMarkdown = (text: string) => {
+        return text
+          .replace(/#{1,6}\s/g, '') // Remove markdown headers
+          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
+          .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
+          .replace(/\n+/g, '\n'); // Clean up extra newlines
+      };
+      
+      // Build full content
+      let fullContent = "";
+      
+      if (summary && summary.trim()) {
+        fullContent += "CONSULTATION SUMMARY\n";
+        fullContent += "===================\n\n";
+        fullContent += cleanMarkdown(summary);
+        fullContent += "\n\n";
+      }
+      
+      if (notes && notes.trim()) {
+        fullContent += "CLINICAL DOCUMENTATION\n";
+        fullContent += "=====================\n\n";
+        fullContent += cleanMarkdown(notes);
+      }
+      
       // Add logo to header
       try {
         const logoImg = new Image();
         logoImg.crossOrigin = "anonymous";
         logoImg.onload = () => {
-          // Add logo in top right corner
-          doc.addImage(logoImg, 'JPEG', 170, 10, 20, 20);
-          
-          // Add title
-          doc.setFontSize(16);
-          doc.text(documentTitle, 20, 20);
-          
-          // Add content - clean markdown for PDF
-          doc.setFontSize(12);
-          const cleanContent = content
-            .replace(/#{1,6}\s/g, '') // Remove markdown headers
-            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
-            .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
-            .replace(/\n+/g, '\n'); // Clean up extra newlines
-          
-          const splitText = doc.splitTextToSize(cleanContent, 170);
-          doc.text(splitText, 20, 40);
-          
-          // Save the PDF
-          doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
-          toast.success("PDF downloaded successfully");
+          generatePDFWithLogo(doc, logoImg, documentTitle, fullContent);
         };
         logoImg.onerror = () => {
           // Fallback without logo
-          generatePDFWithoutLogo();
+          generatePDFWithoutLogo(doc, documentTitle, fullContent);
         };
         logoImg.src = '/lovable-uploads/precision.jpeg';
       } catch (error) {
-        generatePDFWithoutLogo();
+        generatePDFWithoutLogo(doc, documentTitle, fullContent);
       }
       
-      function generatePDFWithoutLogo() {
+      function generatePDFWithLogo(doc: any, logoImg: HTMLImageElement, title: string, content: string) {
+        // Add logo in top right corner
+        doc.addImage(logoImg, 'JPEG', 170, 10, 20, 20);
+        
         // Add title
         doc.setFontSize(16);
-        doc.text(documentTitle, 20, 20);
+        doc.text(title, 20, 20);
         
-        // Add content - clean markdown for PDF
+        // Add content
         doc.setFontSize(12);
-        const cleanContent = content
-          .replace(/#{1,6}\s/g, '') // Remove markdown headers
-          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
-          .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
-          .replace(/\n+/g, '\n'); // Clean up extra newlines
-        
-        const splitText = doc.splitTextToSize(cleanContent, 170);
+        const splitText = doc.splitTextToSize(content, 170);
         doc.text(splitText, 20, 40);
         
         // Save the PDF
-        doc.save(`${documentTitle.replace(/\s+/g, '_')}.pdf`);
+        doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+        toast.success("PDF downloaded successfully");
+      }
+      
+      function generatePDFWithoutLogo(doc: any, title: string, content: string) {
+        // Add title
+        doc.setFontSize(16);
+        doc.text(title, 20, 20);
+        
+        // Add content
+        doc.setFontSize(12);
+        const splitText = doc.splitTextToSize(content, 170);
+        doc.text(splitText, 20, 40);
+        
+        // Save the PDF
+        doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
         toast.success("PDF downloaded successfully");
       }
     } catch (error) {
@@ -217,6 +266,9 @@ const OrganizationalDocumentationPage = () => {
         if (result.request_id) {
           setValue("requestId", result.request_id);
         }
+        if (result.usage) {
+          setValue("usage", result.usage);
+        }
         
         setActiveTab("notes");
         toast.success("Document regenerated with new format!");
@@ -257,7 +309,12 @@ const OrganizationalDocumentationPage = () => {
                 className="flex flex-col md:flex-row items-center justify-center p-2 md:p-3 text-xs md:text-sm" 
                 disabled={!notesContent || transcriptionControls.isProcessing}
               >
-                <span className="text-center leading-tight">Review<br className="md:hidden" /> Notes</span>
+                <span className="text-center leading-tight">
+                  Review<br className="md:hidden" /> Notes
+                  {(transcriptResult?.utterances?.length || consultationSummary) && (
+                    <span className="ml-1 text-green-600">●</span>
+                  )}
+                </span>
               </TabsTrigger>
               <TabsTrigger 
                 value="export" 
@@ -332,6 +389,22 @@ const OrganizationalDocumentationPage = () => {
                   </div>
                 )}
 
+                {/* Utterances Display Section */}
+                {transcriptResult?.utterances && transcriptResult.utterances.length > 0 && (
+                  <UtterancesDisplay 
+                    utterances={transcriptResult.utterances} 
+                    className="mb-4"
+                  />
+                )}
+
+                {/* Consultation Summary Section */}
+                {consultationSummary && (
+                  <ConsultationSummary 
+                    summary={consultationSummary} 
+                    className="mb-4"
+                  />
+                )}
+
                 <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <Label htmlFor="notes" className="text-lg font-medium flex items-center">
@@ -401,6 +474,14 @@ const OrganizationalDocumentationPage = () => {
                    requestId={requestId}
                  />
 
+                 {/* Usage Information */}
+                 {usage && (
+                   <UsageInfo 
+                     usage={usage} 
+                     className="mt-4"
+                   />
+                 )}
+
                 <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
                   <Button
                     type="button"
@@ -458,7 +539,7 @@ const OrganizationalDocumentationPage = () => {
                       <div className="flex-1 text-center sm:text-left">
                         <h4 className="font-medium">Copy to EMR</h4>
                         <p className="text-sm text-muted-foreground mb-3">
-                          Copy the formatted notes to paste directly into your
+                          Copy the consultation summary and formatted notes to paste directly into your
                           EMR system
                         </p>
                         <Button
@@ -480,7 +561,7 @@ const OrganizationalDocumentationPage = () => {
                       <div className="flex-1 text-center sm:text-left">
                         <h4 className="font-medium">Download PDF</h4>
                         <p className="text-sm text-muted-foreground mb-3">
-                          Save the consultation notes as a PDF document
+                          Save the consultation summary and notes as a PDF document
                         </p>
                         <Button
                           type="button"

@@ -182,6 +182,11 @@ export const useOrganizationalTranscriptionController = ({
           form.setValue("generatedDocument", result.document);
         }
         
+        // If there's a summary, set it in the form
+        if (result.summary) {
+          form.setValue("consultationSummary", result.summary);
+        }
+        
         // Store B2B processing metadata in form for display
         if (result.credits_used) {
           form.setValue("creditsUsed", result.credits_used);
@@ -194,6 +199,9 @@ export const useOrganizationalTranscriptionController = ({
         }
         if (result.request_id) {
           form.setValue("requestId", result.request_id);
+        }
+        if (result.usage) {
+          form.setValue("usage", result.usage);
         }
         
         // Auto-switch to notes tab after successful processing
@@ -260,6 +268,11 @@ export const useOrganizationalTranscriptionController = ({
           form.setValue("generatedDocument", result.document);
         }
         
+        // If there's a summary, set it in the form
+        if (result.summary) {
+          form.setValue("consultationSummary", result.summary);
+        }
+        
         // Store B2B processing metadata in form for display
         if (result.credits_used) {
           form.setValue("creditsUsed", result.credits_used);
@@ -272,6 +285,9 @@ export const useOrganizationalTranscriptionController = ({
         }
         if (result.request_id) {
           form.setValue("requestId", result.request_id);
+        }
+        if (result.usage) {
+          form.setValue("usage", result.usage);
         }
         
         // Auto-switch to notes tab after successful processing
