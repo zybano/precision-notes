@@ -3,13 +3,12 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {Label} from "@/components/ui/label";
 import {DocumentFormat} from "@/services/transcription";
 import {TranscriptionLanguage} from "@/hooks/useDocumentFormat";
 import {DocumentTemplate, documentTemplates} from "@/data/documentTemplates";
-import {Baby, Brain, Eye, FileText, Heart, Languages, Loader2, Search, Stethoscope, Users} from "lucide-react";
+import {Baby, Brain, Eye, FileText, Heart, Loader2, Search, Stethoscope, Users} from "lucide-react";
 import DocumentFormatModal from "./DocumentFormatModal";
+import TranscriptionSettings from "./TranscriptionSettings";
 
 interface TemplateSelectionStepProps {
   selectedFormat: DocumentFormat;
@@ -19,6 +18,10 @@ interface TemplateSelectionStepProps {
   isLoading?: boolean;
   transcriptionLanguage: TranscriptionLanguage;
   onLanguageSelect: (language: TranscriptionLanguage) => void;
+  useSpeechModelNano: boolean;
+  setUseSpeechModelNano: (value: boolean) => void;
+  acceptSuggestions: boolean;
+  setAcceptSuggestions: (value: boolean) => void;
 }
 
 // Icon mapping for templates
@@ -64,7 +67,11 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
   isRegenerateMode = false,
   isLoading = false,
   transcriptionLanguage,
-  onLanguageSelect
+  onLanguageSelect,
+  useSpeechModelNano,
+  setUseSpeechModelNano,
+  acceptSuggestions,
+  setAcceptSuggestions
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,29 +103,26 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
           <CardDescription>
             {isRegenerateMode 
               ? "Choose a new document format to regenerate your existing transcript."
-              : "Choose the document format and language before recording or uploading audio."
+              : "Choose the document format and configure transcription settings."
             }
           </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          {/* Transcription Settings */}
+          {!isRegenerateMode && (
+            <TranscriptionSettings
+              transcriptionLanguage={transcriptionLanguage}
+              onLanguageSelect={onLanguageSelect}
+              useSpeechModelNano={useSpeechModelNano}
+              setUseSpeechModelNano={setUseSpeechModelNano}
+              acceptSuggestions={acceptSuggestions}
+              setAcceptSuggestions={setAcceptSuggestions}
+            />
+          )}
           
-          {/* Language Selector */}
-          <div className="mt-4 space-y-2">
-            <Label htmlFor="language-select" className="text-sm font-medium flex items-center">
-              <Languages className="h-4 w-4 mr-2" />
-              Transcription Language
-            </Label>
-            <Select value={transcriptionLanguage} onValueChange={onLanguageSelect}>
-              <SelectTrigger id="language-select">
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TranscriptionLanguage.ENGLISH}>English</SelectItem>
-                <SelectItem value={TranscriptionLanguage.YORUBA}>Yoruba</SelectItem>
-                <SelectItem value={TranscriptionLanguage.HAUSA}>Hausa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="relative mt-4">
+          {/* Search Templates */}
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search templates..."
@@ -127,8 +131,8 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
               className="pl-10"
             />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          
+          {/* Template Sections */}
           <div>
             <h3 className="text-sm font-medium mb-3 flex items-center">
               <Badge variant="secondary" className="mr-2">Custom Templates</Badge>

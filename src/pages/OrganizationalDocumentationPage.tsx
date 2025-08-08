@@ -7,7 +7,7 @@ import {Button} from "@/components/ui/button";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Textarea} from "@/components/ui/textarea";
 import {Label} from "@/components/ui/label";
-import {Copy, Download, Eye, FileCog, Loader2} from "lucide-react";
+import {Copy, Download, Eye, FileCog, Loader2, RotateCcw} from "lucide-react";
 import {toast} from "sonner";
 import ReactMarkdown from "react-markdown";
 import OrganizationalRecordingInterface from "@/components/documentation/OrganizationalRecordingInterface";
@@ -42,6 +42,7 @@ const OrganizationalDocumentationPage = () => {
       requestId: "",
       consultationSummary: "",
       usage: null,
+      acceptSuggestions: true,
     },
   });
 
@@ -56,6 +57,8 @@ const OrganizationalDocumentationPage = () => {
     setUseSpeechModelNano,
     transcriptionLanguage,
     setTranscriptionLanguage,
+    acceptSuggestions,
+    setAcceptSuggestions,
   } = useDocumentFormat();
 
   const transcriptionControls = useOrganizationalTranscriptionController({
@@ -63,6 +66,7 @@ const OrganizationalDocumentationPage = () => {
     transcriptionProvider,
     useSpeechModelNano,
     transcriptionLanguage,
+    acceptSuggestions,
     setActiveTab,
   });
 
@@ -290,6 +294,42 @@ const OrganizationalDocumentationPage = () => {
     setIsEditMode(!isEditMode);
   };
 
+  const handleStartAnotherDocumentation = () => {
+    // Reset form to initial values
+    form.reset({
+      type: "Consultation",
+      notes: "",
+      documentId: "",
+      transcript: "",
+      transcriptSummary: "",
+      transcriptResult: null,
+      recordingTime: 0,
+      patientName: "",
+      patientInfo: null,
+      documentFormat: "soap",
+      infoVerified: false,
+      creditsUsed: 0,
+      processingTimeMs: 0,
+      organizationId: "",
+      requestId: "",
+      consultationSummary: "",
+      usage: null,
+      acceptSuggestions: true,
+    });
+
+    // Reset recording state
+    transcriptionControls.resetRecording();
+    transcriptionControls.resetTranscription();
+    
+    // Reset UI state
+    setActiveTab("template");
+    setTemplateSelected(false);
+    setIsEditMode(false);
+    
+    // Show success message
+    toast.success("Ready to start new documentation");
+  };
+
   return (
     <div className="container mx-auto py-4 md:py-6 px-4 md:px-6 space-y-6 md:space-y-8 w-full max-w-7xl">
       <DocumentationHeader />
@@ -337,6 +377,10 @@ const OrganizationalDocumentationPage = () => {
                 }}
                 transcriptionLanguage={transcriptionLanguage}
                 onLanguageSelect={setTranscriptionLanguage}
+                useSpeechModelNano={useSpeechModelNano}
+                setUseSpeechModelNano={setUseSpeechModelNano}
+                acceptSuggestions={acceptSuggestions}
+                setAcceptSuggestions={setAcceptSuggestions}
                 isRegenerateMode={!!watch("transcriptResult")?.text}
                 isLoading={transcriptionControls.isB2BProcessing}
                 onNext={(selectedFormat) => {
@@ -489,15 +533,28 @@ const OrganizationalDocumentationPage = () => {
                  )}
 
                 <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveTab("record")}
-                    className="w-full sm:w-auto"
-                    disabled={transcriptionControls.isB2BProcessing}
-                  >
-                    Back to Recording
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("record")}
+                      className="w-full sm:w-auto"
+                      disabled={transcriptionControls.isB2BProcessing}
+                    >
+                      Back to Recording
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleStartAnotherDocumentation}
+                      className="w-full sm:w-auto flex items-center justify-center"
+                      disabled={transcriptionControls.isB2BProcessing}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      <span className="hidden md:inline">Start Another Documentation</span>
+                      <span className="md:hidden">New Documentation</span>
+                    </Button>
+                  </div>
                   <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
                     <Button
                       type="button"
@@ -580,6 +637,27 @@ const OrganizationalDocumentationPage = () => {
                         </Button>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Start Another Documentation - Prominent in Export Tab */}
+                <div className="border rounded-lg p-4 md:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                      <h4 className="font-medium text-blue-900">Ready for Another Document?</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Start a fresh documentation with new audio and settings
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleStartAnotherDocumentation}
+                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+                      disabled={transcriptionControls.isB2BProcessing}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Start Another Documentation
+                    </Button>
                   </div>
                 </div>
 

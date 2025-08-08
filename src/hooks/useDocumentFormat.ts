@@ -15,6 +15,7 @@ export const useDocumentFormat = () => {
   const [documentFormat, setDocumentFormat] = useState<DocumentFormat>(DocumentFormat.SOAP);
   const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
   const [transcriptionLanguage, setTranscriptionLanguage] = useState<TranscriptionLanguage>(TranscriptionLanguage.ENGLISH);
+  const [acceptSuggestions, setAcceptSuggestions] = useState(true);
 
   return {
     transcriptionProvider,
@@ -26,6 +27,8 @@ export const useDocumentFormat = () => {
     useSpeechModelNano,
     setUseSpeechModelNano,
     transcriptionLanguage,
-    setTranscriptionLanguage
+    setTranscriptionLanguage,
+    acceptSuggestions,
+    setAcceptSuggestions
   };
 };

@@ -11,6 +11,7 @@ interface OrganizationalTranscriptionControllerProps {
   transcriptionProvider: TranscriptionProvider;
   useSpeechModelNano: boolean;
   transcriptionLanguage?: string;
+  acceptSuggestions?: boolean;
 }
 
 interface OrganizationalTranscriptionControllerReturn {
@@ -42,12 +43,14 @@ export const useOrganizationalTranscriptionController = ({
   transcriptionProvider,
   useSpeechModelNano,
   transcriptionLanguage,
+  acceptSuggestions,
   setActiveTab,
 }: {
   form: UseFormReturn<any>;
   transcriptionProvider: TranscriptionProvider;
   useSpeechModelNano: boolean;
   transcriptionLanguage?: string;
+  acceptSuggestions?: boolean;
   setActiveTab?: (tab: string) => void;
 }): OrganizationalTranscriptionControllerReturn => {
   const [isB2BProcessing, setIsB2BProcessing] = useState(false);
@@ -148,6 +151,7 @@ export const useOrganizationalTranscriptionController = ({
     formData.append("document_format", form.getValues("documentFormat") || "soap");
     formData.append("languageCode", transcriptionLanguage || "en_us");
     formData.append("useSpeechModelNano", options.useSpeechModelNano.toString());
+    formData.append("acceptSuggestions", (acceptSuggestions ?? true).toString());
     formData.append("model_name", "gpt-4-turbo");
     formData.append("requestId", crypto.randomUUID());
 
@@ -234,6 +238,7 @@ export const useOrganizationalTranscriptionController = ({
     formData.append("document_format", form.getValues("documentFormat") || "soap");
     formData.append("languageCode", transcriptionLanguage || "en_us");
     formData.append("useSpeechModelNano", options.useSpeechModelNano.toString());
+    formData.append("acceptSuggestions", (acceptSuggestions ?? true).toString());
     formData.append("model_name", "gpt-4-turbo");
     formData.append("requestId", crypto.randomUUID());
 
