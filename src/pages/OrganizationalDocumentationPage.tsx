@@ -165,17 +165,103 @@ const OrganizationalDocumentationPage = () => {
       }
       
       function generatePDFWithLogo(doc: any, logoImg: HTMLImageElement, title: string, content: string) {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const usableWidth = pageWidth - (margin * 2);
+        const headerHeight = 60;
+        
+        // Create header with logo and branding
+        doc.setFillColor(245, 247, 250);
+        doc.rect(0, 0, pageWidth, headerHeight, 'F');
+        doc.setDrawColor(93, 104, 253);
+        doc.setLineWidth(1.5);
+        doc.line(0, headerHeight, pageWidth, headerHeight);
+        
         // Add logo in top right corner
         doc.addImage(logoImg, 'JPEG', 170, 10, 20, 20);
         
-        // Add title
-        doc.setFontSize(16);
-        doc.text(title, 20, 20);
+        // Add PrecisionNote branding
+        doc.setTextColor(4, 5, 35);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PrecisionNote', margin, 30);
         
-        // Add content
+        // Add tagline
         doc.setFontSize(12);
-        const splitText = doc.splitTextToSize(content, 170);
-        doc.text(splitText, 20, 40);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(93, 104, 253);
+        doc.text('AI-Powered Medical Documentation', margin, 40);
+        
+        // Add document title
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(4, 5, 35);
+        doc.text(title, margin, headerHeight + 20);
+        
+        // Add generation timestamp
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, margin, headerHeight + 30);
+        
+        // Format and add content with pagination
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        
+        const splitText = doc.splitTextToSize(content, usableWidth);
+        let startY = headerHeight + 40;
+        const lineHeight = 7;
+        let currentPage = 1;
+        let currentY = startY;
+        
+        for (let i = 0; i < splitText.length; i++) {
+          // Check if we need a new page
+          if (currentY + lineHeight > pageHeight - margin) {
+            // Add page number to current page
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
+            
+            // Add new page
+            doc.addPage();
+            currentPage++;
+            currentY = margin + 15;
+            
+            // Add smaller header to continuation pages
+            doc.setFillColor(245, 247, 250);
+            doc.rect(0, 0, pageWidth, 25, 'F');
+            doc.setDrawColor(93, 104, 253);
+            doc.setLineWidth(1);
+            doc.line(0, 25, pageWidth, 25);
+            
+            // Add smaller branding on continuation pages
+            doc.setTextColor(4, 5, 35);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PrecisionNote', margin, 17);
+            
+            // Reset to normal text for content
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+          }
+          
+          // Add the line to the page
+          doc.text(splitText[i], margin, currentY);
+          currentY += lineHeight;
+        }
+        
+        // Add page number to the last page
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
+        
+        // Add footer with website
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('www.precisionnote.com', margin, pageHeight - 10);
         
         // Save the PDF
         doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
@@ -183,14 +269,100 @@ const OrganizationalDocumentationPage = () => {
       }
       
       function generatePDFWithoutLogo(doc: any, title: string, content: string) {
-        // Add title
-        doc.setFontSize(16);
-        doc.text(title, 20, 20);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const usableWidth = pageWidth - (margin * 2);
+        const headerHeight = 60;
         
-        // Add content
+        // Create header with branding
+        doc.setFillColor(245, 247, 250);
+        doc.rect(0, 0, pageWidth, headerHeight, 'F');
+        doc.setDrawColor(93, 104, 253);
+        doc.setLineWidth(1.5);
+        doc.line(0, headerHeight, pageWidth, headerHeight);
+        
+        // Add PrecisionNote branding
+        doc.setTextColor(4, 5, 35);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PrecisionNote', margin, 30);
+        
+        // Add tagline
         doc.setFontSize(12);
-        const splitText = doc.splitTextToSize(content, 170);
-        doc.text(splitText, 20, 40);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(93, 104, 253);
+        doc.text('AI-Powered Medical Documentation', margin, 40);
+        
+        // Add document title
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(4, 5, 35);
+        doc.text(title, margin, headerHeight + 20);
+        
+        // Add generation timestamp
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, margin, headerHeight + 30);
+        
+        // Format and add content with pagination
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        
+        const splitText = doc.splitTextToSize(content, usableWidth);
+        let startY = headerHeight + 40;
+        const lineHeight = 7;
+        let currentPage = 1;
+        let currentY = startY;
+        
+        for (let i = 0; i < splitText.length; i++) {
+          // Check if we need a new page
+          if (currentY + lineHeight > pageHeight - margin) {
+            // Add page number to current page
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
+            
+            // Add new page
+            doc.addPage();
+            currentPage++;
+            currentY = margin + 15;
+            
+            // Add smaller header to continuation pages
+            doc.setFillColor(245, 247, 250);
+            doc.rect(0, 0, pageWidth, 25, 'F');
+            doc.setDrawColor(93, 104, 253);
+            doc.setLineWidth(1);
+            doc.line(0, 25, pageWidth, 25);
+            
+            // Add smaller branding on continuation pages
+            doc.setTextColor(4, 5, 35);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PrecisionNote', margin, 17);
+            
+            // Reset to normal text for content
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+          }
+          
+          // Add the line to the page
+          doc.text(splitText[i], margin, currentY);
+          currentY += lineHeight;
+        }
+        
+        // Add page number to the last page
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Page ${currentPage}`, pageWidth - margin - 15, pageHeight - 10);
+        
+        // Add footer with website
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('www.precisionnote.com', margin, pageHeight - 10);
         
         // Save the PDF
         doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
