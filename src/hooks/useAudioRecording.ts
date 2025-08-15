@@ -8,6 +8,7 @@ export const useAudioRecording = () => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<BlobPart[]>([]);
   const [recordingTimer, setRecordingTimer] = useState<NodeJS.Timeout | null>(null);
+  const [hasAudioData, setHasAudioData] = useState(false);
   const chunksRef = useRef<BlobPart[]>([]);
 
   const startRecording = async () => {
@@ -17,11 +18,13 @@ export const useAudioRecording = () => {
       
       // Reset chunks at the start of a new recording
       chunksRef.current = [];
+      setHasAudioData(false);
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           chunksRef.current.push(e.data);
           setAudioChunks([...chunksRef.current]);
+          setHasAudioData(true);
         }
       };
 
@@ -107,6 +110,7 @@ export const useAudioRecording = () => {
     setRecordingTime(0);
     setIsRecording(false);
     setIsPaused(false);
+    setHasAudioData(false);
   };
 
   return {
@@ -118,6 +122,7 @@ export const useAudioRecording = () => {
     stopRecording,
     formatTime,
     audioChunks,
-    resetRecording
+    resetRecording,
+    hasAudioData
   };
 };

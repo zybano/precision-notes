@@ -3,6 +3,7 @@ import {useTranscription} from "@/hooks/useTranscription";
 import {TranscriptionProvider, TranscriptionResult} from "@/services/transcription";
 import {PatientSummaryResult} from "@/services/summaryUtils";
 import {UseFormReturn} from "react-hook-form";
+import {toast} from "sonner";
 
 
 interface TranscriptionControllerProps {
@@ -49,7 +50,8 @@ export const useTranscriptionController = ({
     stopRecording: baseStopRecording,
     formatTime,
     audioChunks,
-    resetRecording
+    resetRecording,
+    hasAudioData
   } = useAudioRecording();
   
 
@@ -100,6 +102,14 @@ export const useTranscriptionController = ({
   const handleStopRecording = async () => {
     const chunks = [...audioChunks]; // Create a copy of the current chunks
     baseStopRecording();
+    
+    // Check if we have actual audio data
+    if (!hasAudioData || chunks.length === 0) {
+      toast.error("No audio captured", {
+        description: "Please make sure your microphone is working and you've spoken during recording."
+      });
+      return;
+    }
     
     // Only process if we have audio to process
     if (chunks.length > 0) {

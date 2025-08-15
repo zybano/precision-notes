@@ -65,6 +65,7 @@ export const useOrganizationalTranscriptionController = ({
     formatTime,
     audioChunks,
     resetRecording,
+    hasAudioData
   } = useAudioRecording();
 
   const handleTranscriptionComplete = (
@@ -112,6 +113,14 @@ export const useOrganizationalTranscriptionController = ({
   const handleStopRecording = async () => {
     const chunks = [...audioChunks];
     baseStopRecording();
+
+    // Check if we have actual audio data
+    if (!hasAudioData || chunks.length === 0) {
+      toast.error("No audio captured", {
+        description: "Please make sure your microphone is working and you've spoken during recording."
+      });
+      return;
+    }
 
     if (chunks.length > 0) {
       try {

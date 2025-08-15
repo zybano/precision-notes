@@ -93,7 +93,32 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
   const reportTemplates = filteredTemplates.filter(template => template.category === "reports");
   const customTemplates = filteredTemplates.filter(template => template.category === "custom");
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
+      {/* Sticky Navigation Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              {selectedFormat ? `Selected: ${documentTemplates.find(template => template.documentFormat === selectedFormat)?.title}` : "Please select a template"}
+            </div>
+            <Button 
+              onClick={() => onNext(selectedFormat)} 
+              disabled={!selectedFormat || isLoading}
+              className="ml-4"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {isRegenerateMode ? "Generating..." : "Processing..."}
+                </>
+              ) : (
+                isRegenerateMode ? "Generate Document" : "Continue to Recording"
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -288,25 +313,6 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm text-muted-foreground">
-              {selectedFormat ? `Selected: ${documentTemplates.find(template => template.documentFormat === selectedFormat)?.title}` : "Please select a template"}
-            </div>
-            <Button 
-              onClick={() => onNext(selectedFormat)} 
-              disabled={!selectedFormat || isLoading}
-              className="ml-4"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {isRegenerateMode ? "Generating..." : "Processing..."}
-                </>
-              ) : (
-                isRegenerateMode ? "Generate Document" : "Continue to Recording"
-              )}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 

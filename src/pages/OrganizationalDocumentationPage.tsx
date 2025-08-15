@@ -16,6 +16,7 @@ import B2BProcessingInfo from "@/components/documentation/B2BProcessingInfo";
 import UtterancesDisplay from "@/components/documentation/UtterancesDisplay";
 import ConsultationSummary from "@/components/documentation/ConsultationSummary";
 import UsageInfo from "@/components/documentation/UsageInfo";
+import StickyNavigation from "@/components/documentation/StickyNavigation";
 
 const OrganizationalDocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("template");
@@ -568,7 +569,7 @@ const OrganizationalDocumentationPage = () => {
               />
             </TabsContent>
 
-            <TabsContent value="record" className="mt-0">
+            <TabsContent value="record" className="mt-0 pb-20">
               <OrganizationalRecordingInterface
                 isRecording={transcriptionControls.isRecording}
                 isPaused={transcriptionControls.isPaused}
@@ -585,9 +586,25 @@ const OrganizationalDocumentationPage = () => {
                 useSpeechModelNano={useSpeechModelNano}
                 setUseSpeechModelNano={setUseSpeechModelNano}
               />
+              
+              <StickyNavigation
+                leftContent={`Recording ${documentFormat.toUpperCase()} format`}
+                rightActions={[
+                  {
+                    label: "Back to Template",
+                    onClick: () => setActiveTab("template"),
+                    variant: "outline"
+                  }
+                ]}
+                primaryAction={{
+                  label: "Go to Notes",
+                  onClick: () => setActiveTab("notes"),
+                  disabled: !notesContent
+                }}
+              />
             </TabsContent>
 
-            <TabsContent value="notes" className="mt-0">
+            <TabsContent value="notes" className="mt-0 pb-20">
               <div className="space-y-4 md:space-y-6">
                 {/* Transcript Editing Section - Show if transcript exists */}
                 {watch("transcript") && (
@@ -704,61 +721,46 @@ const OrganizationalDocumentationPage = () => {
                    />
                  )}
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setActiveTab("record")}
-                      className="w-full sm:w-auto"
-                      disabled={transcriptionControls.isB2BProcessing}
-                    >
-                      Back to Recording
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleStartAnotherDocumentation}
-                      className="w-full sm:w-auto flex items-center justify-center"
-                      disabled={transcriptionControls.isB2BProcessing}
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      <span className="hidden md:inline">Start Another Documentation</span>
-                      <span className="md:hidden">New Documentation</span>
-                    </Button>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const transcriptResult = watch("transcriptResult");
-                        if (transcriptResult?.text) {
-                          setActiveTab("template");
-                        } else {
-                          toast.error("No transcript available. Please record or upload again.");
-                        }
-                      }}
-                      className="w-full sm:w-auto"
-                      disabled={transcriptionControls.isB2BProcessing}
-                    >
-                      Change Format
-                    </Button>
-                    <Button
-                      type="button"
-                      className="flex items-center justify-center w-full sm:w-auto"
-                      onClick={() => setActiveTab("export")}
-                      disabled={transcriptionControls.isB2BProcessing}
-                    >
-                      <span className="mr-2">Export Options</span>
-                      <FileCog className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
               </div>
+              
+              <StickyNavigation
+                leftContent={`${documentFormat.toUpperCase()} Notes - ${notesContent?.length || 0} characters`}
+                rightActions={[
+                  {
+                    label: "Back to Recording",
+                    onClick: () => setActiveTab("record"),
+                    variant: "outline",
+                    disabled: transcriptionControls.isB2BProcessing
+                  },
+                  {
+                    label: "Change Format",
+                    onClick: () => {
+                      const transcriptResult = watch("transcriptResult");
+                      if (transcriptResult?.text) {
+                        setActiveTab("template");
+                      } else {
+                        toast.error("No transcript available. Please record or upload again.");
+                      }
+                    },
+                    variant: "outline",
+                    disabled: transcriptionControls.isB2BProcessing
+                  },
+                  {
+                    label: "New Doc",
+                    onClick: handleStartAnotherDocumentation,
+                    variant: "outline",
+                    disabled: transcriptionControls.isB2BProcessing
+                  }
+                ]}
+                primaryAction={{
+                  label: "Export Options",
+                  onClick: () => setActiveTab("export"),
+                  disabled: transcriptionControls.isB2BProcessing
+                }}
+              />
             </TabsContent>
 
-            <TabsContent value="export" className="mt-0">
+            <TabsContent value="export" className="mt-0 pb-20">
               <div className="space-y-4 md:space-y-6">
                 <div className="rounded-lg border p-4 md:p-6">
                   <h3 className="text-lg font-medium mb-4 flex items-center">
@@ -833,17 +835,23 @@ const OrganizationalDocumentationPage = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-center sm:justify-start">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveTab("notes")}
-                    className="w-full sm:w-auto"
-                  >
-                    Back to Notes
-                  </Button>
-                </div>
               </div>
+              
+              <StickyNavigation
+                leftContent="Export your documentation"
+                rightActions={[
+                  {
+                    label: "Back to Notes",
+                    onClick: () => setActiveTab("notes"),
+                    variant: "outline"
+                  }
+                ]}
+                primaryAction={{
+                  label: "Start New Document",
+                  onClick: handleStartAnotherDocumentation,
+                  disabled: transcriptionControls.isB2BProcessing
+                }}
+              />
             </TabsContent>
           </Tabs>
         </div>

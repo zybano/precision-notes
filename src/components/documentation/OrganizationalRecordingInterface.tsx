@@ -7,6 +7,7 @@ import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {DocumentFormat, TranscriptionResult} from "@/services/transcription";
+import AudioVisualizer from "./AudioVisualizer";
 
 interface OrganizationalRecordingInterfaceProps {
   isRecording: boolean;
@@ -98,7 +99,35 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
+      {/* Fixed Status Bar */}
+      {(isRecording || isTranscribing) && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-full shadow-lg px-4 py-2">
+          <div className="flex items-center gap-3">
+            {isRecording && (
+              <>
+                <div className={`w-2 h-2 rounded-full ${
+                  isPaused ? 'bg-amber-500 animate-pulse' : 'bg-red-500 animate-pulse'
+                }`} />
+                <span className="font-mono text-sm font-bold">
+                  {formatTime(recordingTime)}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {isPaused ? 'Paused' : 'Recording'}
+                </span>
+              </>
+            )}
+            
+            {isTranscribing && (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                <span className="text-sm font-medium text-blue-600">Processing...</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -112,6 +141,13 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Audio Visualizer */}
+          <AudioVisualizer 
+            isRecording={isRecording} 
+            isPaused={isPaused}
+            className="mb-4"
+          />
+          
           <div className="flex flex-col items-center justify-center space-y-4 py-8">
             {isTranscribing ? (
               <div className="flex flex-col items-center space-y-3">
