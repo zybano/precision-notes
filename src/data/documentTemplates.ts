@@ -149,6 +149,15 @@ export const documentTemplates: DocumentTemplate[] = [
     category: "specialty",
     documentFormat: "neurology"
   },
+
+  {
+    id: "dentistry",
+    title: "Dentist Consultation",
+    description: "Dentist specialist consultation",
+    content: "",
+    category: "specialty",
+    documentFormat: "dentistry"
+  },
   {
     id: "oncology",
     title: "Oncology Consultation",
