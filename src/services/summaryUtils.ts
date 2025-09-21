@@ -55,7 +55,7 @@ export const generateBriefSummary = (text: string): string => {
   ].join('. ') + '.';
 };
 
-import OpenAI from 'openai';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface SummaryGenerationOptions {
   apiKey?: string;
@@ -73,7 +73,7 @@ export interface PatientSummaryResult {
 }
 
 /**
- * Generates a concise patient summary from a medical conversation transcript using OpenAI.
+ * Generates a concise patient summary from a medical conversation transcript using Supabase Edge Function.
  * Also extracts patient identifying information like name, age, gender.
  *
  * @param transcript The conversation transcript to summarize
@@ -85,85 +85,25 @@ export const generatePatientSummary = async (
     options: SummaryGenerationOptions = {}
 ): Promise<PatientSummaryResult> => {
   try {
-    const apiKey = options.apiKey || import.meta.env.VITE_OPENAI_API_KEY;
-
-    if (!apiKey) {
-      throw new Error("No OpenAI API key provided");
-    }
-
-    // Initialize the OpenAI client
-    const openai = new OpenAI({
-      apiKey,
-      dangerouslyAllowBrowser: true // Required for browser environments
+    const { data, error } = await supabase.functions.invoke('ai-document-generation', {
+      body: {
+        transcript,
+        format: 'patient-summary',
+        provider: 'openai',
+        modelName: options.modelName || "gpt-4-turbo"
+      }
     });
 
-    // Craft a prompt focused on generating a concise patient summary
-    // and extracting patient information
-    const summaryPrompt = `
-Please analyze this medical conversation transcript and provide TWO separate outputs in JSON format:
-
-1. A concise patient summary (150-200 words). Focus on key clinical information:
-   - Chief complaints
-   - Relevant medical history
-   - Key findings
-   - Diagnoses or differential diagnoses
-   - Treatment plan highlights
-
-2. Patient identifying information:
-   - Full name (first name and last name)
-   - Age (if mentioned)
-   - Gender (if mentioned)
-   - Other identifiers (like date of birth, patient ID, etc.)
-
-Here's the transcript:
-${transcript}
-
-Respond ONLY with valid JSON in the following format:
-{
-  "summary": "The clinical summary text goes here...",
-  "patientInfo": {
-    "name": "Patient's full name or 'Unknown' if not found",
-    "age": "Age or null if not mentioned",
-    "gender": "Gender or null if not mentioned",
-    "otherIdentifiers": ["Any other identifiers found"]
-  }
-}
-`;
-
-    // Make API call to OpenAI
-    const completion = await openai.chat.completions.create({
-      model: options.modelName || "gpt-4-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert medical professional that creates concise, accurate patient summaries from medical conversations and extracts patient identifying information."
-        },
-        {
-          role: "user",
-          content: summaryPrompt
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.3, // Lower temperature for more deterministic outputs
-      response_format: { type: "json_object" }
-    });
-
-    // Extract and parse the JSON response
-    const responseContent = completion.choices[0]?.message?.content || '{"summary": "Summary generation failed.", "patientInfo": {"name": "Unknown"}}';
-    
-    try {
-      const parsedResponse = JSON.parse(responseContent) as PatientSummaryResult;
-      return parsedResponse;
-    } catch (parseError) {
-      console.error("Error parsing summary JSON response:", parseError);
-      return {
-        summary: "Error parsing summary response.",
-        patientInfo: {
-          name: "Unknown"
-        }
-      };
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`Edge function error: ${error.message}`);
     }
 
+    if (!data.success) {
+      throw new Error(data.error || 'Unknown error occurred');
+    }
+
+    return data.result as PatientSummaryResult;
   } catch (error) {
     console.error("Error generating patient summary:", error);
     return {
@@ -176,86 +116,32 @@ Respond ONLY with valid JSON in the following format:
 };
 
 /**
- * Generates a summary using Claude (Anthropic) API
+ * Generates a summary using Claude (Anthropic) via Supabase Edge Function
  */
 export const generatePatientSummaryWithClaude = async (
     transcript: string,
     options: SummaryGenerationOptions = {}
 ): Promise<PatientSummaryResult> => {
   try {
-    const apiKey = options.apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY;
-
-    if (!apiKey) {
-      throw new Error("No Claude API key provided");
-    }
-
-    const { Anthropic } = require('@anthropic-ai/sdk');
-    const anthropic = new Anthropic({ apiKey });
-
-    const summaryPrompt = `
-Please analyze this medical conversation transcript and provide TWO separate outputs in JSON format:
-
-1. A concise patient summary (150-200 words). Focus on key clinical information:
-   - Chief complaints
-   - Relevant medical history
-   - Key findings
-   - Diagnoses or differential diagnoses
-   - Treatment plan highlights
-
-2. Patient identifying information:
-   - Full name (first name and last name)
-   - Age (if mentioned)
-   - Gender (if mentioned)
-   - Other identifiers (like date of birth, patient ID, etc.)
-
-Here's the transcript:
-${transcript}
-
-Respond ONLY with valid JSON in the following format:
-{
-  "summary": "The clinical summary text goes here...",
-  "patientInfo": {
-    "name": "Patient's full name or 'Unknown' if not found",
-    "age": "Age or null if not mentioned",
-    "gender": "Gender or null if not mentioned",
-    "otherIdentifiers": ["Any other identifiers found"]
-  }
-}
-`;
-
-    const message = await anthropic.messages.create({
-      model: options.modelName || "claude-3-sonnet-20240229",
-      max_tokens: 1000,
-      messages: [
-        {
-          role: "user",
-          content: summaryPrompt
-        }
-      ],
-      system: "You are an expert medical professional that creates concise, accurate patient summaries from medical conversations and extracts patient identifying information."
+    const { data, error } = await supabase.functions.invoke('ai-document-generation', {
+      body: {
+        transcript,
+        format: 'patient-summary',
+        provider: 'anthropic',
+        modelName: options.modelName || "claude-3-sonnet-20240229"
+      }
     });
 
-    const responseContent = message.content[0].text;
-    
-    try {
-      // Extract JSON from the response (Claude might wrap it in markdown code blocks)
-      const jsonMatch = responseContent.match(/```json\n([\s\S]*?)\n```/) || 
-                        responseContent.match(/```\n([\s\S]*?)\n```/) ||
-                        [null, responseContent];
-      
-      const jsonContent = jsonMatch[1] || responseContent;
-      const parsedResponse = JSON.parse(jsonContent) as PatientSummaryResult;
-      return parsedResponse;
-    } catch (parseError) {
-      console.error("Error parsing Claude summary response:", parseError);
-      return {
-        summary: responseContent.substring(0, 200) + "...",
-        patientInfo: {
-          name: "Unknown"
-        }
-      };
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`Edge function error: ${error.message}`);
     }
 
+    if (!data.success) {
+      throw new Error(data.error || 'Unknown error occurred');
+    }
+
+    return data.result as PatientSummaryResult;
   } catch (error) {
     console.error("Error with Claude summary generation:", error);
     return {

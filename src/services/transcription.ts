@@ -2,8 +2,8 @@
 
 import { AssemblyAI } from 'assemblyai';
 import { SpeechClient } from '@google-cloud/speech';
-import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { supabase } from "@/integrations/supabase/client";
 
 // Define transcription provider types
 export enum TranscriptionProvider {
@@ -379,50 +379,64 @@ const generateWithClaude = async (
 };
 
 /**
- * Generate document using OpenAI
+ * Generate document using Supabase Edge Function
  */
 const generateWithOpenAI = async (
     prompt: string,
     options: DocumentGenerationOptions
 ): Promise<string> => {
   try {
-    const apiKey = options.apiKey || import.meta.env.VITE_OPENAI_API_KEY;
+    // Extract format from the prompt or use a default mapping
+    const format = mapPromptToFormat(prompt, options.format);
+    
+    const { data, error } = await supabase.functions.invoke('ai-document-generation', {
+      body: {
+        conversationText: prompt, // The prompt contains the conversation text
+        format,
+        provider: 'openai',
+        modelName: options.modelName || "gpt-4-turbo"
+      }
+    });
 
-    if (!apiKey) {
-      throw new Error("No OpenAI API key provided");
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`Edge function error: ${error.message}`);
     }
 
+    if (!data.success) {
+      throw new Error(data.error || 'Unknown error occurred');
+    }
 
-    // Initialize the OpenAI client with dangerouslyAllowBrowser since we're in a browser environment
-    const openai = new OpenAI({
-      apiKey,
-      dangerouslyAllowBrowser: true // Required for browser environments
-    });
-    // Make API call to OpenAI
-    const completion = await openai.chat.completions.create({
-      model: options.modelName || "gpt-4-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert medical professional specializing in creating accurate and comprehensive medical documentation from transcripts."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      max_tokens: 4000,
-      temperature: 0.3, // Lower temperature for more deterministic outputs
-
-    });
-
-    // Extract and return the generated content
-    return completion.choices[0]?.message?.content || "";
-
+    return data.result;
   } catch (error) {
-    console.error("Error with OpenAI:", error);
-    throw new Error(`OpenAI API error: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Error with Edge Function:", error);
+    throw new Error(`Edge Function error: ${error instanceof Error ? error.message : String(error)}`);
   }
+};
+
+/**
+ * Map prompt content and DocumentFormat to the edge function format parameter
+ */
+const mapPromptToFormat = (prompt: string, format: DocumentFormat): string => {
+  // Map DocumentFormat enum to edge function format strings
+  const formatMap: { [key in DocumentFormat]: string } = {
+    [DocumentFormat.SOAP]: 'soap',
+    [DocumentFormat.HISTORY_AND_PHYSICAL]: 'h&p', 
+    [DocumentFormat.PROGRESS_NOTE]: 'progress',
+    [DocumentFormat.DISCHARGE_SUMMARY]: 'discharge',
+    [DocumentFormat.CONSULTATION]: 'consultation',
+    [DocumentFormat.PROCEDURE_NOTE]: 'procedure',
+    [DocumentFormat.PEDIATRICS]: 'pediatrics',
+    [DocumentFormat.CARDIOLOGY]: 'cardiology',
+    [DocumentFormat.ORTHOPEDICS]: 'orthopedics',
+    [DocumentFormat.PSYCHIATRY]: 'psychiatry',
+    [DocumentFormat.GERIATRICS]: 'geriatrics',
+    [DocumentFormat.OBSTETRICS]: 'obstetrics',
+    [DocumentFormat.ENDOCRINOLOGY]: 'endocrinology',
+    [DocumentFormat.DICTATION]: 'dictation'
+  };
+  
+  return formatMap[format] || 'soap';
 };
 
 /**

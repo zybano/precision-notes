@@ -1,206 +1,104 @@
 /**
  * This file contains utility functions for converting transcripts to structured clinical notes
+ * Now uses Supabase Edge Functions instead of direct OpenAI calls
  */
 
-import OpenAI from 'openai';
+import { supabase } from "@/integrations/supabase/client";
 
-// Initialize OpenAI client
-let openai: OpenAI | null = null;
-
-// Initialize OpenAI with API key if available
-const initializeOpenAI = () => {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  if (apiKey) {
-    openai = new OpenAI({
-      apiKey,
-      dangerouslyAllowBrowser: true // Allowing usage in browser for demo purposes
+// Call the Supabase Edge Function for AI document generation
+const callDocumentGenerationFunction = async (transcript: string, format: string): Promise<string> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('ai-document-generation', {
+      body: {
+        transcript,
+        format,
+        provider: 'openai',
+        modelName: 'gpt-4o-mini'
+      }
     });
-    return true;
+
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`Edge function error: ${error.message}`);
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || 'Unknown error occurred');
+    }
+
+    return data.result;
+  } catch (error) {
+    console.error("Error calling document generation function:", error);
+    throw error;
   }
-  return false;
 };
 
 /**
- * Converts a transcript to a SOAP note format using OpenAI if available, otherwise falls back to template-based conversion
+ * Converts a transcript to a SOAP note format using Supabase Edge Function, otherwise falls back to template-based conversion
  * @param transcript The raw transcript to convert
  * @returns Formatted SOAP note
  */
 export const convertTranscriptToSOAP = async (transcript: string): Promise<string> => {
-  // Try using OpenAI first if API key is available
-  if (!openai) {
-    const openaiInitialized = initializeOpenAI();
-    if (!openaiInitialized) {
-      console.log("OpenAI API key not available, using fallback method");
-      return fallbackConvertToSOAP(transcript);
-    }
-  }
-  
   try {
-    const result = await openai!.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a medical documentation assistant that creates well-structured SOAP notes from doctor-patient conversation transcripts. Format the content professionally with clear sections following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
-        },
-        {
-          role: "user",
-          content: `Create a complete SOAP note from this doctor-patient conversation transcript. Structure it with clear SUBJECTIVE, OBJECTIVE, ASSESSMENT, and PLAN sections:\n\n${transcript}`
-        }
-      ],
-    });
-    
-    return result.choices[0].message.content || fallbackConvertToSOAP(transcript);
+    return await callDocumentGenerationFunction(transcript, 'soap');
   } catch (error) {
-    console.error("Error using OpenAI for SOAP note conversion:", error);
+    console.error("Error using Edge Function for SOAP note conversion:", error);
     return fallbackConvertToSOAP(transcript);
   }
 };
 
 /**
- * Converts a transcript to a Progress Note format using OpenAI if available
+ * Converts a transcript to a Progress Note format using Supabase Edge Function
  * @param transcript The raw transcript to convert
  * @returns Formatted Progress Note
  */
 export const convertTranscriptToProgressNote = async (transcript: string): Promise<string> => {
-  // Try using OpenAI first if API key is available
-  if (!openai) {
-    const openaiInitialized = initializeOpenAI();
-    if (!openaiInitialized) {
-      console.log("OpenAI API key not available, using fallback method");
-      return fallbackConvertToProgressNote(transcript);
-    }
-  }
-  
   try {
-    const result = await openai!.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a medical documentation assistant that creates well-structured Progress Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
-        },
-        {
-          role: "user",
-          content: `Create a complete Progress Note from this doctor-patient conversation transcript. Structure it with CHIEF COMPLAINT, INTERVAL HISTORY, CURRENT STATUS, and ASSESSMENT & PLAN sections:\n\n${transcript}`
-        }
-      ],
-    });
-    
-    return result.choices[0].message.content || fallbackConvertToProgressNote(transcript);
+    return await callDocumentGenerationFunction(transcript, 'progress');
   } catch (error) {
-    console.error("Error using OpenAI for Progress Note conversion:", error);
+    console.error("Error using Edge Function for Progress Note conversion:", error);
     return fallbackConvertToProgressNote(transcript);
   }
 };
 
 /**
- * Converts a transcript to a Consultation Note format using OpenAI if available
+ * Converts a transcript to a Consultation Note format using Supabase Edge Function
  * @param transcript The raw transcript to convert
  * @returns Formatted Consultation Note
  */
 export const convertTranscriptToConsultNote = async (transcript: string): Promise<string> => {
-  // Try using OpenAI first if API key is available
-  if (!openai) {
-    const openaiInitialized = initializeOpenAI();
-    if (!openaiInitialized) {
-      console.log("OpenAI API key not available, using fallback method");
-      return fallbackConvertToConsultNote(transcript);
-    }
-  }
-  
   try {
-    const result = await openai!.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a medical documentation assistant that creates well-structured Consultation Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
-        },
-        {
-          role: "user",
-          content: `Create a complete Consultation Note from this doctor-patient conversation transcript. Structure it with REASON FOR CONSULTATION, HISTORY OF PRESENT ILLNESS, RELEVANT FINDINGS, and IMPRESSION & RECOMMENDATIONS sections:\n\n${transcript}`
-        }
-      ],
-    });
-    
-    return result.choices[0].message.content || fallbackConvertToConsultNote(transcript);
+    return await callDocumentGenerationFunction(transcript, 'consultation');
   } catch (error) {
-    console.error("Error using OpenAI for Consultation Note conversion:", error);
+    console.error("Error using Edge Function for Consultation Note conversion:", error);
     return fallbackConvertToConsultNote(transcript);
   }
 };
 
 /**
- * Converts a transcript to a History & Physical format using OpenAI if available
+ * Converts a transcript to a History & Physical format using Supabase Edge Function
  * @param transcript The raw transcript to convert
  * @returns Formatted H&P
  */
 export const convertTranscriptToHistoryAndPhysical = async (transcript: string): Promise<string> => {
-  // Try using OpenAI first if API key is available
-  if (!openai) {
-    const openaiInitialized = initializeOpenAI();
-    if (!openaiInitialized) {
-      console.log("OpenAI API key not available, using fallback method");
-      return fallbackConvertToHistoryAndPhysical(transcript);
-    }
-  }
-  
   try {
-    const result = await openai!.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a medical documentation assistant that creates well-structured History & Physical reports from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under ROS. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
-        },
-        {
-          role: "user",
-          content: `Create a complete History & Physical report from this doctor-patient conversation transcript. Structure it with CHIEF COMPLAINT, HISTORY OF PRESENT ILLNESS, PAST MEDICAL HISTORY, REVIEW OF SYSTEMS, PHYSICAL EXAMINATION, and ASSESSMENT & PLAN sections:\n\n${transcript}`
-        }
-      ],
-    });
-    
-    return result.choices[0].message.content || fallbackConvertToHistoryAndPhysical(transcript);
+    return await callDocumentGenerationFunction(transcript, 'history-physical');
   } catch (error) {
-    console.error("Error using OpenAI for H&P conversion:", error);
+    console.error("Error using Edge Function for H&P conversion:", error);
     return fallbackConvertToHistoryAndPhysical(transcript);
   }
 };
 
 /**
- * Converts a transcript to a Procedure Note format using OpenAI if available
+ * Converts a transcript to a Procedure Note format using Supabase Edge Function
  * @param transcript The raw transcript to convert
  * @returns Formatted Procedure Note
  */
 export const convertTranscriptToProcedureNote = async (transcript: string): Promise<string> => {
-  // Try using OpenAI first if API key is available
-  if (!openai) {
-    const openaiInitialized = initializeOpenAI();
-    if (!openaiInitialized) {
-      console.log("OpenAI API key not available, using fallback method");
-      return fallbackConvertToProcedureNote(transcript);
-    }
-  }
-  
   try {
-    const result = await openai!.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a medical documentation assistant that creates well-structured Procedure Notes from doctor-patient conversation transcripts. Format the content professionally following medical documentation standards. Use bold headings followed by a colon (avoid markdown; plain text only). Present details in concise bullet points. Include dosages (e.g., 'metformin 500 mg PO BID') and allergy reactions (e.g., 'penicillin → rash'). For negations (e.g., 'denies chest pain'), include under relevant findings. Label sections as 'None reported' if absent. Ensure clear section breaks and logical flow."
-        },
-        {
-          role: "user",
-          content: `Create a complete Procedure Note from this doctor-patient conversation transcript. Structure it with PROCEDURE PERFORMED, INDICATION, TECHNIQUE, FINDINGS, and POST-PROCEDURE sections:\n\n${transcript}`
-        }
-      ],
-    });
-    
-    return result.choices[0].message.content || fallbackConvertToProcedureNote(transcript);
+    return await callDocumentGenerationFunction(transcript, 'procedure');
   } catch (error) {
-    console.error("Error using OpenAI for Procedure Note conversion:", error);
+    console.error("Error using Edge Function for Procedure Note conversion:", error);
     return fallbackConvertToProcedureNote(transcript);
   }
 };
