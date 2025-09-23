@@ -1,4 +1,4 @@
-# Precision Notes
+# Precision Notes-B2B
 
 Precision Notes App is a modern web application for medical documentation and transcription management, designed to streamline the creation, organization, and sharing of medical documents for healthcare professionals.
 
