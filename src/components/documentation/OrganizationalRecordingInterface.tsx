@@ -99,10 +99,13 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-32 sm:pb-24">
       {/* Fixed Status Bar */}
       {(isRecording || isTranscribing) && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-full shadow-lg px-4 py-2">
+        <div
+          className="fixed left-1/2 transform -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-full shadow-lg px-4 py-2"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+        >
           <div className="flex items-center gap-3">
             {isRecording && (
               <>

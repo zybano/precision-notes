@@ -93,18 +93,23 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
   const reportTemplates = filteredTemplates.filter(template => template.category === "reports");
   const customTemplates = filteredTemplates.filter(template => template.category === "custom");
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-36 sm:pb-28">
       {/* Sticky Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
+      >
         <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">
-              {selectedFormat ? `Selected: ${documentTemplates.find(template => template.documentFormat === selectedFormat)?.title}` : "Please select a template"}
+              {selectedFormat
+                ? `Selected: ${documentTemplates.find(template => template.documentFormat === selectedFormat)?.title}`
+                : "Please select a template"}
             </div>
-            <Button 
-              onClick={() => onNext(selectedFormat)} 
+            <Button
+              onClick={() => onNext(selectedFormat)}
               disabled={!selectedFormat || isLoading}
-              className="ml-4"
+              className="w-full sm:w-auto"
             >
               {isLoading ? (
                 <>

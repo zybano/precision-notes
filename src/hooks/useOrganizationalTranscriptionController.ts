@@ -14,7 +14,7 @@ interface OrganizationalTranscriptionControllerProps {
   acceptSuggestions?: boolean;
 }
 
-interface OrganizationalTranscriptionControllerReturn {
+export interface OrganizationalTranscriptionControllerReturn {
   isRecording: boolean;
   isPaused: boolean;
   recordingTime: number;
