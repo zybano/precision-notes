@@ -1,38 +1,7 @@
-export type Recipient = {
-  email: string;
-  name?: string;
-};
-
-export type RecipientInput = string | Recipient;
-
-interface BaseEmailOptions {
-  to: RecipientInput | RecipientInput[];
-  fromEmail?: string;
-  fromName?: string;
-  cc?: RecipientInput[];
-  bcc?: RecipientInput[];
-  replyTo?: RecipientInput | RecipientInput[];
-  bounceAddress?: string;
-  clientReference?: string;
-  mimeHeaders?: Record<string, string>;
-}
-
-interface HtmlEmailOptions extends BaseEmailOptions {
-  subject: string;
-  html: string;
-}
-
-interface TemplateEmailOptions extends BaseEmailOptions {
-  templateKey: string;
-  subject?: string;
-  parameters?: Record<string, unknown>;
-}
-
-const BASE_URL = Deno.env.get("ZEPTOMAIL_BASE_URL")?.replace(/\/$/, "") ?? "https://api.zeptomail.com/v1.1";
+const BASE_URL = "https://api.zeptomail.com/v1.1";
 const API_TOKEN = Deno.env.get("ZEPTOMAIL_API_TOKEN") ?? Deno.env.get("ZEPTOMAIL_TOKEN");
 const DEFAULT_FROM_EMAIL = Deno.env.get("ZEPTOMAIL_FROM_EMAIL");
 const DEFAULT_FROM_NAME = Deno.env.get("ZEPTOMAIL_FROM_NAME") ?? "Precision Notes";
-
 function requireZeptoConfig() {
   if (!API_TOKEN) {
     throw new Error("ZEPTOMAIL_API_TOKEN is not configured");
@@ -41,10 +10,13 @@ function requireZeptoConfig() {
     throw new Error("ZEPTOMAIL_FROM_EMAIL is not configured");
   }
 }
-
-function mapRecipient(input: RecipientInput): { email_address: { address: string; name?: string } } {
+function mapRecipient(input) {
   if (typeof input === "string") {
-    return { email_address: { address: input } };
+    return {
+      email_address: {
+        address: input
+      }
+    };
   }
   return {
     email_address: {
@@ -53,88 +25,71 @@ function mapRecipient(input: RecipientInput): { email_address: { address: string
     }
   };
 }
-
-function normalizeRecipients(value: RecipientInput | RecipientInput[] | undefined) {
+function normalizeRecipients(value) {
   if (!value) return undefined;
-  const list = Array.isArray(value) ? value : [value];
+  const list = Array.isArray(value) ? value : [
+    value
+  ];
   if (!list.length) return undefined;
   return list.map(mapRecipient);
 }
-
-function mapReplyRecipient(input: RecipientInput): { address: string; name?: string } {
+function mapReplyRecipient(input) {
   if (typeof input === "string") {
-    return { address: input };
+    return {
+      address: input
+    };
   }
-  return { address: input.email, name: input.name };
+  return {
+    address: input.email,
+    name: input.name
+  };
 }
-
-function normalizeReplyRecipients(value: RecipientInput | RecipientInput[] | undefined) {
+function normalizeReplyRecipients(value) {
   if (!value) return undefined;
-  const list = Array.isArray(value) ? value : [value];
+  const list = Array.isArray(value) ? value : [
+    value
+  ];
   if (!list.length) return undefined;
   return list.map(mapReplyRecipient);
 }
-
-function buildFrom(fromEmail?: string, fromName?: string) {
+function buildFrom(fromEmail, fromName) {
   return {
-    address: fromEmail ?? DEFAULT_FROM_EMAIL!,
+    address: fromEmail ?? DEFAULT_FROM_EMAIL,
     name: fromName ?? DEFAULT_FROM_NAME
   };
 }
-
-async function callZeptoMail(path: string, payload: Record<string, unknown>) {
+async function callZeptoMail(path, payload) {
   requireZeptoConfig();
-
   const response = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
     headers: {
-      "Authorization": `Zoho-enczapikey ${API_TOKEN}`,
+      "Authorization": API_TOKEN,
       "Content-Type": "application/json",
       "Accept": "application/json"
     },
     body: JSON.stringify(payload)
   });
-
-  let parsed: any = undefined;
   const text = await response.text();
-  if (text && text.trim().length > 0) {
-    try {
-      parsed = JSON.parse(text);
-    } catch (_error) {
-      parsed = undefined;
-    }
-  }
-
+  const parsed = text ? JSON.parse(text) : undefined;
   if (!response.ok) {
-    const message = parsed?.message ?? parsed?.error ?? response.statusText ?? text;
-    console.error("ZeptoMail request failed", {
-      path,
-      status: response.status,
-      payload,
-      responseBody: text
-    });
+    const message = parsed?.message ?? parsed?.error ?? response.statusText;
     throw new Error(`ZeptoMail error ${response.status}: ${message}`);
   }
-
   return parsed;
 }
-
-export async function sendHtmlEmail(options: HtmlEmailOptions) {
+export async function sendHtmlEmail(options) {
   if (!options.subject || !options.html) {
     throw new Error("subject and html are required for HTML email");
   }
-
-  const payload: Record<string, unknown> = {
+  const payload = {
     from: buildFrom(options.fromEmail, options.fromName),
     to: normalizeRecipients(options.to),
     subject: options.subject,
     htmlbody: options.html
   };
-
   if (!payload.to?.length) {
     throw new Error("At least one recipient is required");
   }
-
   const cc = normalizeRecipients(options.cc);
   if (cc) payload.cc = cc;
   const bcc = normalizeRecipients(options.bcc);
@@ -144,31 +99,24 @@ export async function sendHtmlEmail(options: HtmlEmailOptions) {
   if (options.bounceAddress) payload.bounce_address = options.bounceAddress;
   if (options.clientReference) payload.client_reference = options.clientReference;
   if (options.mimeHeaders) payload.mime_headers = options.mimeHeaders;
-
   return await callZeptoMail("/email", payload);
 }
-
-export async function sendTemplateEmail(options: TemplateEmailOptions) {
+export async function sendTemplateEmail(options) {
   if (!options.templateKey) {
     throw new Error("templateKey is required");
   }
-
-  const payload: Record<string, unknown> = {
+  const payload = {
     from: buildFrom(options.fromEmail, options.fromName),
     to: normalizeRecipients(options.to),
-    template_key: options.templateKey,
-    merge_info: options.parameters ?? {},
-    mail_format: "plaintext"
+    mail_template_key: options.templateKey,
+    merge_info: options.parameters ?? {}
   };
-
   if (!payload.to?.length) {
     throw new Error("At least one recipient is required");
   }
-
   if (options.subject) {
     payload.subject = options.subject;
   }
-
   const cc = normalizeRecipients(options.cc);
   if (cc) payload.cc = cc;
   const bcc = normalizeRecipients(options.bcc);
@@ -178,6 +126,5 @@ export async function sendTemplateEmail(options: TemplateEmailOptions) {
   if (options.bounceAddress) payload.bounce_address = options.bounceAddress;
   if (options.clientReference) payload.client_reference = options.clientReference;
   if (options.mimeHeaders) payload.mime_headers = options.mimeHeaders;
-
   return await callZeptoMail("/email/template", payload);
 }

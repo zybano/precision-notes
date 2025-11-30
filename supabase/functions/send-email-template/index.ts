@@ -90,7 +90,7 @@ async function parseJson(req: Request) {
   }
 }
 
-const BASE_URL = Deno.env.get("ZEPTOMAIL_BASE_URL")?.replace(/\/$/, "") ?? "https://api.zeptomail.com/v1.1";
+const BASE_URL =  "https://api.zeptomail.com/v1.1";
 const API_TOKEN = Deno.env.get("ZEPTOMAIL_API_TOKEN") ?? Deno.env.get("ZEPTOMAIL_TOKEN");
 const DEFAULT_FROM_EMAIL = Deno.env.get("ZEPTOMAIL_FROM_EMAIL");
 const DEFAULT_FROM_NAME = Deno.env.get("ZEPTOMAIL_FROM_NAME") ?? "Precision Notes";
@@ -116,9 +116,8 @@ async function sendTemplateEmail(options: {
   const payload: Record<string, unknown> = {
     from: buildFrom(options.fromEmail, options.fromName),
     to: normalizeRecipients(options.to),
-    template_key: options.templateKey,
-    merge_info: options.parameters ?? {},
-    mail_format: "plaintext"
+    mail_template_key: options.templateKey,
+    merge_info: options.parameters ?? {}
   };
 
   if (!payload.to?.length) {
@@ -181,7 +180,7 @@ async function callZeptoMail(path: string, payload: Record<string, unknown>) {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
     headers: {
-      "Authorization": `Zoho-enczapikey ${API_TOKEN}`,
+      "Authorization": API_TOKEN,
       "Content-Type": "application/json",
       "Accept": "application/json"
     },

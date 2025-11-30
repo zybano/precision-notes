@@ -26,13 +26,9 @@ interface ActivityLog {
   id: string;
   activity_type: 'transcription' | 'document_generation' | 'combined_request';
   credits_used: number;
-  request_id?: string;
   document_format?: string;
-  transcription_provider?: string;
-  model_used?: string;
-  processing_time_ms?: number;
+  processing_time_seconds?: string;
   created_at: string;
-  metadata: Record<string, any>;
 }
 
 export default function CreditUtilizationPage() {
@@ -311,15 +307,9 @@ export default function CreditUtilizationPage() {
                             {activity.document_format && (
                               <p>Format: {activity.document_format}</p>
                             )}
-                            {activity.model_used && (
-                              <p>Model: {activity.model_used}</p>
-                            )}
-                            {activity.transcription_provider && (
-                              <p>Provider: {activity.transcription_provider}</p>
-                            )}
-                            {activity.processing_time_ms && (
+                            {activity.processing_time_seconds && (
                               <p className="text-xs text-slate-500">
-                                Processing time: {activity.processing_time_ms}ms
+                                Processing time: {activity.processing_time_seconds}s
                               </p>
                             )}
                           </div>

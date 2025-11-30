@@ -723,11 +723,20 @@ async function handleStaffUtilization(req: Request, supabase: SupabaseClient) {
     }
   }
 
-  const { data, error } = await supabase.rpc("get_staff_utilization", {
-    p_user_id: userId,
-    p_start_date: startDate || null,
-    p_end_date: endDate || null
-  });
+  // Build query for staff utilization
+  let utilizationQuery = supabase
+    .from("staff_utilization")
+    .select("date, credits_used, documents_generated, transcriptions_completed, metadata")
+    .eq("user_id", userId);
+
+  if (startDate) {
+    utilizationQuery = utilizationQuery.gte("date", startDate);
+  }
+  if (endDate) {
+    utilizationQuery = utilizationQuery.lte("date", endDate);
+  }
+
+  const { data, error } = await utilizationQuery.order("date", { ascending: false });
 
   if (error) {
     return jsonResponse({ error: "Failed to load staff utilization" }, 500);
@@ -780,12 +789,22 @@ async function handleStaffActivityLog(req: Request, supabase: SupabaseClient) {
     }
   }
 
-  const { data, error } = await supabase.rpc("get_staff_activity_details", {
-    p_user_id: userId,
-    p_start_date: startDate || null,
-    p_end_date: endDate || null,
-    p_limit: Math.min(limit, 1000) // Cap at 1000 records
-  });
+  // Build query for activity log
+  let activityQuery = supabase
+    .from("staff_activity_log")
+    .select("id, activity_type, credits_used, request_id, document_format, transcription_provider, model_used, processing_time_ms, created_at, metadata")
+    .eq("user_id", userId);
+
+  if (startDate) {
+    activityQuery = activityQuery.gte("created_at", startDate);
+  }
+  if (endDate) {
+    activityQuery = activityQuery.lte("created_at", endDate);
+  }
+
+  const { data, error } = await activityQuery
+    .order("created_at", { ascending: false })
+    .limit(Math.min(limit, 1000));
 
   if (error) {
     return jsonResponse({ error: "Failed to load staff activity log" }, 500);
@@ -808,22 +827,75 @@ async function handleOrganizationStaffUtilization(req: Request, supabase: Supaba
   const startDate = url.searchParams.get("start_date");
   const endDate = url.searchParams.get("end_date");
 
-  const { data, error } = await supabase.rpc("get_organization_staff_utilization", {
-    p_organization_id: session.user.organization_id,
-    p_start_date: startDate || null,
-    p_end_date: endDate || null
-  });
+  // Get all organization users
+  const { data: orgUsers, error: usersError } = await supabase
+    .from("organization_users")
+    .select("id, email, first_name, last_name")
+    .eq("organization_id", session.user.organization_id);
 
-  if (error) {
-    return jsonResponse({ error: "Failed to load organization staff utilization" }, 500);
+  if (usersError) {
+    return jsonResponse({ error: "Failed to load organization users" }, 500);
   }
 
+  // Build query for staff utilization
+  let utilizationQuery = supabase
+    .from("staff_utilization")
+    .select("user_id, credits_used, documents_generated, transcriptions_completed, date")
+    .eq("organization_id", session.user.organization_id);
+
+  if (startDate) {
+    utilizationQuery = utilizationQuery.gte("date", startDate);
+  }
+  if (endDate) {
+    utilizationQuery = utilizationQuery.lte("date", endDate);
+  }
+
+  const { data: utilizationData, error: utilizationError } = await utilizationQuery;
+
+  if (utilizationError) {
+    return jsonResponse({ error: "Failed to load utilization data" }, 500);
+  }
+
+  // Aggregate data by user
+  const userUtilizationMap = new Map();
+
+  // Initialize all users with zero values
+  (orgUsers || []).forEach((user) => {
+    userUtilizationMap.set(user.id, {
+      user_id: user.id,
+      user_email: user.email,
+      user_name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email,
+      total_credits_used: 0,
+      total_documents_generated: 0,
+      total_transcriptions_completed: 0,
+      last_activity_date: null
+    });
+  });
+
+  // Aggregate utilization data
+  (utilizationData || []).forEach((record) => {
+    const existing = userUtilizationMap.get(record.user_id);
+    if (existing) {
+      existing.total_credits_used += record.credits_used || 0;
+      existing.total_documents_generated += record.documents_generated || 0;
+      existing.total_transcriptions_completed += record.transcriptions_completed || 0;
+
+      // Update last activity date
+      if (!existing.last_activity_date || record.date > existing.last_activity_date) {
+        existing.last_activity_date = record.date;
+      }
+    }
+  });
+
+  const staffUtilization = Array.from(userUtilizationMap.values())
+    .sort((a, b) => b.total_credits_used - a.total_credits_used);
+
   // Calculate organization-wide totals
-  const totals = (data || []).reduce(
+  const totals = staffUtilization.reduce(
     (acc, staff) => ({
-      total_credits: acc.total_credits + Number(staff.total_credits_used || 0),
-      total_documents: acc.total_documents + Number(staff.total_documents_generated || 0),
-      total_transcriptions: acc.total_transcriptions + Number(staff.total_transcriptions_completed || 0),
+      total_credits: acc.total_credits + staff.total_credits_used,
+      total_documents: acc.total_documents + staff.total_documents_generated,
+      total_transcriptions: acc.total_transcriptions + staff.total_transcriptions_completed,
       active_staff: acc.active_staff + (staff.last_activity_date ? 1 : 0)
     }),
     { total_credits: 0, total_documents: 0, total_transcriptions: 0, active_staff: 0 }
@@ -831,9 +903,9 @@ async function handleOrganizationStaffUtilization(req: Request, supabase: Supaba
 
   return jsonResponse({
     organization_id: session.user.organization_id,
-    staff_utilization: data || [],
+    staff_utilization: staffUtilization,
     totals,
-    total_staff: (data || []).length
+    total_staff: staffUtilization.length
   });
 }
 
@@ -1075,20 +1147,29 @@ function comparePassword(value: string, hashed: string) {
 
 async function sendOtpEmail(user: any, otpCode: string) {
   const recipient = recipientFromUser(user);
+
+  // Try template email first if template key is configured
   if (OTP_TEMPLATE_KEY) {
-    await sendTemplateEmail({
-      to: recipient,
-      templateKey: OTP_TEMPLATE_KEY,
-      parameters: {
-        name: recipient.name ?? user.email,
-        OTP: otpCode,
-        product_name: PRODUCT_NAME
-      },
-      subject: "Your verification code"
-    });
-    return;
+    try {
+      await sendTemplateEmail({
+        to: recipient,
+        templateKey: OTP_TEMPLATE_KEY,
+        parameters: {
+          name: recipient.name ?? user.email,
+          OTP: otpCode,
+          product_name: PRODUCT_NAME
+        },
+        subject: "Your verification code"
+      });
+      console.log("OTP email sent successfully via template");
+      return;
+    } catch (templateError) {
+      console.error("Template email failed, falling back to HTML email:", templateError);
+      // Fall through to HTML email
+    }
   }
 
+  // Fallback to HTML email
   const html = `
     <p>Hello ${recipient.name ?? user.email},</p>
     <p>Your <strong>${PRODUCT_NAME}</strong> verification code is <strong>${otpCode}</strong>. It expires in 10 minutes.</p>
@@ -1100,24 +1181,34 @@ async function sendOtpEmail(user: any, otpCode: string) {
     subject: "Your verification code",
     html
   });
+  console.log("OTP email sent successfully via HTML");
 }
 
 async function sendPasswordResetEmail(user: any, resetLink: string, expiresAt?: string) {
   const recipient = recipientFromUser(user);
+
+  // Try template email first if template key is configured
   if (RESET_TEMPLATE_KEY) {
-    await sendTemplateEmail({
-      to: recipient,
-      templateKey: RESET_TEMPLATE_KEY,
-      parameters: {
-        "product name": PRODUCT_NAME,
-        password_reset_link: resetLink,
-        data_time: expiresAt ? new Date(expiresAt).toUTCString() : new Date().toUTCString()
-      },
-      subject: "Reset your password"
-    });
-    return;
+    try {
+      await sendTemplateEmail({
+        to: recipient,
+        templateKey: RESET_TEMPLATE_KEY,
+        parameters: {
+          "product name": PRODUCT_NAME,
+          password_reset_link: resetLink,
+          data_time: expiresAt ? new Date(expiresAt).toUTCString() : new Date().toUTCString()
+        },
+        subject: "Reset your password"
+      });
+      console.log("Password reset email sent successfully via template");
+      return;
+    } catch (templateError) {
+      console.error("Template email failed, falling back to HTML email:", templateError);
+      // Fall through to HTML email
+    }
   }
 
+  // Fallback to HTML email
   const html = `
     <p>Hello ${recipient.name ?? user.email},</p>
     <p>${PRODUCT_NAME} received a request to reset your password. Click the button below to continue.</p>
@@ -1130,6 +1221,7 @@ async function sendPasswordResetEmail(user: any, resetLink: string, expiresAt?: 
     subject: "Reset your password",
     html
   });
+  console.log("Password reset email sent successfully via HTML");
 }
 
 function recipientFromUser(user: any) {

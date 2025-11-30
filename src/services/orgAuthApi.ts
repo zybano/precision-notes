@@ -1,5 +1,6 @@
 const EDGE_URL = import.meta.env.VITE_SUPABASE_EDGE_URL ?? "https://rdjzeayewevditzekveb.supabase.co/functions/v1";
 const ORG_AUTH_BASE = `${EDGE_URL}/organization-auth`;
+const UTILIZATION_BASE = `${EDGE_URL}/staff-utilization`;
 
 export type OrganizationUserRole = "admin" | "staff";
 
@@ -169,10 +170,10 @@ export async function fetchUsageSummary(token: string) {
 }
 
 // Staff Utilization endpoints
-async function getJsonWithParams<T>(path: string, token: string, params?: Record<string, string>): Promise<T> {
+async function getJsonWithParams<T>(path: string, token: string, params?: Record<string, string>, baseUrl = ORG_AUTH_BASE): Promise<T> {
   const queryParams = new URLSearchParams(params || {});
   const queryString = queryParams.toString();
-  const url = `${ORG_AUTH_BASE}${path}${queryString ? `?${queryString}` : ""}`;
+  const url = `${baseUrl}${path}${queryString ? `?${queryString}` : ""}`;
 
   const response = await fetch(url, {
     headers: {
@@ -214,7 +215,7 @@ export async function fetchStaffUtilization(
       total_documents: number;
       total_transcriptions: number;
     };
-  }>("/staff/utilization", token, params);
+  }>("/user", token, params, UTILIZATION_BASE);
 }
 
 export async function fetchStaffActivityLog(
@@ -231,21 +232,16 @@ export async function fetchStaffActivityLog(
   if (limit) params.limit = limit.toString();
 
   return getJsonWithParams<{
-    user_id: string;
     activities: Array<{
       id: string;
       activity_type: 'transcription' | 'document_generation' | 'combined_request';
       credits_used: number;
-      request_id?: string;
       document_format?: string;
-      transcription_provider?: string;
-      model_used?: string;
-      processing_time_ms?: number;
+      processing_time_seconds?: string;
       created_at: string;
-      metadata: Record<string, any>;
     }>;
     count: number;
-  }>("/staff/activity", token, params);
+  }>("/activity", token, params, UTILIZATION_BASE);
 }
 
 export async function fetchOrganizationStaffUtilization(
@@ -258,11 +254,12 @@ export async function fetchOrganizationStaffUtilization(
   if (endDate) params.end_date = endDate;
 
   return getJsonWithParams<{
-    organization_id: string;
     staff_utilization: Array<{
       user_id: string;
       user_email: string;
       user_name: string;
+      user_role: string;
+      user_department?: string;
       total_credits_used: number;
       total_documents_generated: number;
       total_transcriptions_completed: number;
@@ -275,5 +272,9 @@ export async function fetchOrganizationStaffUtilization(
       active_staff: number;
     };
     total_staff: number;
-  }>("/organization/staff-utilization", token, params);
+    date_range: {
+      start_date?: string;
+      end_date?: string;
+    };
+  }>("/organization", token, params, UTILIZATION_BASE);
 }
