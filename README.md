@@ -23,7 +23,6 @@ Precision Notes transforms the way healthcare professionals handle documentation
   - Discharge Summaries
   - Consultation Notes
   - Specialty-specific formats (Cardiology, Psychiatry, etc.)
-- Choose from multiple AI providers (Claude, GPT-4, Gemini)
 
 ### 📚 Document Management
 - Create, view, edit, and organize medical documents
