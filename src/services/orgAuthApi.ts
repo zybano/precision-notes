@@ -11,6 +11,9 @@ export interface OrganizationUser {
   role: OrganizationUserRole;
   organization_id: string;
   department?: string | null;
+  last_login_at?: string | null;
+  created_at?: string;
+  is_active?: boolean;
 }
 
 export interface OrgSession {
@@ -29,6 +32,45 @@ interface AdminOnboardPayload {
   department?: string;
 }
 
+export interface StaffBulkEntry {
+  email: string;
+  first_name: string;
+  last_name: string;
+  department?: string | null;
+}
+
+export interface OrganizationDetailsResponse {
+  organization: {
+    id: string;
+    name: string;
+    contact_email?: string;
+    contact_name?: string;
+    industry?: string;
+    credits?: number;
+    rate_limit_per_hour?: number;
+    total_requests?: number;
+    total_transcriptions?: number;
+    total_documents_generated?: number;
+    created_at?: string;
+  };
+  staffCount: number;
+}
+
+export interface UsageSummaryResponse {
+  organizationUsage: {
+    credits: number;
+    totalRequests: number;
+    totalTranscriptions: number;
+    totalDocumentsGenerated: number;
+    rateLimitPerHour: number;
+    remainingRequests: number;
+  };
+  userUsage: {
+    lastLogin?: string | null;
+    sessionCount: number;
+  };
+}
+
 async function postJson<T>(path: string, body: unknown, token?: string): Promise<T> {
   const response = await fetch(`${ORG_AUTH_BASE}${path}`, {
     method: "POST",
@@ -37,6 +79,22 @@ async function postJson<T>(path: string, body: unknown, token?: string): Promise
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     },
     body: JSON.stringify(body)
+  });
+
+  const data = await safeParseJson(response);
+
+  if (!response.ok) {
+    throw new Error(data?.error ?? data?.message ?? "Request failed");
+  }
+
+  return data as T;
+}
+
+async function getJson<T>(path: string, token: string): Promise<T> {
+  const response = await fetch(`${ORG_AUTH_BASE}${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
   });
 
   const data = await safeParseJson(response);
@@ -90,23 +148,132 @@ export async function createStaff(
   return postJson<{ staff: OrganizationUser; temporary_password?: string }>("/staff", payload, token);
 }
 
-export async function bulkUploadStaff(token: string, file: File) {
-  const formData = new FormData();
-  formData.append("file", file);
+export async function bulkUploadStaff(token: string, entries: StaffBulkEntry[]) {
+  return postJson<{ total_rows: number; results: Array<Record<string, unknown>> }>(
+    "/staff/bulk-upload",
+    { staff: entries },
+    token
+  );
+}
 
-  const response = await fetch(`${ORG_AUTH_BASE}/staff/bulk-upload`, {
-    method: "POST",
+export async function fetchOrganizationDetails(token: string) {
+  return getJson<OrganizationDetailsResponse>("/organization", token);
+}
+
+export async function fetchStaffList(token: string) {
+  return getJson<{ staff: OrganizationUser[] }>("/staff", token);
+}
+
+export async function fetchUsageSummary(token: string) {
+  return getJson<UsageSummaryResponse>("/usage", token);
+}
+
+// Staff Utilization endpoints
+async function getJsonWithParams<T>(path: string, token: string, params?: Record<string, string>): Promise<T> {
+  const queryParams = new URLSearchParams(params || {});
+  const queryString = queryParams.toString();
+  const url = `${ORG_AUTH_BASE}${path}${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`
-    },
-    body: formData
+    }
   });
 
   const data = await safeParseJson(response);
 
   if (!response.ok) {
-    throw new Error(data?.error ?? data?.message ?? "Bulk upload failed");
+    throw new Error(data?.error ?? data?.message ?? "Request failed");
   }
 
-  return data as { total_rows: number; results: Array<Record<string, unknown>> };
+  return data as T;
+}
+
+export async function fetchStaffUtilization(
+  token: string,
+  userId?: string,
+  startDate?: string,
+  endDate?: string
+) {
+  const params: Record<string, string> = {};
+  if (userId) params.user_id = userId;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+
+  return getJsonWithParams<{
+    user_id: string;
+    daily_utilization: Array<{
+      date: string;
+      credits_used: number;
+      documents_generated: number;
+      transcriptions_completed: number;
+      metadata: Record<string, any>;
+    }>;
+    totals: {
+      total_credits: number;
+      total_documents: number;
+      total_transcriptions: number;
+    };
+  }>("/staff/utilization", token, params);
+}
+
+export async function fetchStaffActivityLog(
+  token: string,
+  userId?: string,
+  startDate?: string,
+  endDate?: string,
+  limit?: number
+) {
+  const params: Record<string, string> = {};
+  if (userId) params.user_id = userId;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  if (limit) params.limit = limit.toString();
+
+  return getJsonWithParams<{
+    user_id: string;
+    activities: Array<{
+      id: string;
+      activity_type: 'transcription' | 'document_generation' | 'combined_request';
+      credits_used: number;
+      request_id?: string;
+      document_format?: string;
+      transcription_provider?: string;
+      model_used?: string;
+      processing_time_ms?: number;
+      created_at: string;
+      metadata: Record<string, any>;
+    }>;
+    count: number;
+  }>("/staff/activity", token, params);
+}
+
+export async function fetchOrganizationStaffUtilization(
+  token: string,
+  startDate?: string,
+  endDate?: string
+) {
+  const params: Record<string, string> = {};
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+
+  return getJsonWithParams<{
+    organization_id: string;
+    staff_utilization: Array<{
+      user_id: string;
+      user_email: string;
+      user_name: string;
+      total_credits_used: number;
+      total_documents_generated: number;
+      total_transcriptions_completed: number;
+      last_activity_date?: string;
+    }>;
+    totals: {
+      total_credits: number;
+      total_documents: number;
+      total_transcriptions: number;
+      active_staff: number;
+    };
+    total_staff: number;
+  }>("/organization/staff-utilization", token, params);
 }

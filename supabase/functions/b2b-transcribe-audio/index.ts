@@ -2,9 +2,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { AssemblyAI } from "https://esm.sh/assemblyai@4.0.0";
+import { recordStaffActivity, getUserIdFromSessionToken } from "../_shared/staffActivityTracker.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-api-key, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 // Rate limiting store (in-memory, simple implementation)
@@ -35,10 +36,11 @@ serve(async (req)=>{
   try {
     // Initialize Supabase client
     const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
-    // Extract API key from header
-    const apiKey = req.headers.get("x-api-key");
-    if (!apiKey) {
-      errorMessage = "API key required";
+
+    // Extract and validate session token
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      errorMessage = "Authentication required";
       return new Response(JSON.stringify({
         error: errorMessage
       }), {
@@ -49,12 +51,15 @@ serve(async (req)=>{
         }
       });
     }
-    // Validate API key and get organization
-    const { data: validation, error: validationError } = await supabase.rpc('validate_api_key', {
-      p_api_key: apiKey
-    });
-    if (validationError || !validation?.valid) {
-      errorMessage = validation?.error || "Invalid API key";
+
+    const sessionToken = authHeader.replace("Bearer ", "").trim();
+    const { userId, organizationId: sessionOrgId, error: sessionError } = await getUserIdFromSessionToken(
+      supabase,
+      sessionToken
+    );
+
+    if (sessionError || !userId || !sessionOrgId) {
+      errorMessage = sessionError || "Invalid or expired session";
       return new Response(JSON.stringify({
         error: errorMessage
       }), {
@@ -65,8 +70,28 @@ serve(async (req)=>{
         }
       });
     }
-    const organization = validation.organization;
-    organizationId = organization.id;
+
+    organizationId = sessionOrgId;
+
+    // Fetch organization details
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', organizationId)
+      .single();
+
+    if (orgError || !organization) {
+      errorMessage = "Organization not found";
+      return new Response(JSON.stringify({
+        error: errorMessage
+      }), {
+        status: 404,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
+    }
     // Rate limiting check
     const currentHour = Math.floor(Date.now() / (1000 * 60 * 60));
     const rateLimitKey = `${organizationId}_${currentHour}`;
@@ -193,6 +218,24 @@ serve(async (req)=>{
     };
     const processingTime = Date.now() - startTime;
     success = true;
+
+    // Track staff activity
+    await recordStaffActivity(supabase, {
+      userId,
+      organizationId,
+      activityType: 'transcription',
+      creditsUsed: creditsNeeded,
+      requestId,
+      transcriptionProvider: 'assemblyai',
+      processingTimeMs: processingTime,
+      metadata: {
+        language_code: languageCode,
+        use_nano_model: useSpeechModelNano,
+        audio_file_size_mb: requestSize,
+        utterance_count: transcriptionResult.utterances?.length || 0
+      }
+    });
+
     // Determine storage preference and handle accordingly
     const response = {
       success: true,

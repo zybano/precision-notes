@@ -5,6 +5,7 @@ import {TranscriptionProvider, TranscriptionResult} from "@/services/transcripti
 import {PatientSummaryResult} from "@/services/summaryUtils";
 import {UseFormReturn} from "react-hook-form";
 import {toast} from "sonner";
+import {useOrgAuth} from "@/contexts/OrgAuthContext";
 
 interface OrganizationalTranscriptionControllerProps {
   form: UseFormReturn<any>;
@@ -53,6 +54,7 @@ export const useOrganizationalTranscriptionController = ({
   acceptSuggestions?: boolean;
   setActiveTab?: (tab: string) => void;
 }): OrganizationalTranscriptionControllerReturn => {
+  const { session } = useOrgAuth();
   const [isB2BProcessing, setIsB2BProcessing] = useState(false);
   
   const {
@@ -155,6 +157,11 @@ export const useOrganizationalTranscriptionController = ({
   };
 
   const processOrganizationalFile = async (file: File, options: any) => {
+    if (!session?.token) {
+      toast.error("Session expired. Please log in again.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("audio", file);
     formData.append("document_format", form.getValues("documentFormat") || "soap");
@@ -168,7 +175,7 @@ export const useOrganizationalTranscriptionController = ({
       const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-request", {
         method: "POST",
         headers: {
-          "x-api-key": import.meta.env.VITE_B2B_API_KEY,
+          "Authorization": `Bearer ${session.token}`,
         },
         body: formData,
       });
@@ -241,6 +248,11 @@ export const useOrganizationalTranscriptionController = ({
       return;
     }
 
+    if (!session?.token) {
+      toast.error("Session expired. Please log in again.");
+      return;
+    }
+
     const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
     const formData = new FormData();
     formData.append("audio", audioBlob, "audio.webm");
@@ -255,7 +267,7 @@ export const useOrganizationalTranscriptionController = ({
       const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-request", {
         method: "POST",
         headers: {
-          "x-api-key": import.meta.env.VITE_B2B_API_KEY,
+          "Authorization": `Bearer ${session.token}`,
         },
         body: formData,
       });

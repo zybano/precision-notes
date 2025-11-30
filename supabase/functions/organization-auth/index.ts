@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
-import * as XLSX from "https://esm.sh/xlsx@0.18.5?no-check";
 import { sendHtmlEmail, sendTemplateEmail } from "./zeptomail.ts";
 
 type SupabaseClient = ReturnType<typeof createClient>;
@@ -67,6 +66,30 @@ serve(async (req) => {
       return await handleStaffCreate(req, supabase);
     }
 
+    if (req.method === "GET" && primaryRoute === "organization") {
+      return await handleOrganizationDetails(req, supabase);
+    }
+
+    if (req.method === "GET" && primaryRoute === "staff") {
+      return await handleStaffList(req, supabase);
+    }
+
+    if (req.method === "GET" && primaryRoute === "usage") {
+      return await handleUsageSummary(req, supabase);
+    }
+
+    if (req.method === "GET" && primaryRoute === "staff" && secondaryRoute === "utilization") {
+      return await handleStaffUtilization(req, supabase);
+    }
+
+    if (req.method === "GET" && primaryRoute === "staff" && secondaryRoute === "activity") {
+      return await handleStaffActivityLog(req, supabase);
+    }
+
+    if (req.method === "GET" && primaryRoute === "organization" && secondaryRoute === "staff-utilization") {
+      return await handleOrganizationStaffUtilization(req, supabase);
+    }
+
     return jsonResponse({
       error: "Route not found",
       available_routes: [
@@ -75,7 +98,13 @@ serve(async (req) => {
         "POST /request-otp",
         "POST /verify-otp",
         "POST /staff",
-        "POST /staff/bulk-upload"
+        "POST /staff/bulk-upload",
+        "GET /organization",
+        "GET /staff",
+        "GET /usage",
+        "GET /staff/utilization",
+        "GET /staff/activity",
+        "GET /organization/staff-utilization"
       ]
     }, 404);
   } catch (error) {
@@ -449,7 +478,7 @@ async function handlePasswordResetConfirmation(req: Request, supabase: SupabaseC
 }
 
 async function handleStaffCreate(req: Request, supabase: SupabaseClient) {
-  const session = await requireAdminSession(req, supabase);
+  const session = await requireSession(req, supabase, { adminOnly: true });
   if (!session?.user) {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
@@ -499,38 +528,28 @@ async function handleStaffCreate(req: Request, supabase: SupabaseClient) {
 }
 
 async function handleBulkStaffUpload(req: Request, supabase: SupabaseClient) {
-  const session = await requireAdminSession(req, supabase);
+  const session = await requireSession(req, supabase, { adminOnly: true });
   if (!session?.user) {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
-  const contentType = req.headers.get("content-type") ?? "";
-  if (!contentType.includes("multipart/form-data")) {
-    return jsonResponse({ error: "Bulk upload requires multipart/form-data with a file field" }, 400);
+  const body = await parseJson(req);
+  let entries: Array<Record<string, unknown>> = [];
+
+  if (Array.isArray(body)) {
+    entries = body;
+  } else if (body && Array.isArray(body.staff)) {
+    entries = body.staff;
+  } else if (body && Array.isArray(body.rows)) {
+    entries = body.rows;
+  } else {
+    return jsonResponse({ error: "Provide a JSON array of staff entries" }, 400);
   }
-
-  const formData = await req.formData();
-  const file = formData.get("file");
-
-  if (!(file instanceof File)) {
-    return jsonResponse({ error: "File field is required" }, 400);
-  }
-
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
-  const firstSheet = workbook.SheetNames[0];
-
-  if (!firstSheet) {
-    return jsonResponse({ error: "No sheet found in workbook" }, 400);
-  }
-
-  const worksheet = workbook.Sheets[firstSheet];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: "" });
 
   const results: Array<Record<string, unknown>> = [];
 
-  for (const row of rows) {
-    const normalized = normalizeRow(row);
+  for (const entry of entries) {
+    const normalized = normalizeRow(entry ?? {});
     const email = normalized.email;
     const firstName = normalized.first_name;
     const lastName = normalized.last_name;
@@ -577,8 +596,244 @@ async function handleBulkStaffUpload(req: Request, supabase: SupabaseClient) {
   }
 
   return jsonResponse({
-    total_rows: rows.length,
+    total_rows: entries.length,
     results
+  });
+}
+
+async function handleOrganizationDetails(req: Request, supabase: SupabaseClient) {
+  const session = await requireSession(req, supabase);
+  if (!session?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const { data: organization, error } = await supabase
+    .from("organizations")
+    .select(
+      "id, name, contact_email, contact_name, industry, credits, rate_limit_per_hour, total_requests, total_transcriptions, total_documents_generated, created_at"
+    )
+    .eq("id", session.user.organization_id)
+    .maybeSingle();
+
+  if (error) {
+    return jsonResponse({ error: "Failed to load organization info" }, 500);
+  }
+
+  if (!organization) {
+    return jsonResponse({ error: "Organization not found" }, 404);
+  }
+
+  const { count: staffCount } = await supabase
+    .from("organization_users")
+    .select("id", { head: true, count: "exact" })
+    .eq("organization_id", session.user.organization_id);
+
+  return jsonResponse({
+    organization,
+    staffCount: staffCount ?? 0
+  });
+}
+
+async function handleStaffList(req: Request, supabase: SupabaseClient) {
+  const session = await requireSession(req, supabase, { adminOnly: true });
+  if (!session?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const { data, error } = await supabase
+    .from("organization_users")
+    .select("id, first_name, last_name, email, role, department, last_login_at, created_at, is_active")
+    .eq("organization_id", session.user.organization_id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    return jsonResponse({ error: "Failed to load staff" }, 500);
+  }
+
+  return jsonResponse({ staff: data ?? [] });
+}
+
+async function handleUsageSummary(req: Request, supabase: SupabaseClient) {
+  const session = await requireSession(req, supabase);
+  if (!session?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const { data: organization, error } = await supabase
+    .from("organizations")
+    .select("credits, total_requests, rate_limit_per_hour, total_transcriptions, total_documents_generated")
+    .eq("id", session.user.organization_id)
+    .maybeSingle();
+
+  if (error) {
+    return jsonResponse({ error: "Failed to load usage" }, 500);
+  }
+
+  const { data: userSessions } = await supabase
+    .from("organization_user_sessions")
+    .select("id")
+    .eq("user_id", session.user.id);
+
+  const organizationUsage = {
+    credits: organization?.credits ?? 0,
+    totalRequests: organization?.total_requests ?? 0,
+    totalTranscriptions: organization?.total_transcriptions ?? 0,
+    totalDocumentsGenerated: organization?.total_documents_generated ?? 0,
+    rateLimitPerHour: organization?.rate_limit_per_hour ?? 0,
+    remainingRequests: Math.max(
+      0,
+      (organization?.rate_limit_per_hour ?? 0) - (organization?.total_requests ?? 0)
+    )
+  };
+
+  const userUsage = {
+    lastLogin: session.user.last_login_at,
+    sessionCount: userSessions?.length ?? 0
+  };
+
+  return jsonResponse({ organizationUsage, userUsage });
+}
+
+async function handleStaffUtilization(req: Request, supabase: SupabaseClient) {
+  const session = await requireSession(req, supabase);
+  if (!session?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const url = new URL(req.url);
+  const userId = url.searchParams.get("user_id") || session.user.id;
+  const startDate = url.searchParams.get("start_date");
+  const endDate = url.searchParams.get("end_date");
+
+  // If requesting another user's data, must be admin
+  if (userId !== session.user.id && session.user.role !== "admin") {
+    return jsonResponse({ error: "Unauthorized to view other staff utilization" }, 403);
+  }
+
+  // Verify user belongs to same organization
+  if (userId !== session.user.id) {
+    const { data: targetUser } = await supabase
+      .from("organization_users")
+      .select("organization_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!targetUser || targetUser.organization_id !== session.user.organization_id) {
+      return jsonResponse({ error: "User not found in organization" }, 404);
+    }
+  }
+
+  const { data, error } = await supabase.rpc("get_staff_utilization", {
+    p_user_id: userId,
+    p_start_date: startDate || null,
+    p_end_date: endDate || null
+  });
+
+  if (error) {
+    return jsonResponse({ error: "Failed to load staff utilization" }, 500);
+  }
+
+  // Calculate totals
+  const totals = (data || []).reduce(
+    (acc, record) => ({
+      total_credits: acc.total_credits + (record.credits_used || 0),
+      total_documents: acc.total_documents + (record.documents_generated || 0),
+      total_transcriptions: acc.total_transcriptions + (record.transcriptions_completed || 0)
+    }),
+    { total_credits: 0, total_documents: 0, total_transcriptions: 0 }
+  );
+
+  return jsonResponse({
+    user_id: userId,
+    daily_utilization: data || [],
+    totals
+  });
+}
+
+async function handleStaffActivityLog(req: Request, supabase: SupabaseClient) {
+  const session = await requireSession(req, supabase);
+  if (!session?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const url = new URL(req.url);
+  const userId = url.searchParams.get("user_id") || session.user.id;
+  const startDate = url.searchParams.get("start_date");
+  const endDate = url.searchParams.get("end_date");
+  const limit = parseInt(url.searchParams.get("limit") || "100");
+
+  // If requesting another user's data, must be admin
+  if (userId !== session.user.id && session.user.role !== "admin") {
+    return jsonResponse({ error: "Unauthorized to view other staff activity" }, 403);
+  }
+
+  // Verify user belongs to same organization
+  if (userId !== session.user.id) {
+    const { data: targetUser } = await supabase
+      .from("organization_users")
+      .select("organization_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!targetUser || targetUser.organization_id !== session.user.organization_id) {
+      return jsonResponse({ error: "User not found in organization" }, 404);
+    }
+  }
+
+  const { data, error } = await supabase.rpc("get_staff_activity_details", {
+    p_user_id: userId,
+    p_start_date: startDate || null,
+    p_end_date: endDate || null,
+    p_limit: Math.min(limit, 1000) // Cap at 1000 records
+  });
+
+  if (error) {
+    return jsonResponse({ error: "Failed to load staff activity log" }, 500);
+  }
+
+  return jsonResponse({
+    user_id: userId,
+    activities: data || [],
+    count: (data || []).length
+  });
+}
+
+async function handleOrganizationStaffUtilization(req: Request, supabase: SupabaseClient) {
+  const session = await requireSession(req, supabase, { adminOnly: true });
+  if (!session?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const url = new URL(req.url);
+  const startDate = url.searchParams.get("start_date");
+  const endDate = url.searchParams.get("end_date");
+
+  const { data, error } = await supabase.rpc("get_organization_staff_utilization", {
+    p_organization_id: session.user.organization_id,
+    p_start_date: startDate || null,
+    p_end_date: endDate || null
+  });
+
+  if (error) {
+    return jsonResponse({ error: "Failed to load organization staff utilization" }, 500);
+  }
+
+  // Calculate organization-wide totals
+  const totals = (data || []).reduce(
+    (acc, staff) => ({
+      total_credits: acc.total_credits + Number(staff.total_credits_used || 0),
+      total_documents: acc.total_documents + Number(staff.total_documents_generated || 0),
+      total_transcriptions: acc.total_transcriptions + Number(staff.total_transcriptions_completed || 0),
+      active_staff: acc.active_staff + (staff.last_activity_date ? 1 : 0)
+    }),
+    { total_credits: 0, total_documents: 0, total_transcriptions: 0, active_staff: 0 }
+  );
+
+  return jsonResponse({
+    organization_id: session.user.organization_id,
+    staff_utilization: data || [],
+    totals,
+    total_staff: (data || []).length
   });
 }
 
@@ -641,10 +896,19 @@ async function updateLastLogin(supabase: SupabaseClient, userId: string) {
 async function createSessionForUser(supabase: SupabaseClient, user: any, req: Request) {
   const token = crypto.randomUUID() + crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const ip = req.headers.get("x-forwarded-for") ?? undefined;
   const userAgent = req.headers.get("user-agent") ?? undefined;
 
-  await supabase
+  // Extract the first IP from the x-forwarded-for header (client IP)
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
+
+  console.log("=== Creating Session ===");
+  console.log("User ID:", user.id);
+  console.log("Organization ID:", user.organization_id);
+  console.log("Token length:", token.length);
+  console.log("IP address:", ip);
+
+  const { data, error } = await supabase
     .from("organization_user_sessions")
     .insert({
       user_id: user.id,
@@ -652,9 +916,23 @@ async function createSessionForUser(supabase: SupabaseClient, user: any, req: Re
       role: user.role,
       session_token: token,
       expires_at: expiresAt.toISOString(),
-      ip_address: ip ?? null,
+      ip_address: ip,
       user_agent: userAgent ?? null
-    });
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("ERROR: Failed to insert session:", error);
+    throw new Error("Failed to create session: " + error.message);
+  }
+
+  if (!data) {
+    console.error("ERROR: Session insert returned no data");
+    throw new Error("Failed to create session: No data returned");
+  }
+
+  console.log("✓ Session created successfully:", data.id);
 
   return {
     token,
@@ -664,28 +942,92 @@ async function createSessionForUser(supabase: SupabaseClient, user: any, req: Re
   };
 }
 
-async function requireAdminSession(req: Request, supabase: SupabaseClient) {
+interface RequireSessionOptions {
+  adminOnly?: boolean;
+}
+
+async function requireSession(req: Request, supabase: SupabaseClient, options: RequireSessionOptions = {}) {
   const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization");
+
+  console.log("=== Session Validation Debug ===");
+  console.log("Auth header present:", !!authHeader);
+  console.log("Auth header value:", authHeader?.substring(0, 20) + "...");
+
   if (!authHeader?.startsWith("Bearer ")) {
+    console.log("ERROR: No Bearer token in header");
     return null;
   }
 
   const token = authHeader.replace("Bearer ", "").trim();
   if (!token) {
+    console.log("ERROR: Token is empty after extraction");
     return null;
   }
 
+  console.log("Token extracted, length:", token.length);
+  console.log("Current time:", new Date().toISOString());
+
   const { data, error } = await supabase
     .from("organization_user_sessions")
-    .select("id, user_id, role, organization_id, expires_at, revoked_at, user:organization_users(id, email, first_name, last_name, role, organization_id)")
+    .select(
+      "id, user_id, role, organization_id, expires_at, revoked_at, user:organization_users(id, email, first_name, last_name, role, organization_id, department, last_login_at)"
+    )
     .eq("session_token", token)
     .is("revoked_at", null)
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();
 
-  if (error || !data || data.role !== "admin" || !data.user || data.user.role !== "admin") {
+  if (error) {
+    console.log("ERROR: Database error fetching session:", error);
     return null;
   }
+
+  if (!data) {
+    console.log("ERROR: No session found for token");
+    // Check if session exists but is expired or revoked
+    const { data: anySession } = await supabase
+      .from("organization_user_sessions")
+      .select("id, expires_at, revoked_at")
+      .eq("session_token", token)
+      .maybeSingle();
+
+    if (anySession) {
+      console.log("Session exists but invalid:");
+      console.log("- Expires at:", anySession.expires_at);
+      console.log("- Revoked at:", anySession.revoked_at);
+      console.log("- Is expired:", new Date(anySession.expires_at) <= new Date());
+      console.log("- Is revoked:", !!anySession.revoked_at);
+    } else {
+      console.log("Session does not exist in database");
+    }
+    return null;
+  }
+
+  console.log("Session found:", {
+    user_id: data.user_id,
+    role: data.role,
+    expires_at: data.expires_at
+  });
+
+  let userRecord = data.user;
+  if (!userRecord) {
+    console.log("User not populated, fetching separately...");
+    const { data: fetchedUser } = await supabase
+      .from("organization_users")
+      .select("id, email, first_name, last_name, role, organization_id, department, last_login_at")
+      .eq("id", data.user_id)
+      .maybeSingle();
+    if (!fetchedUser) {
+      console.log("ERROR: User not found for user_id:", data.user_id);
+      return null;
+    }
+    userRecord = fetchedUser as any;
+    data.user = userRecord;
+    console.log("User fetched:", userRecord.email);
+  }
+
+
+  console.log("Session validation successful!");
 
   await supabase
     .from("organization_user_sessions")

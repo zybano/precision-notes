@@ -117,7 +117,8 @@ async function sendTemplateEmail(options: {
     from: buildFrom(options.fromEmail, options.fromName),
     to: normalizeRecipients(options.to),
     template_key: options.templateKey,
-    merge_info: options.parameters ?? {}
+    merge_info: options.parameters ?? {},
+    mail_format: "plaintext"
   };
 
   if (!payload.to?.length) {
@@ -198,7 +199,13 @@ async function callZeptoMail(path: string, payload: Record<string, unknown>) {
   }
 
   if (!response.ok) {
-    const message = parsed?.message ?? parsed?.error ?? response.statusText;
+    const message = parsed?.message ?? parsed?.error ?? response.statusText ?? text;
+    console.error("send-email-template ZeptoMail failure", {
+      path,
+      status: response.status,
+      payload,
+      responseBody: text
+    });
     throw new Error(`ZeptoMail error ${response.status}: ${message}`);
   }
 

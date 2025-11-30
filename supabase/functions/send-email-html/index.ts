@@ -175,7 +175,13 @@ async function callZeptoMail(path: string, payload: Record<string, unknown>) {
   }
 
   if (!response.ok) {
-    const message = parsed?.message ?? parsed?.error ?? response.statusText;
+    const message = parsed?.message ?? parsed?.error ?? response.statusText ?? text;
+    console.error("send-email-html ZeptoMail failure", {
+      path,
+      status: response.status,
+      payload,
+      responseBody: text
+    });
     throw new Error(`ZeptoMail error ${response.status}: ${message}`);
   }
 

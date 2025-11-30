@@ -1,0 +1,377 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useOrgAuth } from "@/contexts/OrgAuthContext";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  fetchOrganizationDetails,
+  fetchUsageSummary,
+  OrganizationDetailsResponse,
+  UsageSummaryResponse
+} from "@/services/orgAuthApi";
+import {
+  TrendingUp,
+  CreditCard,
+  FileText,
+  Users,
+  BarChart3,
+  UserPlus,
+  FileEdit,
+  BookOpen,
+  Activity,
+  ArrowRight
+} from "lucide-react";
+
+interface OrgSummary {
+  id: string;
+  name: string;
+  contactEmail: string;
+  contactName: string;
+  industry: string;
+  credits: number;
+  staffCount: number;
+}
+
+export default function DashboardPage() {
+  const { user, session } = useOrgAuth();
+  const navigate = useNavigate();
+  const [orgDetails, setOrgDetails] = useState<OrgSummary | null>(null);
+  const [usage, setUsage] = useState<UsageSummaryResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const token = session?.token;
+  const isAdmin = user?.role === "admin";
+
+  useEffect(() => {
+    if (!token) return;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const [orgResponse, usageResponse] = await Promise.all([
+          fetchOrganizationDetails(token),
+          fetchUsageSummary(token)
+        ]);
+        setOrgDetails(transformOrg(orgResponse));
+        setUsage(usageResponse);
+      } catch (error) {
+        console.error(error);
+        toast.error((error as Error)?.message ?? "Unable to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [token]);
+
+  const orgUsage = usage?.organizationUsage;
+
+  return (
+    <div className="p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Welcome back, {user?.first_name}!
+          </h1>
+          <p className="text-slate-600 mt-1">
+            {isAdmin
+              ? "Here's an overview of your organization's activity"
+              : "Here's your personal activity overview"}
+          </p>
+        </div>
+
+        {loading ? (
+          <Card className="p-6 text-sm text-slate-500">Loading dashboard data...</Card>
+        ) : (
+          <>
+            {/* Organization Info - Admin Only */}
+            {isAdmin && orgDetails && (
+              <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600 mb-1">Organization</p>
+                    <h2 className="text-2xl font-bold text-slate-900">{orgDetails.name}</h2>
+                    <p className="text-sm text-slate-600 mt-1">{orgDetails.industry}</p>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {orgDetails.id}
+                  </Badge>
+                </div>
+              </Card>
+            )}
+
+            {/* Stats Grid - Different for Admin vs Staff */}
+            {isAdmin ? (
+              // Admin View - Organization-wide stats
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                      <CreditCard className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-500 mb-1">
+                    Organization Credits
+                  </h3>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {orgUsage?.credits.toLocaleString() ?? orgDetails?.credits?.toLocaleString() ?? "0"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">Available for team</p>
+                </Card>
+
+                <Card className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-500 mb-1">
+                    Total Documents
+                  </h3>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {orgUsage?.totalDocumentsGenerated.toLocaleString() ?? "0"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">Generated by team</p>
+                </Card>
+
+                <Card className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                      <TrendingUp className="h-6 w-6 text-purple-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-500 mb-1">
+                    Total Requests
+                  </h3>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {orgUsage?.totalRequests.toLocaleString() ?? "0"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {orgUsage ? `${orgUsage.remainingRequests.toLocaleString()} remaining today` : "Rate limited"}
+                  </p>
+                </Card>
+
+                <Card className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-orange-100 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-orange-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-500 mb-1">
+                    Team Members
+                  </h3>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {orgDetails?.staffCount?.toString() ?? "0"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">Active users</p>
+                </Card>
+              </div>
+            ) : (
+              // Staff View - Personal stats only
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                      <Activity className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-500 mb-1">
+                    My Documents
+                  </h3>
+                  <p className="text-3xl font-bold text-slate-900">0</p>
+                  <p className="text-xs text-slate-500 mt-1">Created by you</p>
+                </Card>
+
+                <Card className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-500 mb-1">
+                    Last Login
+                  </h3>
+                  <p className="text-lg font-bold text-slate-900">
+                    {usage?.userUsage.lastLogin
+                      ? new Date(usage.userUsage.lastLogin).toLocaleDateString()
+                      : "Never"}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">Your account</p>
+                </Card>
+
+                <Card className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                      <TrendingUp className="h-6 w-6 text-purple-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-500 mb-1">
+                    Active Sessions
+                  </h3>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {usage?.userUsage.sessionCount ?? 0}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">Current sessions</p>
+                </Card>
+              </div>
+            )}
+
+            {/* Quick Actions - Enhanced with better UX */}
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Quick Actions</h2>
+
+              {isAdmin ? (
+                // Admin Quick Actions
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Card className="p-6 hover:shadow-lg transition-all hover:border-blue-300 cursor-pointer group"
+                    onClick={() => navigate('/staff-management')}>
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                        <UserPlus className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900 mb-1">Add Staff Member</h3>
+                        <p className="text-sm text-slate-600 mb-3">
+                          Create new user accounts for your team
+                        </p>
+                        <div className="flex items-center text-blue-600 text-sm font-medium group-hover:gap-2 transition-all">
+                          <span>Manage Staff</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-6 hover:shadow-lg transition-all hover:border-purple-300 cursor-pointer group"
+                    onClick={() => navigate('/credit-utilization')}>
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                        <BarChart3 className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900 mb-1">View Utilization</h3>
+                        <p className="text-sm text-slate-600 mb-3">
+                          Monitor team credit usage and activity
+                        </p>
+                        <div className="flex items-center text-purple-600 text-sm font-medium group-hover:gap-2 transition-all">
+                          <span>View Reports</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-6 hover:shadow-lg transition-all hover:border-green-300 cursor-pointer group"
+                    onClick={() => navigate('/documentation')}>
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                        <BookOpen className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900 mb-1">Documentation</h3>
+                        <p className="text-sm text-slate-600 mb-3">
+                          Access guides and API documentation
+                        </p>
+                        <div className="flex items-center text-green-600 text-sm font-medium group-hover:gap-2 transition-all">
+                          <span>Learn More</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              ) : (
+                // Staff Quick Actions
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="p-6 hover:shadow-lg transition-all hover:border-blue-300 cursor-pointer group">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                        <FileEdit className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900 mb-1">Create Document</h3>
+                        <p className="text-sm text-slate-600 mb-3">
+                          Generate new medical documentation
+                        </p>
+                        <div className="flex items-center text-blue-600 text-sm font-medium group-hover:gap-2 transition-all">
+                          <span>Start Creating</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-6 hover:shadow-lg transition-all hover:border-green-300 cursor-pointer group"
+                    onClick={() => navigate('/documentation')}>
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                        <BookOpen className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900 mb-1">Documentation</h3>
+                        <p className="text-sm text-slate-600 mb-3">
+                          Learn how to use the platform
+                        </p>
+                        <div className="flex items-center text-green-600 text-sm font-medium group-hover:gap-2 transition-all">
+                          <span>View Guides</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-6 hover:shadow-lg transition-all hover:border-purple-300 cursor-pointer group"
+                    onClick={() => navigate('/credit-utilization')}>
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                        <BarChart3 className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900 mb-1">My Usage</h3>
+                        <p className="text-sm text-slate-600 mb-3">
+                          Track your personal activity
+                        </p>
+                        <div className="flex items-center text-purple-600 text-sm font-medium group-hover:gap-2 transition-all">
+                          <span>View Stats</span>
+                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Activity Placeholder */}
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">
+                Recent Activity
+              </h2>
+              <div className="text-center py-12">
+                <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                  <Activity className="h-8 w-8 text-slate-400" />
+                </div>
+                <p className="text-slate-500 mb-2">No recent activity to display</p>
+                <p className="text-sm text-slate-400">Your activity will appear here once you start using the platform</p>
+              </div>
+            </Card>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function transformOrg(response: OrganizationDetailsResponse): OrgSummary {
+  return {
+    id: response.organization.id,
+    name: response.organization.name,
+    contactEmail: response.organization.contact_email ?? "",
+    contactName: response.organization.contact_name ?? "",
+    industry: response.organization.industry ?? "",
+    credits: response.organization.credits ?? 0,
+    staffCount: response.staffCount
+  };
+}

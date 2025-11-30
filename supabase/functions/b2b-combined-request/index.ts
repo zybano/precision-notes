@@ -3,9 +3,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { AssemblyAI } from "https://esm.sh/assemblyai@4.0.0";
 import OpenAI from "https://esm.sh/openai@4.22.0";
+import { recordStaffActivity, getUserIdFromSessionToken } from "../_shared/staffActivityTracker.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-api-key, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 /**
@@ -83,11 +84,12 @@ serve(async (req)=>{
   let errorMessage = "";
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
-    // Extract API key
-    const apiKey = req.headers.get("x-api-key");
-    if (!apiKey) {
+
+    // Extract and validate session token
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({
-        error: "API key required"
+        error: "Authentication required"
       }), {
         status: 401,
         headers: {
@@ -96,13 +98,16 @@ serve(async (req)=>{
         }
       });
     }
-    // Validate API key
-    const { data: validation, error: validationError } = await supabase.rpc('validate_api_key', {
-      p_api_key: apiKey
-    });
-    if (validationError || !validation?.valid) {
+
+    const sessionToken = authHeader.replace("Bearer ", "").trim();
+    const { userId, organizationId: sessionOrgId, error: sessionError } = await getUserIdFromSessionToken(
+      supabase,
+      sessionToken
+    );
+
+    if (sessionError || !userId || !sessionOrgId) {
       return new Response(JSON.stringify({
-        error: validation?.error || "Invalid API key"
+        error: sessionError || "Invalid or expired session"
       }), {
         status: 401,
         headers: {
@@ -111,8 +116,27 @@ serve(async (req)=>{
         }
       });
     }
-    const organization = validation.organization;
-    organizationId = organization.id;
+
+    organizationId = sessionOrgId;
+
+    // Fetch organization details
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', organizationId)
+      .single();
+
+    if (orgError || !organization) {
+      return new Response(JSON.stringify({
+        error: "Organization not found"
+      }), {
+        status: 404,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
+    }
     // Rate limiting
     const currentHour = Math.floor(Date.now() / (1000 * 60 * 60));
     const rateLimitKey = `${organizationId}_${currentHour}`;
@@ -313,6 +337,26 @@ serve(async (req)=>{
     }
     const processingTime = Date.now() - startTime;
     success = true;
+
+    // Track staff activity
+    await recordStaffActivity(supabase, {
+      userId,
+      organizationId,
+      activityType: 'combined_request',
+      creditsUsed: totalCredits,
+      requestId,
+      documentFormat,
+      transcriptionProvider: 'assemblyai',
+      modelUsed: modelName,
+      processingTimeMs: processingTime,
+      metadata: {
+        language_code: languageCode || 'auto-detected',
+        include_summary: includeSummary,
+        use_nano_model: useSpeechModelNano,
+        audio_file_size_mb: requestSize
+      }
+    });
+
     // STEP 3: Handle storage if organization allows it
     if (organization.data_storage_preference === 'temporary' || organization.data_storage_preference === 'permanent') {
       const expiresAt = new Date();

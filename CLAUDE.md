@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Development
 - `npm run dev` - Start development server on port 8080
-- `npm run build` - Production build 
+- `npm run build` - Production build
 - `npm run build:dev` - Development build
 - `npm run lint` - Lint code with ESLint
 - `npm run preview` - Preview production build
@@ -20,8 +20,8 @@ No test scripts are currently configured in this project.
 - **Frontend**: React 18 with TypeScript, Vite build system
 - **UI Framework**: Shadcn UI components built on Radix UI primitives
 - **Styling**: TailwindCSS with custom theme and animations
-- **State Management**: React Query for server state, React Context for auth
-- **Backend**: Supabase (PostgreSQL + Auth + Edge Functions)
+- **State Management**: React Query for server state, Context API for auth
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
 - **Routing**: React Router v6 with protected routes
 
 ### Key Dependencies
@@ -33,20 +33,33 @@ No test scripts are currently configured in this project.
 
 ### Application Structure
 
-This is a B2B medical documentation platform called "Precision Notes" with multiple user tiers:
+This is an organizational B2B medical documentation platform called "Precision Notes" with a custom authentication system:
 
-1. **Individual Users** - Personal medical documentation
-2. **B2B Organizations** - Enterprise medical documentation with credit system
-3. **Hospital Management** - Full hospital system modules (emergency, billing, pharmacy, etc.)
-4. **Admin Interface** - System administration and organization management
+**Current Focus**: The app is primarily configured for organizational/B2B usage with a custom authentication system separate from Supabase Auth. The main entry point routes to organizational documentation pages.
 
 ### Core Architecture Patterns
 
-#### Authentication & Authorization
-- `src/contexts/AuthContext.tsx` - Main user authentication context
-- `src/contexts/AdminAuthContext.tsx` - Separate admin authentication system
-- `src/components/auth/ProtectedRoute.tsx` - Route protection for regular users
-- `src/components/admin/AdminProtectedRoute.tsx` - Admin route protection with permission system
+#### Custom Organization Authentication System
+The app uses a **custom authentication system** separate from Supabase Auth, managed through Edge Functions:
+
+- `src/contexts/OrgAuthContext.tsx` - Organization authentication context with localStorage persistence
+- `src/services/orgAuthApi.ts` - API client for organization auth endpoints
+- `src/components/auth/OrgProtectedRoute.tsx` - Route protection for organizational users
+- `supabase/functions/organization-auth/index.ts` - Edge Function handling all auth operations
+
+**Authentication Flow**:
+1. Admin onboarding creates organization + admin user
+2. Password-based login OR OTP-based login (via email)
+3. Session token stored in localStorage (key: `org_auth_state`)
+4. Token passed as `Authorization: Bearer {token}` header to Edge Functions
+5. Role-based routing: admins see StaffManagementPage, staff see StaffDashboardPage
+
+**Key Routes**:
+- `/` - Organizational documentation page (public)
+- `/admin/onboard` - Admin onboarding flow
+- `/admin/login` - Admin/staff login
+- `/admin/reset-password` - Password reset flow
+- `/admin/dashboard` - Protected dashboard (role-based routing)
 
 #### Document Processing Flow
 1. **Audio Recording** (`src/hooks/useAudioRecording.ts`) - Custom audio capture
@@ -54,75 +67,89 @@ This is a B2B medical documentation platform called "Precision Notes" with multi
 3. **AI Processing** (`src/services/documents/`) - Convert transcripts to formatted medical documents
 4. **Document Management** (`src/components/documentation/`) - CRUD operations, sharing, PDF export
 
-#### Key Service Layers
-- **Payment Services** (`src/services/payment/`) - Multi-provider payment handling (Stripe, Paystack)
+#### Supabase Edge Functions Architecture
+All server-side operations are handled via Edge Functions in `supabase/functions/`:
+
+**Organization Auth** (`organization-auth/`):
+- `/admin-onboard` - Create organization + admin user
+- `/login` - Password login
+- `/request-otp` + `/verify-otp` - OTP-based login
+- `/request-password-reset` + `/reset-password` - Password reset flow
+- `/staff` - CRUD for staff members (admin only)
+- `/staff/bulk-upload` - Bulk staff upload (admin only)
+- `/organization` - Get organization details
+- `/usage` - Get organization usage summary
+
+**B2B API** (`b2b-*` functions):
+- `b2b-transcribe-audio` - Audio transcription for B2B orgs
+- `b2b-generate-document` - AI document generation
+- `b2b-combined-request` - Combined transcription + generation
+- `b2b-organization-management` - Organization CRUD operations
+
+**Payment Webhooks**:
+- `stripe-webhook`, `paystack-webhook`, `enhanced-paystack-webhook`, `unified-webhook`
+- Checkout functions for various payment flows
+
+**Email**:
+- `send-email-html`, `send-email-template` - Email sending via ZeptoMail
+- Used by `organization-auth` for OTP and password reset emails
+
+### Key Service Layers
+- **Organization Auth** (`src/services/orgAuthApi.ts`) - Custom auth API client with typed responses
+- **Payment Services** (`src/services/payment/`) - Multi-provider payment handling
 - **Document Services** (`src/services/documents/`) - Document CRUD and processing
-- **Admin Services** (`src/services/adminApiService.ts`) - B2B organization management
-- **Supabase Integration** (`src/integrations/supabase/`) - Database client and types
+- **Transcription** (`src/services/transcription.ts`) - Multi-provider transcription
 
-### Component Organization
+### React Query Configuration
+QueryClient is configured in `src/App.tsx` with:
+- `refetchOnWindowFocus: false`
+- `retry: 1`
+- `staleTime: 5 minutes`
 
-#### Major Feature Areas
-- `src/components/documentation/` - Core medical documentation interface
-- `src/components/hospital/` - Hospital management modules (emergency, billing, pharmacy, etc.)
-- `src/components/admin/` - Admin interface for managing B2B organizations
-- `src/components/landing/` - Marketing and pricing pages
-- `src/components/subscription/` - Billing and credit management
+### Build Configuration
+- **Vite** with React SWC for fast builds
+- **Path alias**: `@/` maps to `src/`
+- **Port**: Development server runs on port 8080
+- **Terser minification**: Removes `console.log`, `console.debug`, `console.info` in production
+- **TypeScript**: Strict mode enabled
+- **ESLint**: React + TypeScript rules (unused vars disabled)
 
-#### UI Components
-- `src/components/ui/` - Shadcn UI component library
-- Custom theme defined in `tailwind.config.ts` with medical/sunshine color palettes
-- Uses Inter font family for consistent typography
-
-### Data Models
-
-#### Document Templates
-- Defined in `src/data/documentTemplates.ts`
-- Supports SOAP notes, H&P, progress notes, consultation notes, specialty formats
-- Template-driven document generation with AI provider selection
-
-#### Supabase Schema
-- User authentication and profiles
-- Credit management system for B2B organizations  
-- Document storage and sharing permissions
-- Admin user management with role-based permissions
-
-### B2B Features
-
-#### Organization Management
-- Multi-tenant architecture with credit-based usage
-- Admin panel for managing organization credits and API keys
-- Usage tracking and analytics
-- Regional pricing support
-
-#### API Integration
-- Edge functions in `supabase/functions/` for secure server-side operations
-- Webhook handling for payment providers
-- Admin middleware for protected B2B operations
-
-### Development Notes
-
-#### File Structure Conventions
-- Pages in `src/pages/` follow route structure
-- Components organized by feature domain
-- Hooks for reusable logic (`src/hooks/`)
-- Services for API interactions (`src/services/`)
-- Types defined per domain (`src/types/`)
-
-#### Build Configuration
-- Vite with React SWC for fast builds
-- TypeScript with strict settings
-- ESLint with React and TypeScript rules (unused vars disabled)
-- Terser minification with console.log removal in production
-
-#### Environment Variables
+### Environment Variables
 The application expects these environment variables:
-- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` - Supabase connection
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anon/public key
+- `VITE_SUPABASE_EDGE_URL` - (Optional) Custom Edge Function URL, defaults to Supabase project URL
 - `VITE_ASSEMBLYAI_API_KEY` - Speech-to-text transcription
-- `VITE_OPENAI_API_KEY`, `VITE_ANTHROPIC_API_KEY`, `VITE_GEMINI_API_KEY` - AI providers
+- `VITE_OPENAI_API_KEY` - OpenAI for document generation
+- `VITE_ANTHROPIC_API_KEY` - Anthropic Claude for document generation
+- `VITE_GEMINI_API_KEY` - Google Gemini for document generation
 
-#### Special Considerations
-- Medical data handling requires careful attention to security and privacy
-- Multi-provider AI system allows fallback options for document generation
-- Credit-based billing system requires careful transaction handling
-- Audio processing happens client-side with real-time transcription capabilities
+### File Structure Conventions
+- **Pages**: `src/pages/` organized by feature (`auth/`, `admin/`, `staff/`)
+- **Components**: `src/components/` organized by domain
+- **Contexts**: `src/contexts/` for React context providers
+- **Hooks**: `src/hooks/` for reusable logic
+- **Services**: `src/services/` for API clients and business logic
+- **Types**: `src/types/` for TypeScript type definitions
+- **UI Components**: `src/components/ui/` for Shadcn UI library
+
+### Important Implementation Details
+
+#### Authentication State Persistence
+- Auth state stored in localStorage with key `org_auth_state`
+- Contains `{ session: OrgSession, user: OrganizationUser }`
+- Loaded on app initialization in `OrgAuthContext`
+- Cleared on logout
+
+#### Role-Based Access
+- Two roles: `admin` and `staff`
+- Admins can manage staff, view organization details, upload bulk staff
+- Staff can only access their own dashboard
+- Role determined by `user.role` field in session
+
+#### Security Considerations
+- Medical data handling requires HIPAA compliance considerations
+- Edge Functions validate session tokens for all protected endpoints
+- Row-level security in Supabase for data protection
+- Password reset tokens expire (tracked in Edge Function responses)
+- OTP codes expire (tracked in Edge Function responses)
