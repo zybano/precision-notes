@@ -50,7 +50,7 @@ interface UsageStatsDialogProps {
   organization: Organization;
 }
 
-const SUPABASE_URL = "https://rdjzeayewevditzekveb.supabase.co";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://api.precisionnote.com";
 
 export function UsageStatsDialog({
   open,

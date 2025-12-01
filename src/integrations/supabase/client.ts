@@ -2,8 +2,8 @@
 import {createClient} from '@supabase/supabase-js';
 import type {Database} from './types';
 
-const SUPABASE_URL = "https://rdjzeayewevditzekveb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkanplYXlld2V2ZGl0emVrdmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzODQ4MzYsImV4cCI6MjA1Nzk2MDgzNn0.ExzjHL-s6qWyV3DGJb-k1EVxRLpd2ZrNW_7qnDmlnmU";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://api.precisionnote.com";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkanplYXlld2V2ZGl0emVrdmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzODQ4MzYsImV4cCI6MjA1Nzk2MDgzNn0.ExzjHL-s6qWyV3DGJb-k1EVxRLpd2ZrNW_7qnDmlnmU";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
