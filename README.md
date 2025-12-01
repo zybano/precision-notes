@@ -79,14 +79,6 @@ cp .env.example .env
 npm run dev
 ```
 
-### Environment Variables
-- `VITE_SUPABASE_URL`: Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY`: Your Supabase anon/public key
-- `VITE_ASSEMBLYAI_API_KEY`: AssemblyAI API key for transcription
-- `VITE_OPENAI_API_KEY`: OpenAI API key for document generation
-- `VITE_ANTHROPIC_API_KEY`: Anthropic API key for document generation
-- `VITE_GEMINI_API_KEY`: Google Gemini API key for document generation
-
 ## Development
 
 ### Build for Production
