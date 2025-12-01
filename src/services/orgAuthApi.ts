@@ -1,4 +1,6 @@
-const EDGE_URL = import.meta.env.VITE_SUPABASE_EDGE_URL ?? "https://rdjzeayewevditzekveb.supabase.co/functions/v1";
+const EDGE_URL = import.meta.env.VITE_SUPABASE_URL
+  ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+  : "https://api.precisionnote.com/functions/v1";
 const ORG_AUTH_BASE = `${EDGE_URL}/organization-auth`;
 const UTILIZATION_BASE = `${EDGE_URL}/staff-utilization`;
 

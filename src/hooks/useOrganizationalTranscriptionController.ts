@@ -7,6 +7,10 @@ import {UseFormReturn} from "react-hook-form";
 import {toast} from "sonner";
 import {useOrgAuth} from "@/contexts/OrgAuthContext";
 
+const EDGE_URL = import.meta.env.VITE_SUPABASE_URL
+  ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+  : "https://api.precisionnote.com/functions/v1";
+
 interface OrganizationalTranscriptionControllerProps {
   form: UseFormReturn<any>;
   transcriptionProvider: TranscriptionProvider;
@@ -172,7 +176,7 @@ export const useOrganizationalTranscriptionController = ({
     formData.append("requestId", crypto.randomUUID());
 
     try {
-      const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-request", {
+      const response = await fetch(`${EDGE_URL}/b2b-combined-request`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session.token}`,
@@ -264,7 +268,7 @@ export const useOrganizationalTranscriptionController = ({
     formData.append("requestId", crypto.randomUUID());
 
     try {
-      const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-combined-request", {
+      const response = await fetch(`${EDGE_URL}/b2b-combined-request`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session.token}`,

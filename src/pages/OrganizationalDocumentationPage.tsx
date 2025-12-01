@@ -13,6 +13,10 @@ import {buildCopyContent, generateDocumentationPdf} from "@/utils/documentExport
 import {INITIAL_FORM_VALUES} from "@/pages/organizational/constants";
 import {DocumentFormat} from "@/services/transcription";
 
+const EDGE_URL = import.meta.env.VITE_SUPABASE_URL
+  ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+  : "https://api.precisionnote.com/functions/v1";
+
 
 const OrganizationalDocumentationPage = () => {
   const [activeTab, setActiveTab] = useState("template");
@@ -131,7 +135,7 @@ const OrganizationalDocumentationPage = () => {
         request_id: crypto.randomUUID(),
       };
 
-      const response = await fetch("https://rdjzeayewevditzekveb.supabase.co/functions/v1/b2b-generate-document", {
+      const response = await fetch(`${EDGE_URL}/b2b-generate-document`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
