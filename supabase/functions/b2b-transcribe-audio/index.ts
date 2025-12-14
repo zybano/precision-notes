@@ -1,7 +1,7 @@
 // B2B Audio Transcription API - Replicating frontend AssemblyAI logic
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { AssemblyAI } from "https://esm.sh/assemblyai@4.0.0";
+import { AssemblyAI } from "https://esm.sh/assemblyai@4.22.0";
 import { recordStaffActivity, getUserIdFromSessionToken } from "../_shared/staffActivityTracker.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

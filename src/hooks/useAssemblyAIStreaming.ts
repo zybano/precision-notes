@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from "react";
-import {RealtimeTranscriber} from "assemblyai";
+import {StreamingTranscriber} from "assemblyai";
 
 interface UseAssemblyAIStreamingOptions {
   getRealtimeToken: () => Promise<string>;
@@ -79,7 +79,7 @@ export const useAssemblyAIStreaming = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const transcriberRef = useRef<RealtimeTranscriber | null>(null);
+  const transcriberRef = useRef<StreamingTranscriber | null>(null);
   const finalSegmentsRef = useRef<string[]>([]);
   const partialRef = useRef("");
   const isPausedRef = useRef(false);
@@ -132,23 +132,27 @@ export const useAssemblyAIStreaming = ({
 
     try {
       const token = await getRealtimeToken();
-      const transcriber = new RealtimeTranscriber({
+      const transcriber = new StreamingTranscriber({
         token,
         sampleRate: targetSampleRate,
         encoding: "pcm_s16le",
+        formatTurns: true,
       });
 
-      transcriber.on("transcript.partial", (message) => {
-        partialRef.current = message.text;
-        setPartialTranscript(message.text);
-      });
+      transcriber.on("turn", (event) => {
+        if (event.turn_is_formatted || event.end_of_turn) {
+          partialRef.current = "";
+          setPartialTranscript("");
+          if (event.transcript?.trim()) {
+            finalSegmentsRef.current = [...finalSegmentsRef.current, event.transcript.trim()];
+            setFinalTranscript(finalSegmentsRef.current.join(" ").trim());
+          }
+          return;
+        }
 
-      transcriber.on("transcript.final", (message) => {
-        partialRef.current = "";
-        setPartialTranscript("");
-        if (message.text?.trim()) {
-          finalSegmentsRef.current = [...finalSegmentsRef.current, message.text.trim()];
-          setFinalTranscript(finalSegmentsRef.current.join(" ").trim());
+        if (event.transcript) {
+          partialRef.current = event.transcript;
+          setPartialTranscript(event.transcript);
         }
       });
 
@@ -183,7 +187,7 @@ export const useAssemblyAIStreaming = ({
           try {
             transcriberRef.current.sendAudio(pcmChunk);
           } catch (error) {
-            console.error("Realtime audio send error", error);
+            console.error("Streaming audio send error", error);
           }
         }
       };
@@ -232,7 +236,7 @@ export const useAssemblyAIStreaming = ({
       try {
         await transcriberRef.current.close();
       } catch (error) {
-        console.error("Realtime close error", error);
+        console.error("Streaming close error", error);
       }
     }
 

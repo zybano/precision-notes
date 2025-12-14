@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { AssemblyAI } from "https://esm.sh/assemblyai@4.0.0";
+import { AssemblyAI } from "https://esm.sh/assemblyai@4.22.0";
 import { getUserIdFromSessionToken } from "../_shared/staffActivityTracker.ts";
 
 const corsHeaders = {
@@ -56,25 +56,40 @@ serve(async (req) => {
       });
     }
 
-    let expiresIn = 60;
+    let expiresInSeconds = 60;
+    let maxSessionDurationSeconds: number | undefined;
+    let body: Record<string, unknown> | undefined;
+
     try {
-      const body = await req.json();
-      if (body?.expires_in && Number.isFinite(body.expires_in)) {
-        const requested = Number(body.expires_in);
-        expiresIn = Math.max(30, Math.min(1800, Math.floor(requested)));
-      }
+      body = await req.json();
     } catch {
-      // Ignore JSON parse errors – default expiry will be used
+      // Ignore JSON parse errors – defaults will be used
+    }
+
+    const requestedExpiry = Number(body?.expires_in_seconds);
+    if (Number.isFinite(requestedExpiry)) {
+      expiresInSeconds = Math.max(30, Math.min(600, Math.floor(requestedExpiry)));
+    }
+
+    const requestedMaxSession = Number(body?.max_session_duration_seconds);
+    if (Number.isFinite(requestedMaxSession)) {
+      maxSessionDurationSeconds = Math.max(60, Math.min(10800, Math.floor(requestedMaxSession)));
     }
 
     const client = new AssemblyAI({ apiKey });
-    const token = await client.realtime.createTemporaryToken({ expires_in: expiresIn });
+    const token = await client.streaming.createTemporaryToken({
+      expires_in_seconds: expiresInSeconds,
+      ...(maxSessionDurationSeconds
+        ? { max_session_duration_seconds: maxSessionDurationSeconds }
+        : {}),
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
         token,
-        expires_in: expiresIn,
+        expires_in_seconds: expiresInSeconds,
+        max_session_duration_seconds: maxSessionDurationSeconds,
         organization_id: organizationId,
       }),
       {

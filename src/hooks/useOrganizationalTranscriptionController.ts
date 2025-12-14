@@ -92,7 +92,7 @@ export const useOrganizationalTranscriptionController = ({
         Authorization: `Bearer ${session.token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ expires_in: 300 }),
+      body: JSON.stringify({ expires_in_seconds: 300 }),
     });
 
     const data = await response.json().catch(() => null);

@@ -13,6 +13,7 @@ import { OrgProtectedRoute } from './components/auth/OrgProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import {Toaster} from 'sonner';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import { TawkMessenger } from './components/integrations/TawkMessenger';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -28,6 +29,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <TawkMessenger />
       <Routes>
         {/* Public routes - Auth pages */}
         <Route path="/admin/onboard" element={<AdminOnboardingPage />} />

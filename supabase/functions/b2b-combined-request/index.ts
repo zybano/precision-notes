@@ -1,7 +1,7 @@
 // B2B Combined Transcription + Document Generation API with Summary (Simplified Single File)
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { AssemblyAI } from "https://esm.sh/assemblyai@4.0.0";
+import { AssemblyAI } from "https://esm.sh/assemblyai@4.22.0";
 import OpenAI from "https://esm.sh/openai@4.22.0";
 import { recordStaffActivity, getUserIdFromSessionToken } from "../_shared/staffActivityTracker.ts";
 const corsHeaders = {
