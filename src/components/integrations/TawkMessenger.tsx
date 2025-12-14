@@ -1,7 +1,12 @@
 import {useEffect} from 'react'
 
-const TAWK_PROPERTY_ID = import.meta.env.VITE_TAWK_PROPERTY_ID
-const TAWK_WIDGET_ID = import.meta.env.VITE_TAWK_WIDGET_ID
+const DEFAULT_TAWK_PROPERTY_ID = '693f1753a98748197f471eca'
+const DEFAULT_TAWK_WIDGET_ID = '1jcf768f9'
+
+const TAWK_PROPERTY_ID =
+  import.meta.env.VITE_TAWK_PROPERTY_ID || DEFAULT_TAWK_PROPERTY_ID
+const TAWK_WIDGET_ID =
+  import.meta.env.VITE_TAWK_WIDGET_ID || DEFAULT_TAWK_WIDGET_ID
 
 type TawkWindow = Window & typeof globalThis & {
   Tawk_API?: Record<string, unknown>

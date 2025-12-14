@@ -141,7 +141,7 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
               Streaming Mode
             </Label>
             <p className="text-xs text-muted-foreground hidden md:block">
-              Live AssemblyAI transcription
+              Live transcription
             </p>
           </div>
           <Switch
