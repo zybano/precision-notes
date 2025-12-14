@@ -28,7 +28,6 @@ No test scripts are currently configured in this project.
 - **AI/ML**: OpenAI, Anthropic Claude, Google Gemini, AssemblyAI for transcription
 - **Audio**: Custom audio recording hooks with Google Cloud Speech-to-Text
 - **PDF Generation**: jsPDF with autotable for document exports
-- **Payments**: Stripe and Paystack integration
 - **Forms**: React Hook Form with Zod validation
 
 ### Application Structure
