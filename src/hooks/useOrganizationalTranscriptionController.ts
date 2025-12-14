@@ -1,11 +1,13 @@
-import {useState} from "react";
+import {useCallback, useState} from "react";
 import {useAudioRecording} from "@/hooks/useAudioRecording";
+import {useAssemblyAIStreaming} from "@/hooks/useAssemblyAIStreaming";
 import {useTranscription} from "@/hooks/useTranscription";
 import {TranscriptionProvider, TranscriptionResult} from "@/services/transcription";
 import {PatientSummaryResult} from "@/services/summaryUtils";
 import {UseFormReturn} from "react-hook-form";
 import {toast} from "sonner";
 import {useOrgAuth} from "@/contexts/OrgAuthContext";
+import {TranscriptionMode} from "@/hooks/useDocumentFormat";
 
 const EDGE_URL = import.meta.env.VITE_SUPABASE_URL
   ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
@@ -15,6 +17,7 @@ interface OrganizationalTranscriptionControllerProps {
   form: UseFormReturn<any>;
   transcriptionProvider: TranscriptionProvider;
   useSpeechModelNano: boolean;
+  transcriptionMode?: TranscriptionMode;
   transcriptionLanguage?: string;
   acceptSuggestions?: boolean;
 }
@@ -34,6 +37,7 @@ export interface OrganizationalTranscriptionControllerReturn {
   showSummary: boolean;
   setShowSummary: (value: boolean) => void;
   transcriptResult: TranscriptionResult | null;
+  streamingTranscriptPreview?: string;
   onFileUpload: (file: File) => Promise<TranscriptionResult | null>;
   resetRecording: () => void;
   resetTranscription: () => void;
@@ -41,12 +45,14 @@ export interface OrganizationalTranscriptionControllerReturn {
   setActiveTab?: (tab: string) => void;
   isB2BProcessing: boolean;
   setIsB2BProcessing: (value: boolean) => void;
+  usingStreamingMode: boolean;
 }
 
 export const useOrganizationalTranscriptionController = ({
   form,
   transcriptionProvider,
   useSpeechModelNano,
+  transcriptionMode,
   transcriptionLanguage,
   acceptSuggestions,
   setActiveTab,
@@ -54,6 +60,7 @@ export const useOrganizationalTranscriptionController = ({
   form: UseFormReturn<any>;
   transcriptionProvider: TranscriptionProvider;
   useSpeechModelNano: boolean;
+  transcriptionMode?: TranscriptionMode;
   transcriptionLanguage?: string;
   acceptSuggestions?: boolean;
   setActiveTab?: (tab: string) => void;
@@ -62,17 +69,60 @@ export const useOrganizationalTranscriptionController = ({
   const [isB2BProcessing, setIsB2BProcessing] = useState(false);
   
   const {
-    isRecording,
-    isPaused,
-    recordingTime,
+    isRecording: isStandardRecording,
+    isPaused: isStandardPaused,
+    recordingTime: standardRecordingTime,
     startRecording: baseStartRecording,
-    pauseRecording,
+    pauseRecording: toggleStandardPause,
     stopRecording: baseStopRecording,
     formatTime,
     audioChunks,
-    resetRecording,
+    resetRecording: resetStandardRecording,
     hasAudioData
   } = useAudioRecording();
+
+  const getRealtimeToken = useCallback(async () => {
+    if (!session?.token) {
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const response = await fetch(`${EDGE_URL}/assemblyai-realtime-token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ expires_in: 300 }),
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message = (data && data.error) || `Unable to start streaming session (${response.status})`;
+      throw new Error(message);
+    }
+
+    if (!data?.token) {
+      throw new Error("Realtime token missing in response");
+    }
+
+    return data.token as string;
+  }, [session?.token]);
+
+  const {
+    isRecording: isStreamingRecording,
+    isPaused: isStreamingPaused,
+    recordingTime: streamingRecordingTime,
+    partialTranscript: streamingPartialTranscript,
+    finalTranscript: streamingFinalTranscript,
+    startStreaming,
+    togglePause: toggleStreamingPause,
+    stopStreaming,
+    resetStreaming,
+  } = useAssemblyAIStreaming({ getRealtimeToken });
+
+  const isStreamingModeActive = transcriptionMode === TranscriptionMode.STREAMING;
+  const activeRecordingTime = isStreamingModeActive ? streamingRecordingTime : standardRecordingTime;
 
   const handleTranscriptionComplete = (
     result: TranscriptionResult,
@@ -94,8 +144,8 @@ export const useOrganizationalTranscriptionController = ({
       }
     }
 
-    if (recordingTime > 0) {
-      form.setValue("recordingTime", recordingTime);
+    if (activeRecordingTime > 0) {
+      form.setValue("recordingTime", activeRecordingTime);
     }
   };
 
@@ -113,10 +163,72 @@ export const useOrganizationalTranscriptionController = ({
   } = useTranscription(handleTranscriptionComplete);
 
   const startRecording = async () => {
-    baseStartRecording();
+    if (isStreamingModeActive) {
+      try {
+        await startStreaming();
+      } catch (error) {
+        console.error("Streaming start error:", error);
+        toast.error("Unable to start streaming", {
+          description: error instanceof Error ? error.message : undefined,
+        });
+      }
+      return;
+    }
+
+    await baseStartRecording();
+  };
+
+  const pauseRecording = () => {
+    if (isStreamingModeActive) {
+      toggleStreamingPause().catch(error => {
+        console.error("Streaming pause toggle error:", error);
+        toast.error("Unable to toggle streaming", {
+          description: error instanceof Error ? error.message : undefined,
+        });
+      });
+      return;
+    }
+
+    toggleStandardPause();
+  };
+
+  const handleStreamingStop = async () => {
+    if (!isStreamingModeActive) return;
+
+    try {
+      setIsB2BProcessing(true);
+      const transcriptText = (await stopStreaming())?.trim();
+
+      if (!transcriptText) {
+        toast.error("No transcript captured during streaming session.");
+        return;
+      }
+
+      const streamingResult: TranscriptionResult = {
+        text: transcriptText,
+        utterances: [],
+        isMock: false,
+        provider: TranscriptionProvider.ASSEMBLYAI,
+      };
+
+      handleTranscriptionComplete(streamingResult);
+      await generateDocumentFromTranscript(transcriptText);
+    } catch (error) {
+      console.error("Streaming processing error:", error);
+      toast.error("Failed to process live transcription.", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsB2BProcessing(false);
+    }
   };
 
   const handleStopRecording = async () => {
+    if (isStreamingModeActive) {
+      await handleStreamingStop();
+      return;
+    }
+
     const chunks = [...audioChunks];
     baseStopRecording();
 
@@ -143,7 +255,77 @@ export const useOrganizationalTranscriptionController = ({
     }
   };
 
+  const generateDocumentFromTranscript = async (transcriptText: string) => {
+    if (!session?.token) {
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const requestBody = {
+      transcript_text: transcriptText,
+      document_format: form.getValues("documentFormat") || "soap",
+      model_name: "gpt-4-turbo",
+      request_id: crypto.randomUUID(),
+    };
+
+    const response = await fetch(`${EDGE_URL}/b2b-generate-document`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || !result?.success) {
+      throw new Error(result?.error || "Failed to generate documentation");
+    }
+
+    if (result.document) {
+      form.setValue("notes", result.document);
+      form.setValue("generatedDocument", result.document);
+    }
+
+    if (result.summary) {
+      form.setValue("consultationSummary", result.summary);
+    }
+
+    if (result.credits_used !== undefined) {
+      form.setValue("creditsUsed", result.credits_used);
+    }
+
+    if (result.processing_time_ms !== undefined) {
+      form.setValue("processingTimeMs", result.processing_time_ms);
+    }
+
+    if (result.organization_id) {
+      form.setValue("organizationId", result.organization_id);
+    }
+
+    if (result.request_id) {
+      form.setValue("requestId", result.request_id);
+    }
+
+    if (result.transcription?.text) {
+      form.setValue("transcript", result.transcription.text);
+    }
+
+    if (setActiveTab) {
+      setActiveTab("notes");
+    }
+
+    toast.success("Document generated successfully!");
+  };
+
   const onFileUpload = async (file: File) => {
+    if (isStreamingModeActive) {
+      toast.info("Streaming mode enabled", {
+        description: "File uploads are disabled while live streaming is active.",
+      });
+      return null;
+    }
+
     try {
       setIsB2BProcessing(true);
       await processOrganizationalFile(file, {
@@ -338,10 +520,23 @@ export const useOrganizationalTranscriptionController = ({
     }
   };
 
+  const resetAllRecording = () => {
+    resetStandardRecording();
+    resetStreaming();
+  };
+
+  const combinedRecordingState = {
+    isRecording: isStreamingModeActive ? isStreamingRecording : isStandardRecording,
+    isPaused: isStreamingModeActive ? isStreamingPaused : isStandardPaused,
+    recordingTime: activeRecordingTime,
+  };
+
+  const streamingPreviewText = isStreamingModeActive
+    ? (streamingPartialTranscript || streamingFinalTranscript || "")
+    : undefined;
+
   return {
-    isRecording,
-    isPaused,
-    recordingTime,
+    ...combinedRecordingState,
     isTranscribing: isB2BProcessing || isTranscribing,
     startRecording,
     pauseRecording,
@@ -354,11 +549,13 @@ export const useOrganizationalTranscriptionController = ({
     setShowSummary,
     transcriptResult,
     onFileUpload,
-    resetRecording,
+    resetRecording: resetAllRecording,
     resetTranscription,
     isProcessing: isB2BProcessing || isTranscribing,
     setActiveTab,
     isB2BProcessing,
     setIsB2BProcessing,
+    streamingTranscriptPreview: streamingPreviewText,
+    usingStreamingMode: isStreamingModeActive,
   };
 };

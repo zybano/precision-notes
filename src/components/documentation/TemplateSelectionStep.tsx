@@ -4,7 +4,7 @@ import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Input} from "@/components/ui/input";
 import {DocumentFormat} from "@/services/transcription";
-import {TranscriptionLanguage} from "@/hooks/useDocumentFormat";
+import {TranscriptionLanguage, TranscriptionMode} from "@/hooks/useDocumentFormat";
 import {DocumentTemplate, documentTemplates} from "@/data/documentTemplates";
 import {Baby, Brain, Eye, FileText, Heart, Loader2, Search, Stethoscope, Users} from "lucide-react";
 import DocumentFormatModal from "./DocumentFormatModal";
@@ -22,6 +22,8 @@ interface TemplateSelectionStepProps {
   setUseSpeechModelNano: (value: boolean) => void;
   acceptSuggestions: boolean;
   setAcceptSuggestions: (value: boolean) => void;
+  transcriptionMode: TranscriptionMode;
+  onTranscriptionModeChange: (mode: TranscriptionMode) => void;
 }
 
 // Icon mapping for templates
@@ -71,7 +73,9 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
   useSpeechModelNano,
   setUseSpeechModelNano,
   acceptSuggestions,
-  setAcceptSuggestions
+  setAcceptSuggestions,
+  transcriptionMode,
+  onTranscriptionModeChange
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -148,6 +152,8 @@ const TemplateSelectionStep: React.FC<TemplateSelectionStepProps> = ({
               setUseSpeechModelNano={setUseSpeechModelNano}
               acceptSuggestions={acceptSuggestions}
               setAcceptSuggestions={setAcceptSuggestions}
+              transcriptionMode={transcriptionMode}
+              onTranscriptionModeChange={onTranscriptionModeChange}
             />
           )}
           

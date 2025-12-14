@@ -2,12 +2,14 @@ import OrganizationalRecordingInterface from "@/components/documentation/Organiz
 import StickyNavigation from "@/components/documentation/StickyNavigation";
 import {OrganizationalTranscriptionControllerReturn} from "@/hooks/useOrganizationalTranscriptionController";
 import {DocumentFormat} from "@/services/transcription";
+import {TranscriptionMode} from "@/hooks/useDocumentFormat";
 
 interface RecordingTabProps {
   documentFormat: DocumentFormat;
   transcriptionLanguage: string;
   useSpeechModelNano: boolean;
   setUseSpeechModelNano: (value: boolean) => void;
+  transcriptionMode: TranscriptionMode;
   notesAvailable: boolean;
   transcriptionControls: OrganizationalTranscriptionControllerReturn;
   onBackToTemplate: () => void;
@@ -19,6 +21,7 @@ const RecordingTab = ({
   transcriptionLanguage,
   useSpeechModelNano,
   setUseSpeechModelNano,
+  transcriptionMode,
   notesAvailable,
   transcriptionControls,
   onBackToTemplate,
@@ -40,6 +43,8 @@ const RecordingTab = ({
       transcriptionLanguage={transcriptionLanguage}
       useSpeechModelNano={useSpeechModelNano}
       setUseSpeechModelNano={setUseSpeechModelNano}
+      transcriptionMode={transcriptionMode}
+      streamingPreviewText={transcriptionControls.streamingTranscriptPreview}
     />
 
     <StickyNavigation

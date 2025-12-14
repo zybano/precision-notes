@@ -7,6 +7,7 @@ import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Badge} from "@/components/ui/badge";
 import {DocumentFormat, TranscriptionResult} from "@/services/transcription";
+import {TranscriptionMode} from "@/hooks/useDocumentFormat";
 import AudioVisualizer from "./AudioVisualizer";
 
 interface OrganizationalRecordingInterfaceProps {
@@ -23,6 +24,8 @@ interface OrganizationalRecordingInterfaceProps {
   transcriptResult: TranscriptionResult | null;
   documentFormat: DocumentFormat;
   onFileUpload: (file: File) => void;
+  transcriptionMode: TranscriptionMode;
+  streamingPreviewText?: string;
 }
 
 const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfaceProps> = ({
@@ -39,6 +42,8 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
   transcriptResult,
   documentFormat,
   onFileUpload,
+  transcriptionMode,
+  streamingPreviewText,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -59,6 +64,8 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
     [DocumentFormat.ONCOLOGY]: "Oncology",
     [DocumentFormat.DICTATION]: "Dictation"
   };
+  const isStreamingMode = transcriptionMode === TranscriptionMode.STREAMING;
+  const hasTranscriptPreview = Boolean(transcriptResult || (isStreamingMode && streamingPreviewText));
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError(null);
@@ -140,7 +147,9 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
             </Badge>
           </CardTitle>
           <CardDescription>
-            Record your consultation or upload an audio file for transcription and document generation.
+            {isStreamingMode
+              ? "Stream audio live to AssemblyAI for instant transcription and documentation."
+              : "Record your consultation or upload an audio file for transcription and document generation."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -150,6 +159,15 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
             isPaused={isPaused}
             className="mb-4"
           />
+
+          {isStreamingMode && (
+            <Alert>
+              <AlertTitle>Streaming mode</AlertTitle>
+              <AlertDescription>
+                Audio is sent in real time to AssemblyAI. File uploads are disabled while streaming is enabled.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <div className="flex flex-col items-center justify-center space-y-4 py-8">
             {isTranscribing ? (
@@ -202,7 +220,7 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
                         className="bg-primary hover:bg-primary/90"
                       >
                         <Mic className="h-5 w-5 mr-2" />
-                        Start Recording
+                        {isStreamingMode ? "Start Streaming" : "Start Recording"}
                       </Button>
                       
                       <div className="text-sm text-muted-foreground">or</div>
@@ -212,6 +230,7 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
                           variant="outline"
                           size="lg"
                           onClick={() => fileInputRef.current?.click()}
+                          disabled={isStreamingMode}
                         >
                           <Upload className="h-5 w-5 mr-2" />
                           Upload Audio File
@@ -226,6 +245,11 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
                         <p className="text-xs text-muted-foreground">
                           Supports MP3, WAV, M4A • Max 30 min, 50MB
                         </p>
+                        {isStreamingMode && (
+                          <p className="text-xs text-muted-foreground text-center">
+                            Disable streaming to re-enable uploads.
+                          </p>
+                        )}
                       </div>
                     </>
                   ) : (
@@ -253,7 +277,7 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
                         size="lg"
                       >
                         <StopCircle className="h-5 w-5 mr-2" />
-                        Stop & Process
+                        {isStreamingMode ? "Stop & Generate" : "Stop & Process"}
                       </Button>
                     </div>
                   )}
@@ -284,16 +308,16 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
         </CardContent>
       </Card>
 
-      {transcriptResult && (
+      {hasTranscriptPreview && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Transcript Preview</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="max-h-60 overflow-y-auto bg-muted p-4 rounded-lg text-sm">
-              {transcriptResult.utterances?.length > 0 ? (
+              {transcriptResult?.utterances?.length ? (
                 transcriptResult.utterances.map((utterance, idx) => (
-                  <div key={idx} className="mb-2">
+                  <div key={`${utterance.speaker}-${idx}`} className="mb-2">
                     <span className={`font-semibold ${
                       utterance.speaker === "Doctor" 
                         ? "text-blue-600" 
@@ -304,9 +328,11 @@ const OrganizationalRecordingInterface: React.FC<OrganizationalRecordingInterfac
                     {utterance.text}
                   </div>
                 ))
-              ) : (
+              ) : transcriptResult?.text ? (
                 <p>{transcriptResult.text}</p>
-              )}
+              ) : isStreamingMode && streamingPreviewText ? (
+                <p className="italic text-muted-foreground">{streamingPreviewText}</p>
+              ) : null}
             </div>
           </CardContent>
         </Card>

@@ -4,8 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Languages, Settings, Zap, Lightbulb } from 'lucide-react';
-import { TranscriptionLanguage } from '@/hooks/useDocumentFormat';
+import { Languages, Settings, Zap, Lightbulb, Waves } from 'lucide-react';
+import { TranscriptionLanguage, TranscriptionMode } from '@/hooks/useDocumentFormat';
 
 interface TranscriptionSettingsProps {
   transcriptionLanguage: TranscriptionLanguage;
@@ -14,6 +14,8 @@ interface TranscriptionSettingsProps {
   setUseSpeechModelNano: (value: boolean) => void;
   acceptSuggestions: boolean;
   setAcceptSuggestions: (value: boolean) => void;
+  transcriptionMode: TranscriptionMode;
+  onTranscriptionModeChange: (mode: TranscriptionMode) => void;
   className?: string;
 }
 
@@ -37,6 +39,8 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
   setUseSpeechModelNano,
   acceptSuggestions,
   setAcceptSuggestions,
+  transcriptionMode,
+  onTranscriptionModeChange,
   className = ''
 }) => {
   return (
@@ -59,6 +63,11 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
             {acceptSuggestions && (
               <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                 AI
+              </Badge>
+            )}
+            {transcriptionMode === TranscriptionMode.STREAMING && (
+              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                Live
               </Badge>
             )}
           </div>
@@ -122,6 +131,27 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
               className="scale-75"
             />
           </div>
+        </div>
+
+        {/* Streaming mode toggle */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label htmlFor="streaming-mode" className="text-xs font-medium flex items-center">
+              <Waves className="h-3 w-3 mr-1" />
+              Streaming Mode
+            </Label>
+            <p className="text-xs text-muted-foreground hidden md:block">
+              Live AssemblyAI transcription
+            </p>
+          </div>
+          <Switch
+            id="streaming-mode"
+            checked={transcriptionMode === TranscriptionMode.STREAMING}
+            onCheckedChange={(checked) =>
+              onTranscriptionModeChange(checked ? TranscriptionMode.STREAMING : TranscriptionMode.STANDARD)
+            }
+            className="scale-75"
+          />
         </div>
       </CardContent>
     </Card>

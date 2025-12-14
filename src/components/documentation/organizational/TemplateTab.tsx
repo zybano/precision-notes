@@ -1,6 +1,6 @@
 import TemplateSelectionStep from "@/components/documentation/TemplateSelectionStep";
 import {DocumentFormat} from "@/services/transcription";
-import {TranscriptionLanguage} from "@/hooks/useDocumentFormat";
+import {TranscriptionLanguage, TranscriptionMode} from "@/hooks/useDocumentFormat";
 
 interface TemplateTabProps {
   documentFormat: DocumentFormat;
@@ -9,6 +9,8 @@ interface TemplateTabProps {
   setUseSpeechModelNano: (value: boolean) => void;
   acceptSuggestions: boolean;
   setAcceptSuggestions: (value: boolean) => void;
+  transcriptionMode: TranscriptionMode;
+  setTranscriptionMode: (mode: TranscriptionMode) => void;
   isRegenerateMode: boolean;
   isProcessing: boolean;
   onFormatSelect: (format: DocumentFormat) => void;
@@ -23,6 +25,8 @@ const TemplateTab = ({
   setUseSpeechModelNano,
   acceptSuggestions,
   setAcceptSuggestions,
+  transcriptionMode,
+  setTranscriptionMode,
   isRegenerateMode,
   isProcessing,
   onFormatSelect,
@@ -38,6 +42,8 @@ const TemplateTab = ({
     setUseSpeechModelNano={setUseSpeechModelNano}
     acceptSuggestions={acceptSuggestions}
     setAcceptSuggestions={setAcceptSuggestions}
+    transcriptionMode={transcriptionMode}
+    onTranscriptionModeChange={setTranscriptionMode}
     isRegenerateMode={isRegenerateMode}
     isLoading={isProcessing}
     onNext={onNext}

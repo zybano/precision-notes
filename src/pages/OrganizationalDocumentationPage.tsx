@@ -37,12 +37,15 @@ const OrganizationalDocumentationPage = () => {
     setTranscriptionLanguage,
     acceptSuggestions,
     setAcceptSuggestions,
+    transcriptionMode,
+    setTranscriptionMode,
   } = useDocumentFormat();
 
   const transcriptionControls = useOrganizationalTranscriptionController({
     form,
     transcriptionProvider,
     useSpeechModelNano,
+    transcriptionMode,
     transcriptionLanguage,
     acceptSuggestions,
     setActiveTab,
@@ -253,6 +256,8 @@ const OrganizationalDocumentationPage = () => {
                 setUseSpeechModelNano={setUseSpeechModelNano}
                 acceptSuggestions={acceptSuggestions}
                 setAcceptSuggestions={setAcceptSuggestions}
+                transcriptionMode={transcriptionMode}
+                setTranscriptionMode={setTranscriptionMode}
                 isRegenerateMode={!!transcriptResult?.text}
                 isProcessing={transcriptionControls.isB2BProcessing}
                 onFormatSelect={handleTemplateFormatSelect}
@@ -267,6 +272,7 @@ const OrganizationalDocumentationPage = () => {
                 transcriptionLanguage={transcriptionLanguage}
                 useSpeechModelNano={useSpeechModelNano}
                 setUseSpeechModelNano={setUseSpeechModelNano}
+                transcriptionMode={transcriptionMode}
                 notesAvailable={!!notesContent}
                 transcriptionControls={transcriptionControls}
                 onBackToTemplate={() => setActiveTab("template")}

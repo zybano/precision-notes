@@ -1,6 +1,11 @@
 import {useState} from "react";
 import {DocumentFormat, LLMProvider, TranscriptionProvider} from "@/services/transcription";
 
+export enum TranscriptionMode {
+  STANDARD = 'standard',
+  STREAMING = 'streaming',
+}
+
 export enum TranscriptionLanguage {
   ENGLISH = 'en_us',
   YORUBA = 'yo',
@@ -16,6 +21,7 @@ export const useDocumentFormat = () => {
   const [useSpeechModelNano, setUseSpeechModelNano] = useState(false);
   const [transcriptionLanguage, setTranscriptionLanguage] = useState<TranscriptionLanguage>(TranscriptionLanguage.ENGLISH);
   const [acceptSuggestions, setAcceptSuggestions] = useState(true);
+  const [transcriptionMode, setTranscriptionMode] = useState<TranscriptionMode>(TranscriptionMode.STANDARD);
 
   return {
     transcriptionProvider,
@@ -29,6 +35,8 @@ export const useDocumentFormat = () => {
     transcriptionLanguage,
     setTranscriptionLanguage,
     acceptSuggestions,
-    setAcceptSuggestions
+    setAcceptSuggestions,
+    transcriptionMode,
+    setTranscriptionMode,
   };
 };
