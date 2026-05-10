@@ -153,7 +153,7 @@ export default function ReportsPage() {
 
   if (!sessionToken) {
     return (
-      <div>
+      <div className="space-y-6">
         <PlatformModuleHeader
           title="Reports"
           description="Operational and executive reporting for tenant usage and platform health."
@@ -168,13 +168,13 @@ export default function ReportsPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <PlatformModuleHeader
         title="Reports"
         description="Operational and executive reporting for tenant usage and platform health."
       />
 
-      <div className="grid gap-4 mb-6 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Organizations</CardTitle>

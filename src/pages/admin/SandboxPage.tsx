@@ -337,7 +337,7 @@ export default function SandboxPage() {
 
   if (!sessionToken) {
     return (
-      <div>
+      <div className="space-y-6">
         <PlatformModuleHeader
           title="Sandbox"
           description="Safe environment for testing providers, transcription settings, and language options."
@@ -352,13 +352,13 @@ export default function SandboxPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <PlatformModuleHeader
         title="Sandbox"
         description="Safe environment for testing providers, transcription settings, and language options."
       />
 
-      <div className="grid gap-4 mb-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Providers</CardTitle></CardHeader>
           <CardContent className="text-2xl font-semibold">{providerRows.length}</CardContent>

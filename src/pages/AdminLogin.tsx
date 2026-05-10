@@ -48,11 +48,38 @@ export default function AdminLogin() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Loading Admin Console</CardTitle>
+            <CardDescription>Checking existing session...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Almost ready</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isSubmitting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Signing You In</CardTitle>
+            <CardDescription>Setting up your platform admin session...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Please wait</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

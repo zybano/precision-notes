@@ -333,7 +333,7 @@ export default function PlansBillingPage() {
 
   if (!sessionToken) {
     return (
-      <div>
+      <div className="space-y-6">
         <PlatformModuleHeader
           title="Plans and Billing"
           description="Control plan catalog, pricing, contracts, and operational payment visibility."
@@ -348,13 +348,13 @@ export default function PlansBillingPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <PlatformModuleHeader
         title="Plans and Billing"
         description="Control plan catalog, pricing, contracts, and operational payment visibility."
       />
 
-      <div className="grid gap-4 mb-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">B2B Plans</CardTitle>

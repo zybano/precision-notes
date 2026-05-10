@@ -17,18 +17,20 @@ export default function PlatformAdminLayout() {
     <div className="min-h-screen bg-background flex">
       <PlatformSidebar />
       <div className="flex-1 min-w-0">
-        <header className="h-16 border-b bg-background px-6 flex items-center justify-between">
+        <header className="h-16 border-b bg-background px-4 md:px-6 flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Control Center</p>
-            <p className="text-sm">Signed in as {adminUser?.email || 'platform admin'}</p>
+            <p className="text-sm truncate">Signed in as {adminUser?.email || 'platform admin'}</p>
           </div>
           <Button variant="outline" size="sm" onClick={handleSignOut}>
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>
         </header>
-        <main className="p-6">
-          <Outlet />
+        <main className="p-4 md:p-6">
+          <div className="mx-auto w-full max-w-[1400px]">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

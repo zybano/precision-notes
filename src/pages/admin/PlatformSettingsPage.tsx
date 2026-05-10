@@ -1,7 +1,13 @@
+import {useMemo} from 'react';
+import {useQuery} from '@tanstack/react-query';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
+import {Button} from '@/components/ui/button';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
+import {useAdminAuth} from '@/contexts/AdminAuthContext';
+import {adminApiService} from '@/services/adminApiService';
 
 const controls = [
   { name: 'Audit log retention policy', status: 'Defined' },
@@ -11,18 +17,69 @@ const controls = [
   { name: 'Global feature flags', status: 'Governed' },
 ];
 
-const endpointContracts = [
-  { endpoint: 'GET /platform-admin/config', status: 'Pending backend' },
-  { endpoint: 'PUT /platform-admin/config', status: 'Pending backend' },
-];
-
 export default function PlatformSettingsPage() {
+  const { sessionToken } = useAdminAuth();
+
+  const configQuery = useQuery({
+    queryKey: ['platform-admin', 'system-config'],
+    enabled: Boolean(sessionToken),
+    queryFn: async () => {
+      const response = await adminApiService.getSystemConfig(sessionToken as string);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to load system configuration');
+      }
+      return (response.data || {}) as Record<string, unknown>;
+    },
+  });
+
+  const configRows = useMemo(() => {
+    if (!configQuery.data || typeof configQuery.data !== 'object') {
+      return [];
+    }
+    return Object.entries(configQuery.data);
+  }, [configQuery.data]);
+
+  if (!sessionToken) {
+    return (
+      <div className="space-y-6">
+        <PlatformModuleHeader
+          title="Settings"
+          description="Centralized configuration for platform-level operational policies."
+        />
+        <Card>
+          <CardContent className="py-8 text-sm text-muted-foreground">
+            Sign in as platform admin to access settings.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="space-y-6">
       <PlatformModuleHeader
         title="Settings"
         description="Centralized configuration for platform-level operational policies."
       />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Settings API</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Badge variant={configQuery.isError ? 'secondary' : 'default'}>
+              {configQuery.isError ? 'Unavailable' : configQuery.isSuccess ? 'Connected' : 'Checking'}
+            </Badge>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Loaded Config Keys</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-semibold">{configRows.length}</CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
@@ -40,24 +97,45 @@ export default function PlatformSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Settings API Contract Status</CardTitle>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Current Platform Configuration</CardTitle>
+          <Button size="sm" variant="outline" onClick={() => configQuery.refetch()} disabled={configQuery.isFetching}>
+            {configQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3">
-          {endpointContracts.map((contract) => (
-            <div key={contract.endpoint} className="flex items-center justify-between rounded-md border px-3 py-2">
-              <span className="font-mono text-xs">{contract.endpoint}</span>
-              <Badge variant="secondary">{contract.status}</Badge>
-            </div>
-          ))}
+          {configQuery.isLoading && <p className="text-sm text-muted-foreground">Loading system configuration...</p>}
 
-          <Alert>
-            <AlertTitle>Backend Wiring Remaining</AlertTitle>
-            <AlertDescription>
-              Platform settings now use real operational definitions, but persistence endpoints are pending backend implementation.
-            </AlertDescription>
-          </Alert>
+          {configRows.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Setting</TableHead>
+                  <TableHead>Value</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {configRows.map(([key, value]) => (
+                  <TableRow key={key}>
+                    <TableCell className="font-mono text-xs">{key}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{String(value)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          {!configQuery.isLoading && !configQuery.isError && configRows.length === 0 && (
+            <p className="text-sm text-muted-foreground">No platform settings returned yet.</p>
+          )}
+
+          {configQuery.isError && (
+            <Alert>
+              <AlertTitle>Unable to load platform settings</AlertTitle>
+              <AlertDescription>{(configQuery.error as Error).message}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -217,7 +217,7 @@ export default function OrganizationsPage() {
 
   if (!sessionToken) {
     return (
-      <div>
+      <div className="space-y-6">
         <PlatformModuleHeader
           title="Organizations"
           description="Create, manage, and operate organizations across the platform."
@@ -232,13 +232,13 @@ export default function OrganizationsPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <PlatformModuleHeader
         title="Organizations"
         description="Create, manage, and operate organizations across the platform."
       />
 
-      <div className="grid gap-4 mb-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Total Organizations</CardTitle>

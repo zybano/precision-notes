@@ -1,44 +1,69 @@
+import {useQuery} from '@tanstack/react-query';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Badge} from '@/components/ui/badge';
 import {BarChart3, Building2, FlaskConical, ShieldCheck, Wallet} from 'lucide-react';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
-
-const modules = [
-  {
-    title: 'Organizations',
-    description: 'Manage platform organizations, credits, API keys, and lifecycle state.',
-    icon: Building2,
-    status: 'Active',
-  },
-  {
-    title: 'Plans and Billing',
-    description: 'Configure plans, feature limits, prices, and organization contract plans.',
-    icon: Wallet,
-    status: 'Active',
-  },
-  {
-    title: 'Reports',
-    description: 'Track usage, staff utilization, activity, and platform-wide KPIs.',
-    icon: BarChart3,
-    status: 'In Progress',
-  },
-  {
-    title: 'Sandbox',
-    description: 'Test provider configurations and transcription workflows safely.',
-    icon: FlaskConical,
-    status: 'Active',
-  },
-  {
-    title: 'Platform Admins',
-    description: 'Manage platform admin identities, permissions, and sessions.',
-    icon: ShieldCheck,
-    status: 'Needs API',
-  },
-];
+import {useAdminAuth} from '@/contexts/AdminAuthContext';
+import {adminApiService} from '@/services/adminApiService';
 
 export default function PlatformOverviewPage() {
+  const { sessionToken } = useAdminAuth();
+
+  const adminUsersHealthQuery = useQuery({
+    queryKey: ['platform-overview', 'admin-users-health'],
+    enabled: Boolean(sessionToken),
+    queryFn: async () => {
+      const response = await adminApiService.listAdminUsers(sessionToken as string);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to connect to platform admins API');
+      }
+      return true;
+    },
+  });
+
+  const platformAdminsStatus = !sessionToken
+    ? 'Sign In Required'
+    : adminUsersHealthQuery.isLoading
+      ? 'Checking'
+      : adminUsersHealthQuery.isSuccess
+        ? 'Active'
+        : 'In Progress';
+
+  const modules = [
+    {
+      title: 'Organizations',
+      description: 'Manage platform organizations, credits, API keys, and lifecycle state.',
+      icon: Building2,
+      status: 'Active',
+    },
+    {
+      title: 'Plans and Billing',
+      description: 'Configure plans, feature limits, prices, and organization contract plans.',
+      icon: Wallet,
+      status: 'Active',
+    },
+    {
+      title: 'Reports',
+      description: 'Track usage, staff utilization, activity, and platform-wide KPIs.',
+      icon: BarChart3,
+      status: 'In Progress',
+    },
+    {
+      title: 'Sandbox',
+      description: 'Test provider configurations and transcription workflows safely.',
+      icon: FlaskConical,
+      status: 'Active',
+    },
+    {
+      title: 'Platform Admins',
+      description: 'Manage platform admin identities, permissions, and sessions.',
+      icon: ShieldCheck,
+      status: platformAdminsStatus,
+    },
+  ];
+
   return (
-    <div>
+    <div className="space-y-6">
       <PlatformModuleHeader
         title="Platform Overview"
         description="Central command center for organization, billing, reporting, and sandbox operations."

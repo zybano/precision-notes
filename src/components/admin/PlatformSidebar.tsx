@@ -18,7 +18,7 @@ export default function PlatformSidebar() {
   const visibleItems = navItems.filter((item) => !item.permission || hasPermission(item.permission));
 
   return (
-    <aside className="w-72 border-r bg-white">
+    <aside className="hidden md:block w-72 shrink-0 border-r bg-white">
       <div className="h-16 px-6 flex items-center border-b">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Precision Notes</p>

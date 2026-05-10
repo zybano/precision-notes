@@ -39,7 +39,7 @@ interface AdminAuthProviderProps {
 
 export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
   const [user, setUser] = useState<AdminUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,10 +64,10 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
           setSessionToken(null);
           setUser(null);
         }
-        setLoading(false);
+        setIsInitializing(false);
       });
     } else {
-      setLoading(false);
+      setIsInitializing(false);
     }
   }, []);
 
@@ -83,8 +83,6 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      setLoading(true);
-
       if (email && password) {
         const response = await adminApiService.login(email, password);
         if (!response.success || !response.data?.sessionToken) {
@@ -117,8 +115,6 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
     } catch (error) {
       console.error('Login error:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -150,8 +146,8 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
   const value: AdminAuthContextType = {
     adminUser: user,
     user,
-    isLoading: loading,
-    loading,
+    isLoading: isInitializing,
+    loading: isInitializing,
     hasPermission,
     signIn: login,
     login,

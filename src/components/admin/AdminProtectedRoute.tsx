@@ -17,10 +17,15 @@ export function AdminProtectedRoute({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div>
+              <p className="text-sm font-medium">Preparing your admin workspace</p>
+              <p className="text-xs text-muted-foreground">Validating session and permissions...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
