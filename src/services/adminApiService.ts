@@ -317,6 +317,66 @@ class AdminApiService {
     });
   }
 
+  async getPlatformAnalyticsOverview(sessionToken: string) {
+    return this.makeAdminApiCall<{
+      totalOrganizations: number;
+      activeOrganizations: number;
+      totalRequests: number;
+      totalCreditsBalance: number;
+      totalPaymentTransactions: number;
+      succeededPaymentTransactions: number;
+      failedPaymentTransactions: number;
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/analytics/overview',
+    });
+  }
+
+  async getPlatformAnalyticsRevenue(sessionToken: string) {
+    return this.makeAdminApiCall<{
+      items: Array<{
+        currency: string;
+        transactionCount: number;
+        totalAmountCents: number;
+      }>;
+      totalTransactions: number;
+      generatedAt?: string;
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/analytics/revenue',
+    });
+  }
+
+  async getPlatformAnalyticsPlanAdoption(sessionToken: string) {
+    return this.makeAdminApiCall<{
+      items: Array<{
+        planName: string;
+        status: string;
+        count: number;
+      }>;
+      totalSubscriptions: number;
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/analytics/plan-adoption',
+    });
+  }
+
+  async getPlatformAnalyticsProviderPerformance(sessionToken: string) {
+    return this.makeAdminApiCall<{
+      items: Array<{
+        provider: string;
+        totalTransactions: number;
+        succeededTransactions: number;
+        failedTransactions: number;
+        webhookEvents: number;
+        successRatePct: number;
+      }>;
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/analytics/provider-performance',
+    });
+  }
+
   async getSystemHealth(sessionToken: string) {
     return this.makeAdminApiCall({
       sessionToken,
@@ -335,11 +395,11 @@ class AdminApiService {
   }
 
   async createAdminUser(sessionToken: string, userData: {
+    username: string;
     email: string;
     password: string;
-    name: string;
-    role: string;
-    permissions: Record<string, boolean>;
+    fullName?: string;
+    isActive?: boolean;
   }) {
     return this.makeAdminApiCall({
       sessionToken,
@@ -647,6 +707,47 @@ class AdminApiService {
     });
   }
 
+  async createPlatformCombinedTranscription(sessionToken: string, request: {
+    audioFile: File;
+    provider: string;
+    documentFormat: string;
+    languageCode?: string;
+    useSpeechModelNano?: boolean;
+    modelName?: string;
+    requestId?: string;
+    includeSummary?: boolean;
+    acceptSuggestions?: boolean;
+    templateId?: string;
+    templateVariables?: Record<string, unknown>;
+  }) {
+    const formData = new FormData();
+    formData.append('audio', request.audioFile);
+    formData.append('provider', request.provider);
+    formData.append('documentFormat', request.documentFormat);
+    if (request.languageCode) formData.append('languageCode', request.languageCode);
+    if (request.useSpeechModelNano !== undefined) {
+      formData.append('useSpeechModelNano', String(request.useSpeechModelNano));
+    }
+    if (request.modelName) formData.append('modelName', request.modelName);
+    if (request.requestId) formData.append('requestId', request.requestId);
+    if (request.includeSummary !== undefined) {
+      formData.append('includeSummary', String(request.includeSummary));
+    }
+    if (request.acceptSuggestions !== undefined) {
+      formData.append('acceptSuggestions', String(request.acceptSuggestions));
+    }
+    if (request.templateId) formData.append('templateId', request.templateId);
+    if (request.templateVariables && Object.keys(request.templateVariables).length > 0) {
+      formData.append('templateVariables', JSON.stringify(request.templateVariables));
+    }
+
+    return this.makeAdminMultipartCall({
+      sessionToken,
+      endpoint: '/platform-admin/transcriptions/combined',
+      body: formData,
+    });
+  }
+
   async getPlatformSandboxCapabilities(sessionToken: string) {
     return this.makeAdminApiCall<{
       defaultProvider?: string;
@@ -656,6 +757,18 @@ class AdminApiService {
     }>({
       sessionToken,
       endpoint: '/platform-admin/sandbox/capabilities',
+    });
+  }
+
+  async getPlatformSandboxTemplates(sessionToken: string) {
+    return this.makeAdminApiCall<Array<{
+      id: string;
+      name: string;
+      ownerType?: string;
+      updatedAt?: string;
+    }>>({
+      sessionToken,
+      endpoint: '/platform-admin/sandbox/templates',
     });
   }
 
@@ -693,6 +806,32 @@ class AdminApiService {
     }>({
       sessionToken,
       endpoint: '/platform-admin/sandbox/webhook-tests',
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async createSandboxDocumentation(sessionToken: string, request: {
+    documentFormat: string;
+    transcriptText?: string;
+    conversationText?: string;
+    includeSummary?: boolean;
+    acceptSuggestions?: boolean;
+    modelName?: string;
+    templateId?: string;
+    templateVariables?: Record<string, unknown>;
+  }) {
+    return this.makeAdminApiCall<{
+      document?: string;
+      summary?: string;
+      documentFormat?: string;
+      modelName?: string;
+      templateId?: string;
+      templateVariables?: Record<string, unknown>;
+      generatedAt?: string;
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/sandbox/documentation/generate',
       method: 'POST',
       body: request,
     });

@@ -123,6 +123,7 @@
   .btn-premium::after {
     content: '';
     @apply absolute inset-0 bg-primary/10 opacity-0 transition-opacity duration-300;
+    pointer-events: none;
   }
   
   .btn-premium:hover::after {

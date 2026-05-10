@@ -10,15 +10,8 @@ import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import AdminFormField from '@/components/admin/AdminFormField';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
-import type {PaymentTransaction, Tenant} from '@/types/platformAdmin';
+import type {Tenant} from '@/types/platformAdmin';
 import {Bar, BarChart, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
-
-const requiredAdditions = [
-  'GET /platform-admin/analytics/overview',
-  'GET /platform-admin/analytics/revenue',
-  'GET /platform-admin/analytics/plan-adoption',
-  'GET /platform-admin/analytics/provider-performance',
-];
 
 export default function ReportsPage() {
   const { sessionToken } = useAdminAuth();
@@ -35,13 +28,43 @@ export default function ReportsPage() {
     },
   });
 
-  const transactionsQuery = useQuery({
-    queryKey: ['reports', 'transactions'],
+  const overviewQuery = useQuery({
+    queryKey: ['reports', 'platform-analytics', 'overview'],
     enabled: Boolean(sessionToken),
     queryFn: async () => {
-      const response = await adminApiService.listPaymentTransactions(sessionToken as string);
-      if (!response.success) throw new Error(response.error || 'Failed to load payment transactions');
-      return (Array.isArray(response.data) ? response.data : []) as PaymentTransaction[];
+      const response = await adminApiService.getPlatformAnalyticsOverview(sessionToken as string);
+      if (!response.success) throw new Error(response.error || 'Failed to load platform overview analytics');
+      return response.data;
+    },
+  });
+
+  const revenueQuery = useQuery({
+    queryKey: ['reports', 'platform-analytics', 'revenue'],
+    enabled: Boolean(sessionToken),
+    queryFn: async () => {
+      const response = await adminApiService.getPlatformAnalyticsRevenue(sessionToken as string);
+      if (!response.success) throw new Error(response.error || 'Failed to load platform revenue analytics');
+      return response.data;
+    },
+  });
+
+  const planAdoptionQuery = useQuery({
+    queryKey: ['reports', 'platform-analytics', 'plan-adoption'],
+    enabled: Boolean(sessionToken),
+    queryFn: async () => {
+      const response = await adminApiService.getPlatformAnalyticsPlanAdoption(sessionToken as string);
+      if (!response.success) throw new Error(response.error || 'Failed to load platform plan adoption analytics');
+      return response.data;
+    },
+  });
+
+  const providerPerformanceQuery = useQuery({
+    queryKey: ['reports', 'platform-analytics', 'provider-performance'],
+    enabled: Boolean(sessionToken),
+    queryFn: async () => {
+      const response = await adminApiService.getPlatformAnalyticsProviderPerformance(sessionToken as string);
+      if (!response.success) throw new Error(response.error || 'Failed to load platform provider performance analytics');
+      return response.data;
     },
   });
 
@@ -62,22 +85,20 @@ export default function ReportsPage() {
   });
 
   const organizations = useMemo(() => organizationsQuery.data || [], [organizationsQuery.data]);
-  const transactions = useMemo(() => transactionsQuery.data || [], [transactionsQuery.data]);
 
   const metrics = useMemo(() => {
-    const activeOrgs = organizations.filter((org) => org.isActive).length;
-    const totalRequests = organizations.reduce((sum, org) => sum + (org.totalRequests || 0), 0);
-    const credits = organizations.reduce((sum, org) => sum + (org.credits || 0), 0);
-    const revenueCents = transactions.reduce((sum, tx) => sum + (tx.amountCents || 0), 0);
+    const overview = overviewQuery.data;
+    const revenueItems = revenueQuery.data?.items || [];
+    const revenueCents = revenueItems.reduce((sum, item) => sum + (item.totalAmountCents || 0), 0);
 
     return {
-      totalOrganizations: organizations.length,
-      activeOrganizations: activeOrgs,
-      totalRequests,
-      credits,
+      totalOrganizations: overview?.totalOrganizations ?? organizations.length,
+      activeOrganizations: overview?.activeOrganizations ?? organizations.filter((org) => org.isActive).length,
+      totalRequests: overview?.totalRequests ?? organizations.reduce((sum, org) => sum + (org.totalRequests || 0), 0),
+      credits: overview?.totalCreditsBalance ?? organizations.reduce((sum, org) => sum + (org.credits || 0), 0),
       revenueCents,
     };
-  }, [organizations, transactions]);
+  }, [organizations, overviewQuery.data, revenueQuery.data?.items]);
 
   const topOrganizations = useMemo(
     () => [...organizations].sort((a, b) => (b.totalRequests || 0) - (a.totalRequests || 0)).slice(0, 8),
@@ -85,29 +106,17 @@ export default function ReportsPage() {
   );
 
   const requestTrendData = useMemo(() => {
-    const monthly = new Map<string, number>();
-
-    organizations.forEach((org) => {
-      const dateValue = org.createdAt || org.updatedAt;
-      const bucket = dateValue ? dateValue.slice(0, 7) : 'unknown';
-      monthly.set(bucket, (monthly.get(bucket) || 0) + (org.totalRequests || 0));
-    });
-
-    return [...monthly.entries()]
-      .map(([period, requests]) => ({ period, requests }))
-      .sort((a, b) => a.period.localeCompare(b.period))
-      .slice(-12);
-  }, [organizations]);
+    const items = planAdoptionQuery.data?.items || [];
+    return items
+      .map((item) => ({ period: item.planName, requests: item.count }))
+      .sort((a, b) => b.requests - a.requests)
+      .slice(0, 12);
+  }, [planAdoptionQuery.data?.items]);
 
   const providerSplitData = useMemo(() => {
-    const byProvider = new Map<string, number>();
-    transactions.forEach((tx) => {
-      const provider = (tx.provider || 'unknown').toUpperCase();
-      byProvider.set(provider, (byProvider.get(provider) || 0) + 1);
-    });
-
-    return [...byProvider.entries()].map(([provider, count]) => ({ provider, count }));
-  }, [transactions]);
+    const items = providerPerformanceQuery.data?.items || [];
+    return items.map((item) => ({ provider: item.provider.toUpperCase(), count: item.totalTransactions }));
+  }, [providerPerformanceQuery.data?.items]);
 
   const successFailureData = useMemo(() => {
     if (usageQuery.data) {
@@ -123,16 +132,16 @@ export default function ReportsPage() {
       ];
     }
 
-    const counters = transactions.reduce(
-      (acc, tx) => {
-        const status = (tx.status || '').toUpperCase();
-        if (['SUCCEEDED', 'SUCCESS', 'COMPLETED', 'PAID', 'ACTIVE'].includes(status)) {
-          acc.success += 1;
-        } else if (['FAILED', 'ERROR', 'CANCELED', 'CANCELLED', 'DECLINED'].includes(status)) {
-          acc.failed += 1;
-        } else {
-          acc.pending += 1;
-        }
+    const items = providerPerformanceQuery.data?.items || [];
+    const counters = items.reduce(
+      (acc, item) => {
+        acc.success += item.succeededTransactions || 0;
+        acc.failed += item.failedTransactions || 0;
+        const pendingForProvider = Math.max(
+          (item.totalTransactions || 0) - (item.succeededTransactions || 0) - (item.failedTransactions || 0),
+          0
+        );
+        acc.pending += pendingForProvider;
         return acc;
       },
       { success: 0, failed: 0, pending: 0 }
@@ -143,7 +152,7 @@ export default function ReportsPage() {
       { label: 'Failed', value: counters.failed },
       { label: 'Pending', value: counters.pending },
     ];
-  }, [transactions, usageQuery.data]);
+  }, [providerPerformanceQuery.data?.items, usageQuery.data]);
 
   const dateError = useMemo(() => {
     if (!startDate || !endDate) return '';
@@ -211,7 +220,7 @@ export default function ReportsPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle>Request Trend</CardTitle>
+              <CardTitle>Plan Adoption</CardTitle>
             </CardHeader>
             <CardContent className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -289,7 +298,7 @@ export default function ReportsPage() {
                 </Button>
               </div>
               <div className="flex items-end">
-                <Badge variant="outline">B2B Reporting Endpoint</Badge>
+                <Badge variant="outline">Platform Reporting Endpoint</Badge>
               </div>
             </div>
             {dateError && <p className="text-xs text-destructive mt-2">{dateError}</p>}
@@ -298,7 +307,7 @@ export default function ReportsPage() {
               <Alert className="mt-4">
                 <AlertTitle>Report Endpoint Access Warning</AlertTitle>
                 <AlertDescription>
-                  {(usageQuery.error as Error).message}. This endpoint is currently b2b-auth oriented and may require backend adaptation for platform admin context.
+                  {(usageQuery.error as Error).message}. Try refreshing or verify the reporting endpoint authorization for your platform admin account.
                 </AlertDescription>
               </Alert>
             )}
@@ -363,17 +372,14 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        <Alert>
-          <AlertTitle>Platform Analytics Extension Needed</AlertTitle>
-          <AlertDescription>
-            Cross-tenant executive analytics should move to dedicated platform endpoints:
-            <ul className="list-disc pl-4 mt-2 space-y-1">
-              {requiredAdditions.map((endpoint) => (
-                <li key={endpoint}>{endpoint}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
+        {(overviewQuery.isError || revenueQuery.isError || planAdoptionQuery.isError || providerPerformanceQuery.isError) && (
+          <Alert>
+            <AlertTitle>Platform Analytics Load Warning</AlertTitle>
+            <AlertDescription>
+              One or more platform analytics endpoints failed to load. Check backend availability and platform admin permissions.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </div>
   );

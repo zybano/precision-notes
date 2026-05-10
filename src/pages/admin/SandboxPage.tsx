@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
@@ -20,6 +21,7 @@ import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import AdminFormField from '@/components/admin/AdminFormField';
 import TranscriptionSettings from '@/components/documentation/TranscriptionSettings';
 import {TranscriptionLanguage} from '@/hooks/useDocumentFormat';
+import {DocumentFormat, LLMProvider} from '@/types/transcription';
 import {toast} from 'sonner';
 
 const providers = ['ASSEMBLY_AI', 'DEEPGRAM', 'GOOGLE'] as const;
@@ -46,6 +48,9 @@ export default function SandboxPage() {
   });
   const [sessionIdLookup, setSessionIdLookup] = useState('');
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
+  const [audioInputMode, setAudioInputMode] = useState<'file' | 'recording'>('file');
+  const [isRecording, setIsRecording] = useState(false);
   const [failoverPayload, setFailoverPayload] = useState({
     currentProvider: 'ASSEMBLY_AI',
     fallbackProvider: 'DEEPGRAM',
@@ -63,6 +68,61 @@ export default function SandboxPage() {
     requestId: '',
   });
   const [acceptSuggestions, setAcceptSuggestions] = useState(false);
+  const [documentationPayload, setDocumentationPayload] = useState({
+    llmProvider: LLMProvider.OPENAI,
+    documentFormat: DocumentFormat.SOAP,
+    templateId: '',
+    transcriptText: '',
+    templateVariables: '{"tone":"clinical"}',
+  });
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+
+  const resolveAudioUploadFile = (): File | null => {
+    if (audioInputMode === 'file') {
+      return audioFile;
+    }
+    if (recordedAudioBlob) {
+      return new File([recordedAudioBlob], 'sandbox-recording.webm', { type: recordedAudioBlob.type || 'audio/webm' });
+    }
+    return null;
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      recordingChunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordingChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const mimeType = recorder.mimeType || 'audio/webm';
+        const blob = new Blob(recordingChunksRef.current, { type: mimeType });
+        setRecordedAudioBlob(blob.size > 0 ? blob : null);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+      toast.success('Recording started');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to start recording');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      toast.success('Recording captured');
+    }
+  };
 
   const toTranscriptionLanguage = (value: string): TranscriptionLanguage => {
     switch (value.toLowerCase()) {
@@ -128,8 +188,33 @@ export default function SandboxPage() {
     },
   });
 
+  const templatesQuery = useQuery({
+    queryKey: ['sandbox', 'templates'],
+    enabled: Boolean(sessionToken),
+    queryFn: async () => {
+      const response = await adminApiService.getPlatformSandboxTemplates(sessionToken as string);
+      if (!response.success) throw new Error(response.error || 'Failed to load templates');
+      return (response.data || []) as Array<{
+        id: string;
+        name: string;
+        ownerType?: string;
+      }>;
+    },
+  });
+
   const providerRows = useMemo(() => providerConfigQuery.data?.providers || [], [providerConfigQuery.data]);
   const languageRows = useMemo(() => languagesQuery.data?.canonicalLanguages || [], [languagesQuery.data]);
+
+  const parseTemplateVariables = () => {
+    if (!documentationPayload.templateVariables.trim()) {
+      return undefined;
+    }
+    try {
+      return JSON.parse(documentationPayload.templateVariables) as Record<string, unknown>;
+    } catch {
+      throw new Error('Template variables must be valid JSON');
+    }
+  };
 
   useEffect(() => {
     if (providerConfigQuery.data?.defaultProvider) {
@@ -271,11 +356,12 @@ export default function SandboxPage() {
 
   const transcriptionMutation = useMutation({
     mutationFn: async () => {
-      if (!audioFile) {
+      const selectedAudio = resolveAudioUploadFile();
+      if (!selectedAudio) {
         throw new Error('Audio file is required');
       }
       const response = await adminApiService.createPlatformTranscription(sessionToken as string, {
-        audioFile,
+        audioFile: selectedAudio,
         provider: transcriptionPayload.provider,
         languageCode: transcriptionPayload.languageCode || undefined,
         useSpeechModelNano: transcriptionPayload.useSpeechModelNano,
@@ -286,6 +372,101 @@ export default function SandboxPage() {
     },
     onSuccess: () => {
       toast.success('Transcription test completed');
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const documentationPreview = useMemo(() => {
+    const result = transcriptionMutation.data;
+    const transcriptText = documentationPayload.transcriptText.trim() || (result?.transcript || result?.text || '').toString();
+    if (!transcriptText) {
+      return null;
+    }
+
+    let parsedTemplateVariables: Record<string, unknown> | null = null;
+    try {
+      parsedTemplateVariables = documentationPayload.templateVariables.trim()
+        ? JSON.parse(documentationPayload.templateVariables)
+        : null;
+    } catch {
+      parsedTemplateVariables = { raw: documentationPayload.templateVariables };
+    }
+
+    return {
+      source: documentationPayload.transcriptText.trim() ? 'manual-transcript' : 'sandbox-transcription-test',
+      llmProvider: documentationPayload.llmProvider,
+      documentFormat: documentationPayload.documentFormat,
+      templateId: documentationPayload.templateId || undefined,
+      templateVariables: parsedTemplateVariables,
+      acceptSuggestions,
+      useSpeechModelNano: transcriptionPayload.useSpeechModelNano,
+      transcriptText,
+    };
+  }, [documentationPayload.documentFormat, documentationPayload.llmProvider, documentationPayload.templateId, documentationPayload.templateVariables, documentationPayload.transcriptText, acceptSuggestions, transcriptionMutation.data, transcriptionPayload.useSpeechModelNano]);
+
+  const combinedFlowMutation = useMutation({
+    mutationFn: async () => {
+      const selectedAudio = resolveAudioUploadFile();
+      if (!selectedAudio) {
+        throw new Error('Audio input is required (file or recording)');
+      }
+
+      const response = await adminApiService.createPlatformCombinedTranscription(sessionToken as string, {
+        templateId: documentationPayload.templateId || undefined,
+        templateVariables: parseTemplateVariables(),
+        audioFile: selectedAudio,
+        provider: transcriptionPayload.provider,
+        documentFormat: documentationPayload.documentFormat,
+        languageCode: transcriptionPayload.languageCode || undefined,
+        useSpeechModelNano: transcriptionPayload.useSpeechModelNano,
+        modelName: documentationPayload.llmProvider,
+        requestId: transcriptionPayload.requestId || undefined,
+        includeSummary: true,
+        acceptSuggestions,
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Combined flow failed');
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Combined flow completed');
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const documentationMutation = useMutation({
+    mutationFn: async () => {
+      const transcriptText = documentationPayload.transcriptText.trim()
+        || (transcriptionMutation.data?.transcript || transcriptionMutation.data?.text || '').toString();
+
+      if (!transcriptText) {
+        throw new Error('Transcript text is required for documentation generation');
+      }
+
+      let parsedTemplateVariables: Record<string, unknown> | undefined;
+      parsedTemplateVariables = parseTemplateVariables();
+
+      const response = await adminApiService.createSandboxDocumentation(sessionToken as string, {
+        documentFormat: documentationPayload.documentFormat,
+        transcriptText,
+        includeSummary: true,
+        acceptSuggestions,
+        modelName: documentationPayload.llmProvider,
+        templateId: documentationPayload.templateId || undefined,
+        templateVariables: parsedTemplateVariables,
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Documentation generation failed');
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Documentation generated');
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -508,10 +689,19 @@ export default function SandboxPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Audio Transcription Test</CardTitle>
+            <CardTitle>Workflow Sandbox</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-4">
+              <AdminFormField label="Audio Input" htmlFor="sandbox-audio-mode">
+                <Select value={audioInputMode} onValueChange={(value) => setAudioInputMode(value as 'file' | 'recording')}>
+                  <SelectTrigger id="sandbox-audio-mode"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="file">Upload File</SelectItem>
+                    <SelectItem value="recording">Record Audio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </AdminFormField>
               <AdminFormField label="Provider" htmlFor="sandbox-transcription-provider">
                 <Select value={transcriptionPayload.provider} onValueChange={(value) => setTranscriptionPayload((prev) => ({ ...prev, provider: value }))}>
                   <SelectTrigger id="sandbox-transcription-provider"><SelectValue /></SelectTrigger>
@@ -522,13 +712,25 @@ export default function SandboxPage() {
                   </SelectContent>
                 </Select>
               </AdminFormField>
-
               <AdminFormField label="Request ID (optional)" htmlFor="sandbox-transcription-request-id">
                 <Input id="sandbox-transcription-request-id" value={transcriptionPayload.requestId} onChange={(e) => setTranscriptionPayload((prev) => ({ ...prev, requestId: e.target.value }))} />
               </AdminFormField>
-              <AdminFormField label="Audio File" htmlFor="sandbox-transcription-audio">
-                <Input id="sandbox-transcription-audio" type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
-              </AdminFormField>
+              {audioInputMode === 'file' ? (
+                <AdminFormField label="Audio File" htmlFor="sandbox-transcription-audio">
+                  <Input id="sandbox-transcription-audio" type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
+                </AdminFormField>
+              ) : (
+                <AdminFormField label="Audio Recorder" htmlFor="sandbox-recorder-controls">
+                  <div id="sandbox-recorder-controls" className="flex items-center gap-2">
+                    {!isRecording ? (
+                      <Button type="button" variant="outline" onClick={startRecording}>Start Recording</Button>
+                    ) : (
+                      <Button type="button" variant="outline" onClick={stopRecording}>Stop</Button>
+                    )}
+                    <Button type="button" variant="ghost" onClick={() => setRecordedAudioBlob(null)} disabled={!recordedAudioBlob}>Clear</Button>
+                  </div>
+                </AdminFormField>
+              )}
             </div>
 
             <div className="mt-4">
@@ -546,18 +748,195 @@ export default function SandboxPage() {
               />
             </div>
 
-            <div className="mt-4 flex items-center gap-3">
-              <Button onClick={() => transcriptionMutation.mutate()} disabled={!audioFile || transcriptionMutation.isPending}>
-                {transcriptionMutation.isPending ? 'Running...' : 'Run Transcription Test'}
-              </Button>
-              <Badge variant="outline">Internal / non-billable</Badge>
-            </div>
+            <Tabs defaultValue="transcription" className="mt-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="transcription">Transcription Only</TabsTrigger>
+                <TabsTrigger value="documentation">Documentation Only</TabsTrigger>
+                <TabsTrigger value="combined">Combined Flow</TabsTrigger>
+              </TabsList>
 
-            {transcriptionMutation.data && (
-              <pre className="mt-4 rounded border p-3 text-xs overflow-auto bg-muted/40">
-                {JSON.stringify(transcriptionMutation.data, null, 2)}
-              </pre>
-            )}
+              <TabsContent value="transcription" className="space-y-3 mt-4">
+                <div className="flex items-center gap-3">
+                  <Button onClick={() => transcriptionMutation.mutate()} disabled={!resolveAudioUploadFile() || transcriptionMutation.isPending}>
+                    {transcriptionMutation.isPending ? 'Running...' : 'Run Transcription Test'}
+                  </Button>
+                  <Badge variant="outline">Transcription only</Badge>
+                </div>
+                {transcriptionMutation.data && (
+                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
+                    {JSON.stringify(transcriptionMutation.data, null, 2)}
+                  </pre>
+                )}
+              </TabsContent>
+
+              <TabsContent value="documentation" className="space-y-3 mt-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <AdminFormField label="LLM Provider" htmlFor="sandbox-doc-provider">
+                    <Select
+                      value={documentationPayload.llmProvider}
+                      onValueChange={(value) =>
+                        setDocumentationPayload((prev) => ({
+                          ...prev,
+                          llmProvider: value as LLMProvider,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="sandbox-doc-provider"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={LLMProvider.OPENAI}>OpenAI</SelectItem>
+                        <SelectItem value={LLMProvider.CLAUDE}>Claude</SelectItem>
+                        <SelectItem value={LLMProvider.GEMINI}>Gemini</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </AdminFormField>
+
+                  <AdminFormField label="Document Format" htmlFor="sandbox-doc-format">
+                    <Select
+                      value={documentationPayload.documentFormat}
+                      onValueChange={(value) =>
+                        setDocumentationPayload((prev) => ({
+                          ...prev,
+                          documentFormat: value as DocumentFormat,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="sandbox-doc-format"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={DocumentFormat.SOAP}>SOAP</SelectItem>
+                        <SelectItem value={DocumentFormat.PROGRESS}>Progress</SelectItem>
+                        <SelectItem value={DocumentFormat.CONSULTATION}>Consultation</SelectItem>
+                        <SelectItem value={DocumentFormat.DISCHARGE}>Discharge</SelectItem>
+                        <SelectItem value={DocumentFormat.HISTORY_AND_PHYSICAL}>History &amp; Physical</SelectItem>
+                        <SelectItem value={DocumentFormat.DICTATION}>Dictation</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </AdminFormField>
+                  <AdminFormField label="Template" htmlFor="sandbox-doc-template-id">
+                    <Select
+                      value={documentationPayload.templateId || '__none'}
+                      onValueChange={(value) =>
+                        setDocumentationPayload((prev) => ({
+                          ...prev,
+                          templateId: value === '__none' ? '' : value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="sandbox-doc-template-id"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">No template</SelectItem>
+                        {templatesQuery.data?.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}{template.ownerType ? ` (${template.ownerType})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </AdminFormField>
+                  <AdminFormField label="Template Variables (JSON)" htmlFor="sandbox-doc-template-vars">
+                    <Textarea
+                      id="sandbox-doc-template-vars"
+                      className="min-h-20"
+                      value={documentationPayload.templateVariables}
+                      onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, templateVariables: e.target.value }))}
+                    />
+                  </AdminFormField>
+                </div>
+                <AdminFormField label="Transcript Text" htmlFor="sandbox-doc-transcript">
+                  <Textarea
+                    id="sandbox-doc-transcript"
+                    className="min-h-28"
+                    placeholder="Paste transcript text, or run transcription and leave this empty to reuse last transcript output."
+                    value={documentationPayload.transcriptText}
+                    onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, transcriptText: e.target.value }))}
+                  />
+                </AdminFormField>
+                <div className="flex items-center gap-3">
+                  <Button onClick={() => documentationMutation.mutate()} disabled={documentationMutation.isPending}>
+                    {documentationMutation.isPending ? 'Generating...' : 'Run Documentation Only'}
+                  </Button>
+                  <Badge variant="outline">Documentation only</Badge>
+                </div>
+                {documentationMutation.data && (
+                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
+                    {JSON.stringify(documentationMutation.data, null, 2)}
+                  </pre>
+                )}
+                {documentationPreview && (
+                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
+                    {JSON.stringify(documentationPreview, null, 2)}
+                  </pre>
+                )}
+              </TabsContent>
+
+              <TabsContent value="combined" className="space-y-3 mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Combined flow runs transcription and documentation together using the selected document format, template, and variables.
+                </p>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <AdminFormField label="Document Format" htmlFor="sandbox-combined-format">
+                    <Select
+                      value={documentationPayload.documentFormat}
+                      onValueChange={(value) =>
+                        setDocumentationPayload((prev) => ({
+                          ...prev,
+                          documentFormat: value as DocumentFormat,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="sandbox-combined-format"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={DocumentFormat.SOAP}>SOAP</SelectItem>
+                        <SelectItem value={DocumentFormat.PROGRESS}>Progress</SelectItem>
+                        <SelectItem value={DocumentFormat.CONSULTATION}>Consultation</SelectItem>
+                        <SelectItem value={DocumentFormat.DISCHARGE}>Discharge</SelectItem>
+                        <SelectItem value={DocumentFormat.HISTORY_AND_PHYSICAL}>History &amp; Physical</SelectItem>
+                        <SelectItem value={DocumentFormat.DICTATION}>Dictation</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </AdminFormField>
+                  <AdminFormField label="Template" htmlFor="sandbox-combined-template">
+                    <Select
+                      value={documentationPayload.templateId || '__none'}
+                      onValueChange={(value) =>
+                        setDocumentationPayload((prev) => ({
+                          ...prev,
+                          templateId: value === '__none' ? '' : value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="sandbox-combined-template"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">No template</SelectItem>
+                        {templatesQuery.data?.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}{template.ownerType ? ` (${template.ownerType})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </AdminFormField>
+                  <AdminFormField label="Template Variables (JSON)" htmlFor="sandbox-combined-template-vars">
+                    <Textarea
+                      id="sandbox-combined-template-vars"
+                      className="min-h-20"
+                      value={documentationPayload.templateVariables}
+                      onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, templateVariables: e.target.value }))}
+                    />
+                  </AdminFormField>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button onClick={() => combinedFlowMutation.mutate()} disabled={!resolveAudioUploadFile() || combinedFlowMutation.isPending}>
+                    {combinedFlowMutation.isPending ? 'Running Combined Flow...' : 'Run Combined Flow'}
+                  </Button>
+                  <Badge variant="outline">Template + variables + audio</Badge>
+                </div>
+                {combinedFlowMutation.data && (
+                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
+                    {JSON.stringify(combinedFlowMutation.data, null, 2)}
+                  </pre>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
