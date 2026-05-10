@@ -1,40 +1,27 @@
-# Precision Notes
+# Precision Notes Admin
 
-Precision Notes App is a modern web application for medical documentation and transcription management, designed to streamline the creation, organization, and sharing of medical documents for healthcare professionals.
+Precision Notes Admin is the platform administration frontend for Precision Notes. It provides operational tooling for org management, plans and billing, reporting, transcription sandboxing, and platform settings.
 
 ## Overview
 
-Precision Notes transforms the way healthcare professionals handle documentation by combining the power of AI-powered transcription with intelligent document generation. It enables physicians and medical practitioners to create comprehensive medical documentation faster and with greater accuracy.
+This app is built with React + Vite and talks to the platform backend over the admin API. Authentication and authorization are handled by backend-issued admin session tokens.
 
 ## Key Features
 
-### 🎤 Audio Transcription
-- Real-time audio recording with noise cancellation
-- Automatic speaker diarization (doctor vs. patient)
-- Multiple transcription service providers support
-- Upload pre-recorded audio files
+### Platform Administration
+- Organization lifecycle management
+- Platform admin user management
+- Permissions-aware route protection
 
-### 📝 AI-Powered Document Generation
-- Converts transcriptions into properly formatted medical documents
-- Multiple document formats supported:
-  - SOAP Notes
-  - History & Physical Reports
-  - Progress Notes
-  - Discharge Summaries
-  - Consultation Notes
-  - Specialty-specific formats (Cardiology, Psychiatry, etc.)
-- Choose from multiple AI providers (Claude, GPT-4, Gemini)
+### Plans and Billing
+- Plan catalog management
+- Contract plan assignment
+- Payment transactions and webhook visibility
 
-### 📚 Document Management
-- Create, view, edit, and organize medical documents
-- Search and filter capabilities
-- Share documents with colleagues
-- Export to PDF
-
-### 👥 User Management
-- Secure authentication
-- Role-based access control
-- Personal document libraries
+### Reporting and Operations
+- Usage reporting views
+- Sandbox tools for transcription provider testing
+- Platform configuration management
 
 ## Technical Stack
 
@@ -46,16 +33,11 @@ Precision Notes transforms the way healthcare professionals handle documentation
 - React Query for data fetching
 - React Hook Form for form handling
 
-### Backend
-- Supabase for database and authentication
-- PostgreSQL with custom SQL functions
-- Row-level security for data protection
+### Backend Integration
+- Platform Admin API (configured via environment variables)
 
-### AI/ML Integrations
+### AI Integrations
 - AssemblyAI for speech-to-text transcription
-- OpenAI (GPT-4) for document generation
-- Anthropic (Claude) for document generation
-- Google (Gemini) for document generation
 
 ## Getting Started
 
@@ -66,27 +48,23 @@ Precision Notes transforms the way healthcare professionals handle documentation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/documedly.git
-cd documedly
+git clone <your-repo-url>
+cd precision-notes-admin
 
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your values
 
 # Start the development server
 npm run dev
 ```
 
 ### Environment Variables
-- `VITE_SUPABASE_URL`: Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY`: Your Supabase anon/public key
+- `VITE_PLATFORM_ADMIN_API_BASE_URL`: Base URL for the platform admin backend API (default: `http://localhost:8080`)
 - `VITE_ASSEMBLYAI_API_KEY`: AssemblyAI API key for transcription
-- `VITE_OPENAI_API_KEY`: OpenAI API key for document generation
-- `VITE_ANTHROPIC_API_KEY`: Anthropic API key for document generation
-- `VITE_GEMINI_API_KEY`: Google Gemini API key for document generation
 
 ## Development
 
@@ -102,13 +80,10 @@ npm run preview
 
 ## Security Considerations
 
-Precision Notes is designed with security in mind, particularly for handling sensitive medical information:
-
-- All data is stored securely in your Supabase project
-- Row-level security ensures data is only accessible to authorized users
-- Authentication is handled securely via Supabase Auth
-
-**Note:** When deploying to production, ensure your environment meets all requirements for handling PHI (Protected Health Information) according to applicable regulations like HIPAA.
+- Never commit `.env` files or API keys.
+- Use HTTPS for all backend API endpoints in non-local environments.
+- Keep admin credentials and session tokens protected; rotate credentials regularly.
+- Ensure deployment and data handling workflows satisfy your compliance requirements (for example HIPAA where applicable).
 
 ## License
 
