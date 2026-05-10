@@ -1,9 +1,9 @@
-const SUPABASE_URL = "https://rdjzeayewevditzekveb.supabase.co";
+const API_BASE_URL = import.meta.env.VITE_PLATFORM_ADMIN_API_BASE_URL || 'http://localhost:8080';
 
 interface AdminApiOptions {
-  sessionToken: string;
+  sessionToken?: string;
   endpoint: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: any;
 }
 
@@ -17,7 +17,42 @@ class AdminApiService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = `${SUPABASE_URL}/functions/v1`;
+    this.baseUrl = API_BASE_URL;
+  }
+
+  private pathSegment(value: string, label = 'id') {
+    const normalized = String(value ?? '').trim();
+    if (!normalized) {
+      throw new Error(`${label} is required`);
+    }
+    return encodeURIComponent(normalized);
+  }
+
+  private async parseResponseBody(response: Response): Promise<unknown> {
+    if (response.status === 204) {
+      return null;
+    }
+
+    const contentLength = response.headers.get('content-length');
+    if (contentLength === '0') {
+      return null;
+    }
+
+    const text = await response.text();
+    if (!text) {
+      return null;
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.toLowerCase().includes('application/json')) {
+      return text;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
 
   /**
@@ -32,8 +67,12 @@ class AdminApiService {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'x-admin-session-token': sessionToken, // Custom header for admin authentication
       };
+
+      if (sessionToken) {
+        headers['X-Platform-Admin-Token'] = sessionToken;
+        headers['Authorization'] = `Bearer ${sessionToken}`;
+      }
 
       const config: RequestInit = {
         method,
@@ -44,7 +83,8 @@ class AdminApiService {
         config.body = JSON.stringify(body);
       }
 
-      const response = await fetch(`${this.baseUrl}/${endpoint}`, config);
+      const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      const response = await fetch(`${this.baseUrl}${normalizedEndpoint}`, config);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -54,10 +94,27 @@ class AdminApiService {
         };
       }
 
-      const data = await response.json();
+      const data = await this.parseResponseBody(response);
+
+      // Backend uses { success, message, data } envelope for most endpoints.
+      if (data && typeof data === 'object' && 'success' in data) {
+        const envelope = data as { success?: boolean; message?: string; data?: unknown };
+        if (!envelope.success) {
+          return {
+            success: false,
+            error: envelope.message || 'Request failed'
+          };
+        }
+
+        return {
+          success: true,
+          data: (envelope.data ?? data) as T
+        };
+      }
+
       return {
         success: true,
-        data
+        data: data as T
       };
     } catch (error) {
       console.error('Admin API call failed:', error);
@@ -68,59 +125,185 @@ class AdminApiService {
     }
   }
 
+  async makeAdminMultipartCall<T = any>({
+    sessionToken,
+    endpoint,
+    body,
+  }: {
+    sessionToken?: string;
+    endpoint: string;
+    body: FormData;
+  }): Promise<AdminApiResponse<T>> {
+    try {
+      const headers: Record<string, string> = {};
+      if (sessionToken) {
+        headers['X-Platform-Admin-Token'] = sessionToken;
+        headers['Authorization'] = `Bearer ${sessionToken}`;
+      }
+
+      const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      const response = await fetch(`${this.baseUrl}${normalizedEndpoint}`, {
+        method: 'POST',
+        headers,
+        body,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${errorText || response.statusText}`,
+        };
+      }
+
+      const data = await this.parseResponseBody(response);
+      if (data && typeof data === 'object' && 'success' in data) {
+        const envelope = data as { success?: boolean; message?: string; data?: unknown };
+        if (!envelope.success) {
+          return {
+            success: false,
+            error: envelope.message || 'Request failed',
+          };
+        }
+
+        return {
+          success: true,
+          data: (envelope.data ?? data) as T,
+        };
+      }
+
+      return {
+        success: true,
+        data: data as T,
+      };
+    } catch (error) {
+      console.error('Admin multipart API call failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      };
+    }
+  }
+
+  async login(identifier: string, password: string) {
+    return this.makeAdminApiCall<{
+      adminId: string;
+      username: string;
+      email: string;
+      fullName?: string;
+      sessionToken: string;
+    }>({
+      endpoint: '/platform-admin/auth/login',
+      method: 'POST',
+      body: {
+        username: identifier,
+        password,
+      },
+    });
+  }
+
+  async logout(sessionToken: string) {
+    return this.makeAdminApiCall({
+      endpoint: '/platform-admin/auth/logout',
+      method: 'POST',
+      sessionToken,
+    });
+  }
+
   /**
    * Organization Management APIs
    */
   async listOrganizations(sessionToken: string) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'b2b-organization-management/list'
+      endpoint: '/tenants'
     });
   }
 
   async createOrganization(sessionToken: string, organizationData: any) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'b2b-organization-management/create',
+      endpoint: '/tenants',
       method: 'POST',
       body: organizationData
     });
   }
 
   async manageCredits(sessionToken: string, organizationId: string, creditAdjustment: number, description: string) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'b2b-organization-management/credits',
+      endpoint: `/tenants/${organizationPathId}/credits`,
       method: 'POST',
       body: {
-        organization_id: organizationId,
-        credit_adjustment: creditAdjustment,
+        creditAdjustment,
         description
       }
     });
   }
 
+  async updateOrganization(sessionToken: string, organizationId: string, organizationData: {
+    name?: string;
+    contactEmail?: string;
+    contactName?: string;
+    industry?: string;
+    rateLimitPerHour?: number;
+    requestLimit?: number;
+    dataStoragePreference?: string;
+    allowedDocumentTypes?: string[];
+    isActive?: boolean;
+    webhookUrl?: string;
+  }) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/tenants/${organizationPathId}`,
+      method: 'PATCH',
+      body: organizationData,
+    });
+  }
+
   async getUsageStats(sessionToken: string, organizationId: string, startDate: string, endDate: string) {
+    const normalizedOrganizationId = String(organizationId ?? '').trim();
+    if (!normalizedOrganizationId) {
+      throw new Error('organizationId is required');
+    }
+    const organizationPathId = this.pathSegment(normalizedOrganizationId, 'organizationId');
     const params = new URLSearchParams({
-      organization_id: organizationId,
+      organization_id: normalizedOrganizationId,
       start_date: startDate,
       end_date: endDate
     });
 
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: `b2b-organization-management/usage?${params}`
+      endpoint: `/tenants/${organizationPathId}/usage?${params}`
+    });
+  }
+
+  async getTenantUsage(sessionToken: string, organizationId: string, startDate?: string, endDate?: string) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    const params = new URLSearchParams();
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+
+    const suffix = params.toString() ? `?${params}` : '';
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/tenants/${organizationPathId}/usage${suffix}`,
     });
   }
 
   async rotateApiKey(sessionToken: string, organizationId: string) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'b2b-organization-management/rotate-key',
-      method: 'POST',
-      body: {
-        organization_id: organizationId
-      }
+      endpoint: `/tenants/${organizationPathId}/rotate-key`,
+      method: 'POST'
     });
   }
 
@@ -130,14 +313,14 @@ class AdminApiService {
   async getSystemStats(sessionToken: string) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'admin/system-stats'
+      endpoint: '/platform-admin/analytics/overview'
     });
   }
 
   async getSystemHealth(sessionToken: string) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'admin/system-health'
+      endpoint: '/platform-admin/analytics/health'
     });
   }
 
@@ -147,7 +330,7 @@ class AdminApiService {
   async listAdminUsers(sessionToken: string) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'admin/users'
+      endpoint: '/platform-admin/users'
     });
   }
 
@@ -160,7 +343,7 @@ class AdminApiService {
   }) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'admin/users',
+      endpoint: '/platform-admin/users',
       method: 'POST',
       body: userData
     });
@@ -172,18 +355,20 @@ class AdminApiService {
     permissions: Record<string, boolean>;
     is_active: boolean;
   }>) {
+    const userPathId = this.pathSegment(userId, 'userId');
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: `admin/users/${userId}`,
-      method: 'PUT',
+      endpoint: `/platform-admin/users/${userPathId}`,
+      method: 'PATCH',
       body: userData
     });
   }
 
   async deleteAdminUser(sessionToken: string, userId: string) {
+    const userPathId = this.pathSegment(userId, 'userId');
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: `admin/users/${userId}`,
+      endpoint: `/platform-admin/users/${userPathId}`,
       method: 'DELETE'
     });
   }
@@ -194,16 +379,322 @@ class AdminApiService {
   async getSystemConfig(sessionToken: string) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'admin/config'
+      endpoint: '/platform-admin/config'
     });
   }
 
   async updateSystemConfig(sessionToken: string, config: Record<string, any>) {
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: 'admin/config',
+      endpoint: '/platform-admin/config',
       method: 'PUT',
       body: config
+    });
+  }
+
+  async listPlans(sessionToken: string, scope: 'B2B' | 'B2C' = 'B2B') {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans?scope=${scope}`,
+    });
+  }
+
+  async createPlan(sessionToken: string, request: {
+    name: string;
+    description?: string;
+    planScope: 'B2B' | 'B2C';
+    isDefault?: boolean;
+    isActive?: boolean;
+    refreshTimezone?: string;
+  }) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/admin/plans',
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async addPlanFeature(sessionToken: string, planId: string, request: {
+    featureCode: string;
+    usageUnit: 'DOCUMENT_INPUT_TOKENS' | 'DOCUMENT_OUTPUT_TOKENS' | 'TRANSCRIPTION_MINUTES';
+    windowType: 'HOURLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+    limitValue: number;
+    isEnabled?: boolean;
+  }) {
+    const planPathId = this.pathSegment(planId, 'planId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans/${planPathId}/features`,
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async updatePlanFeature(sessionToken: string, planId: string, featureLimitId: string, request: {
+    limitValue?: number;
+    isEnabled?: boolean;
+  }) {
+    const planPathId = this.pathSegment(planId, 'planId');
+    const featureLimitPathId = this.pathSegment(featureLimitId, 'featureLimitId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans/${planPathId}/features/${featureLimitPathId}`,
+      method: 'PATCH',
+      body: request,
+    });
+  }
+
+  async addPlanPrice(sessionToken: string, planId: string, request: {
+    provider: string;
+    providerPriceId?: string;
+    currency: string;
+    amountCents: number;
+    billingInterval: 'MONTH' | 'YEAR';
+    regionCode?: string;
+    countryCode?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+  }) {
+    const planPathId = this.pathSegment(planId, 'planId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans/${planPathId}/prices`,
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async assignContractPlan(sessionToken: string, organizationId: string, request: {
+    planId: string;
+    provider?: string;
+    status?: string;
+    timezone?: string;
+  }) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/organizations/${organizationPathId}/contract-plan`,
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async updateContractPlan(sessionToken: string, organizationId: string, request: {
+    planId: string;
+    provider?: string;
+    status?: string;
+    timezone?: string;
+  }) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/organizations/${organizationPathId}/contract-plan`,
+      method: 'PATCH',
+      body: request,
+    });
+  }
+
+  async listPaymentTransactions(sessionToken: string) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/admin/payments/transactions',
+    });
+  }
+
+  async getPaymentTransaction(sessionToken: string, transactionId: string) {
+    const transactionPathId = this.pathSegment(transactionId, 'transactionId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/payments/transactions/${transactionPathId}`,
+    });
+  }
+
+  async createManualPaymentAdjustment(sessionToken: string, transactionId: string, request: {
+    action: string;
+    reason: string;
+    note?: string;
+  }) {
+    const transactionPathId = this.pathSegment(transactionId, 'transactionId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/payments/transactions/${transactionPathId}/manual-adjustment`,
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async listWebhookEvents(sessionToken: string) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/admin/payments/webhook-events',
+    });
+  }
+
+  async listBillingFeatureCodes(sessionToken: string, scope: 'B2B' | 'B2C' = 'B2B') {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/billing/feature-codes?scope=${scope}`,
+    });
+  }
+
+  async listBillingUsageUnits(sessionToken: string) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/admin/billing/usage-units',
+    });
+  }
+
+  async getReportingUsage(sessionToken: string, startDate?: string, endDate?: string) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    const suffix = params.toString() ? `?${params}` : '';
+
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/reporting/usage${suffix}`,
+    });
+  }
+
+  async getOrganizationStaffUtilization(sessionToken: string, startDate?: string, endDate?: string) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    const suffix = params.toString() ? `?${params}` : '';
+
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/reporting/staff-utilization/organization${suffix}`,
+    });
+  }
+
+  async getTranscriptionProviderConfig(sessionToken: string) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/platform-admin/transcription-providers',
+    });
+  }
+
+  async updateTranscriptionProviderConfig(sessionToken: string, request: {
+    defaultProvider: 'ASSEMBLY_AI' | 'DEEPGRAM' | 'GOOGLE';
+    providers: Array<{
+      provider: 'ASSEMBLY_AI' | 'DEEPGRAM' | 'GOOGLE';
+      enabled: boolean;
+      supportsUploadedMedia?: boolean;
+      supportsLive?: boolean;
+      liveTransport?: string;
+      config?: Record<string, unknown>;
+    }>;
+  }) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/platform-admin/transcription-providers',
+      method: 'PUT',
+      body: request,
+    });
+  }
+
+  async getSupportedTranscriptionLanguages(sessionToken: string) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/transcriptions/languages',
+    });
+  }
+
+  async createPlatformLiveSession(sessionToken: string, request: {
+    provider: string;
+    expiresInSeconds?: number;
+    maxSessionDurationSeconds?: number;
+    languageCode?: string;
+  }) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/platform-admin/transcriptions/live/sessions',
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async getPlatformLiveSession(sessionToken: string, sessionId: string) {
+    const sessionPathId = this.pathSegment(sessionId, 'sessionId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/platform-admin/transcriptions/live/sessions/${sessionPathId}`,
+    });
+  }
+
+  async createPlatformTranscription(sessionToken: string, request: {
+    audioFile: File;
+    provider: string;
+    languageCode?: string;
+    useSpeechModelNano?: boolean;
+    requestId?: string;
+  }) {
+    const formData = new FormData();
+    formData.append('audio', request.audioFile);
+    formData.append('provider', request.provider);
+    if (request.languageCode) formData.append('languageCode', request.languageCode);
+    if (request.useSpeechModelNano !== undefined) {
+      formData.append('useSpeechModelNano', String(request.useSpeechModelNano));
+    }
+    if (request.requestId) formData.append('requestId', request.requestId);
+
+    return this.makeAdminMultipartCall({
+      sessionToken,
+      endpoint: '/platform-admin/transcriptions',
+      body: formData,
+    });
+  }
+
+  async getPlatformSandboxCapabilities(sessionToken: string) {
+    return this.makeAdminApiCall<{
+      defaultProvider?: string;
+      enabledProviders?: string[];
+      supportedLanguageCount?: number;
+      supportedLanguageCodes?: string[];
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/sandbox/capabilities',
+    });
+  }
+
+  async simulateProviderFailover(sessionToken: string, request: {
+    currentProvider: string;
+    fallbackProvider: string;
+    languageCode?: string;
+  }) {
+    return this.makeAdminApiCall<{
+      canFailover: boolean;
+      currentProvider: string;
+      recommendedProvider?: string;
+      languageCode?: string;
+      message: string;
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/sandbox/providers/failover-simulations',
+      method: 'POST',
+      body: request,
+    });
+  }
+
+  async createSandboxWebhookTest(sessionToken: string, request: {
+    targetUrl: string;
+    eventType: string;
+    payload?: string;
+  }) {
+    return this.makeAdminApiCall<{
+      eventId: string;
+      targetUrl: string;
+      eventType: string;
+      accepted: boolean;
+      message: string;
+      requestedAt: string;
+    }>({
+      sessionToken,
+      endpoint: '/platform-admin/sandbox/webhook-tests',
+      method: 'POST',
+      body: request,
     });
   }
 }

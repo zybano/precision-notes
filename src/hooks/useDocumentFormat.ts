@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {DocumentFormat, LLMProvider, TranscriptionProvider} from "@/services/transcription";
+import {DocumentFormat, LLMProvider, TranscriptionProvider} from '@/types/transcription';
 
 export enum TranscriptionLanguage {
   ENGLISH = 'en_us',

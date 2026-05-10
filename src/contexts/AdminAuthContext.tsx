@@ -1,4 +1,5 @@
 import React, {createContext, ReactNode, useContext, useEffect, useState} from "react";
+import {adminApiService} from '@/services/adminApiService';
 
 interface AdminUser {
   id: string;
@@ -39,14 +40,29 @@ interface AdminAuthProviderProps {
 export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for existing session on mount
     const token = localStorage.getItem('admin_session_token');
+    const storedUser = localStorage.getItem('admin_user');
+
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse stored admin user:', error);
+      }
+    }
+
     if (token) {
+      setSessionToken(token);
       validateSession(token).then((isValid) => {
         if (!isValid) {
           localStorage.removeItem('admin_session_token');
+          localStorage.removeItem('admin_user');
+          setSessionToken(null);
+          setUser(null);
         }
         setLoading(false);
       });
@@ -57,22 +73,8 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
 
   const validateSession = async (token: string): Promise<boolean> => {
     try {
-      // Simplified approach - just check if token exists and set a mock user
-      if (token && token.length > 10) {
-        setUser({
-          id: "admin-1",
-          name: "Admin User",
-          email: "admin@example.com",
-          role: "admin",
-          permissions: {
-            organizations: true,
-            analytics: true,
-            settings: true
-          }
-        });
-        return true;
-      }
-      return false;
+      const response = await adminApiService.listOrganizations(token);
+      return response.success;
     } catch (error) {
       console.error('Session validation error:', error);
       return false;
@@ -82,27 +84,35 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      
-      // Simplified login - check basic credentials
-      if (email && password) {
-        const sessionToken = crypto.randomUUID();
-        localStorage.setItem('admin_session_token', sessionToken);
 
-        setUser({
-          id: "admin-1",
-          name: "Admin User",
-          email: email,
-          role: "admin",
+      if (email && password) {
+        const response = await adminApiService.login(email, password);
+        if (!response.success || !response.data?.sessionToken) {
+          return false;
+        }
+
+        const resolvedUser: AdminUser = {
+          id: response.data.adminId,
+          name: response.data.fullName || response.data.username || email,
+          email: response.data.email || email,
+          role: 'platform_admin',
           permissions: {
             organizations: true,
             analytics: true,
-            settings: true
+            settings: true,
+            billing: true,
+            sandbox: true,
+            platform_admins: true,
           }
-        });
+        };
 
+        localStorage.setItem('admin_session_token', response.data.sessionToken);
+        localStorage.setItem('admin_user', JSON.stringify(resolvedUser));
+        setSessionToken(response.data.sessionToken);
+        setUser(resolvedUser);
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Login error:', error);
@@ -114,7 +124,12 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
 
   const logout = async () => {
     try {
+      if (sessionToken) {
+        await adminApiService.logout(sessionToken);
+      }
       localStorage.removeItem('admin_session_token');
+      localStorage.removeItem('admin_user');
+      setSessionToken(null);
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -126,10 +141,11 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
   };
 
   const signOut = async (sessionToken: string) => {
+    if (sessionToken) {
+      setSessionToken(sessionToken);
+    }
     await logout();
   };
-
-  const sessionToken = localStorage.getItem('admin_session_token');
 
   const value: AdminAuthContextType = {
     adminUser: user,

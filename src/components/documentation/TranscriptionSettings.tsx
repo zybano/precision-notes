@@ -65,9 +65,7 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
-        {/* Compact Settings Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Language Selection */}
           <div className="space-y-1">
             <Label htmlFor="language-select" className="text-xs font-medium flex items-center">
               <Languages className="h-3 w-3 mr-1" />
@@ -85,7 +83,6 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
             </Select>
           </div>
 
-          {/* Speech Model Setting */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label htmlFor="nano-model" className="text-xs font-medium flex items-center">
@@ -104,7 +101,6 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
             />
           </div>
 
-          {/* Accept Suggestions Setting */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label htmlFor="accept-suggestions" className="text-xs font-medium flex items-center">

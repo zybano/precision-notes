@@ -1,47 +1,9 @@
 // src/services/transcription.ts
 
 import {AssemblyAI} from 'assemblyai';
-import OpenAI from 'openai';
+import {DocumentFormat, LLMProvider, TranscriptionProvider} from '@/types/transcription';
 
-// Define transcription provider types
-export enum TranscriptionProvider {
-  ASSEMBLYAI = 'assemblyai',
-  GOOGLE_SPEECH = 'google_speech',
-}
-
-// Define the LLM provider types
-export enum LLMProvider {
-  CLAUDE = 'claude',
-  OPENAI = 'openai',
-  GEMINI = 'gemini',
-}
-
-// Define the document format types (matching B2B API)
-export enum DocumentFormat {
-  DICTATION = 'dictation',
-  SOAP = 'soap',
-  PROGRESS = 'progress',
-  HISTORY_AND_PHYSICAL = 'h&p',
-  CONSULTATION = 'consultation',
-  DISCHARGE = 'discharge',
-  PROCEDURE = 'procedure',
-  OPERATIVE = 'operative',
-  EMERGENCY = 'emergency',
-  PSYCHIATRIC = 'psychiatric',
-  THERAPY = 'therapy',
-  RADIOLOGY = 'radiology',
-  PATHOLOGY = 'pathology',
-  CARDIOLOGY = 'cardiology',
-  PULMONARY = 'pulmonary',
-  NEUROLOGY = 'neurology',
-  ONCOLOGY = 'oncology',
-  PEDIATRIC = 'pediatric',
-  PRENATAL = 'prenatal',
-  FOLLOWUP = 'followup',
-  REFERRAL = 'referral',
-  MEDICATION = 'medication',
-  CUSTOM = 'custom'
-}
+export {DocumentFormat, LLMProvider, TranscriptionProvider} from '@/types/transcription';
 
 // Define the speaker utterance type
 export interface SpeakerUtterance {
@@ -106,7 +68,7 @@ export const transcribeAudio = async (
     return await transcriptionService(audioBlob, options);
   } catch (error) {
     console.error(`Error with ${provider} transcription:`, error);
-
+    throw new Error(`Transcription failed for provider ${provider}`);
   }
 };
 
@@ -235,44 +197,9 @@ const generateWithOpenAI = async (
     prompt: string,
     options: DocumentGenerationOptions
 ): Promise<string> => {
-  try {
-    const apiKey = options.apiKey || import.meta.env.VITE_OPENAI_API_KEY;
-
-    if (!apiKey) {
-      throw new Error("No OpenAI API key provided");
-    }
-
-
-    // Initialize the OpenAI client with dangerouslyAllowBrowser since we're in a browser environment
-    const openai = new OpenAI({
-      apiKey,
-      dangerouslyAllowBrowser: true // Required for browser environments
-    });
-    // Make API call to OpenAI
-    const completion = await openai.chat.completions.create({
-      model: options.modelName || "gpt-4-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert medical professional specializing in creating accurate and comprehensive medical documentation from transcripts."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      max_tokens: 4000,
-      temperature: 0.3, // Lower temperature for more deterministic outputs
-
-    });
-
-    // Extract and return the generated content
-    return completion.choices[0]?.message?.content || "";
-
-  } catch (error) {
-    console.error("Error with OpenAI:", error);
-    throw new Error(`OpenAI API error: ${error instanceof Error ? error.message : String(error)}`);
-  }
+  void prompt;
+  void options;
+  throw new Error('Client-side OpenAI document generation is disabled. Route this request through a secure backend endpoint.');
 };
 
 

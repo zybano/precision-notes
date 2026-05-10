@@ -1,15 +1,17 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription} from "@/components/ui/alert";
-import {Eye, EyeOff, Loader2, Lock, Shield, User} from "lucide-react";
+import {Eye, EyeOff, Loader2} from "lucide-react";
 import {useAdminAuth} from "@/contexts/AdminAuthContext";
+import precisionLogo from '/lovable-uploads/precision.jpeg';
+import precisionNote from '/lovable-uploads/PrecisionNote.jpeg';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,9 +33,11 @@ export default function AdminLogin() {
     setIsSubmitting(true);
 
     try {
-      const success = await signIn(email, password);
+      const success = await signIn(username, password);
       if (success) {
         navigate('/admin');
+      } else {
+        setError('Invalid credentials or session could not be created');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -54,116 +58,121 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4 text-center">
-          <div className="flex justify-center">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <Shield className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-          <div>
-            <CardTitle className="text-2xl">Admin Portal</CardTitle>
-            <CardDescription>
-              Sign in to access the Precision Notes admin dashboard
-            </CardDescription>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700">
-                  {error}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@precisionnotes.com"
-                  required
-                  disabled={isSubmitting}
-                  className="pl-10"
-                />
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="min-h-screen w-full overflow-hidden">
+      <div className="flex h-screen flex-col md:flex-row">
+        <div className="flex flex-1 items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="space-y-1">
+              <div className="flex items-center justify-center mb-4">
+                <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
+                  <a href="/" target="_self" rel="noreferrer">
+                    <img
+                      src={precisionLogo}
+                      alt="PrecisionNote"
+                      className="h-full w-full object-contain"
+                    />
+                  </a>
+                </div>
               </div>
-            </div>
+              <CardTitle className="text-2xl text-center">Login to PrecisionNote</CardTitle>
+              <CardDescription className="text-center">
+                Enter your credentials to access your account
+              </CardDescription>
+            </CardHeader>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  disabled={isSubmitting}
-                  className="pl-10 pr-10"
-                />
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert className="border-red-200 bg-red-50">
+                    <AlertDescription className="text-red-700">
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="superadmin"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      disabled={isSubmitting}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isSubmitting}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <a href="mailto:support@precisionnote.ai" className="text-sm text-primary hover:underline">
+                    Forgot password?
+                  </a>
+                </div>
+
                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isSubmitting}
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || !username || !password}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Logging in...
+                    </>
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    'Login'
                   )}
                 </Button>
-              </div>
-            </div>
+              </form>
+            </CardContent>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isSubmitting || !email || !password}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <Shield className="h-4 w-4 mr-2" />
-                  Sign In
-                </>
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-6 pt-4 border-t">
-            <div className="text-center space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Default Credentials (Change immediately):
-              </p>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <div>
-                  <strong>Super Admin:</strong> admin@precisionnotes.com / SuperAdmin123!
-                </div>
-                <div>
-                  <strong>Admin:</strong> admin1@precisionnotes.com / Admin123!
-                </div>
+            <CardFooter className="justify-center">
+              <div className="text-sm text-muted-foreground text-center">
+                Need platform admin access? Contact your system owner.
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardFooter>
+          </Card>
+        </div>
+
+        <div className="hidden md:flex md:flex-1 items-center justify-center bg-gray-100">
+          <img
+            src={precisionNote}
+            alt="Admin login illustration"
+            className="h-full w-full object-contain"
+          />
+        </div>
+      </div>
     </div>
   );
 }
