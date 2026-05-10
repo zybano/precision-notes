@@ -36,9 +36,6 @@ This app is built with React + Vite and talks to the platform backend over the a
 ### Backend Integration
 - Platform Admin API (configured via environment variables)
 
-### AI Integrations
-- AssemblyAI for speech-to-text transcription
-
 ## Getting Started
 
 ### Prerequisites
@@ -64,7 +61,6 @@ npm run dev
 
 ### Environment Variables
 - `VITE_PLATFORM_ADMIN_API_BASE_URL`: Base URL for the platform admin backend API (default: `http://localhost:8080`)
-- `VITE_ASSEMBLYAI_API_KEY`: AssemblyAI API key for transcription
 
 ## Development
 
