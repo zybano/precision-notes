@@ -95,6 +95,29 @@
     overflow-x: hidden;
     width: 100%;
   }
+
+  .admin-audio-bar.is-active {
+    animation: admin-audio-wave 980ms ease-in-out infinite;
+    transform-origin: bottom;
+  }
+
+  @keyframes admin-audio-wave {
+    0%, 100% {
+      transform: scaleY(0.38);
+      opacity: 0.55;
+    }
+    50% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-audio-bar.is-active {
+      animation: none;
+      opacity: 0.75;
+    }
+  }
   
   .glass {
     @apply bg-white/80 backdrop-blur-md border border-white/20;

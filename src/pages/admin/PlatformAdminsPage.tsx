@@ -3,7 +3,7 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {Badge} from '@/components/ui/badge';
 import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Card, CardContent} from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
 import {
   Dialog,
@@ -17,9 +17,11 @@ import {
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import AdminFormField from '@/components/admin/AdminFormField';
+import {AdminMetricTile, AdminSectionPanel, AdminTableShell} from '@/components/admin/AdminSurface';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
 import {toast} from 'sonner';
+import {ShieldCheck, UserCheck, UserX, Wifi} from 'lucide-react';
 
 export default function PlatformAdminsPage() {
   const { sessionToken, adminUser } = useAdminAuth();
@@ -120,32 +122,18 @@ export default function PlatformAdminsPage() {
         description="Control platform operator identities, role scopes, and active sessions."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Platform Admin Users</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold">{summary.total}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Active</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold text-emerald-600">{summary.active}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Inactive</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold text-amber-600">{summary.inactive}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Admin API Status</CardTitle></CardHeader>
-          <CardContent>
-            <Badge variant={usersQuery.isError ? 'secondary' : 'default'}>{apiStatusLabel}</Badge>
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricTile label="Platform Admin Users" value={summary.total} helper="Total operators" icon={<ShieldCheck className="h-4 w-4" />} tone="info" />
+        <AdminMetricTile label="Active" value={summary.active} helper="Can access console" icon={<UserCheck className="h-4 w-4" />} tone="success" />
+        <AdminMetricTile label="Inactive" value={summary.inactive} helper="Disabled accounts" icon={<UserX className="h-4 w-4" />} tone="warning" />
+        <AdminMetricTile label="Admin API Status" value={apiStatusLabel} helper="Identity endpoint" icon={<Wifi className="h-4 w-4" />} tone={usersQuery.isError ? 'warning' : 'success'} />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Platform Admin Users</CardTitle>
+      <AdminSectionPanel
+        title="Platform Admin Users"
+        description={`Signed in as ${adminUser?.email || 'platform admin'}`}
+        actions={(
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Signed in as {adminUser?.email || 'platform admin'}</span>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm">Invite Admin</Button>
@@ -208,8 +196,8 @@ export default function PlatformAdminsPage() {
               {usersQuery.isFetching ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        )}
+      >
           {usersQuery.isLoading && <p className="text-sm text-muted-foreground">Loading platform admins...</p>}
           {usersQuery.isError && (
             <Alert>
@@ -218,7 +206,8 @@ export default function PlatformAdminsPage() {
             </Alert>
           )}
           {users.length > 0 && (
-            <Table>
+            <AdminTableShell>
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Username</TableHead>
@@ -241,13 +230,13 @@ export default function PlatformAdminsPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </AdminTableShell>
           )}
           {!usersQuery.isLoading && !usersQuery.isError && users.length === 0 && (
             <p className="text-sm text-muted-foreground">No platform admin users found.</p>
           )}
-        </CardContent>
-      </Card>
+      </AdminSectionPanel>
     </div>
   );
 }

@@ -1,9 +1,8 @@
 
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
-import {Badge} from '@/components/ui/badge';
 import {Input} from '@/components/ui/input';
 import {Switch} from '@/components/ui/switch';
 import {Textarea} from '@/components/ui/textarea';
@@ -20,10 +19,33 @@ import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import AdminFormField from '@/components/admin/AdminFormField';
+import {
+  AdminJsonResult,
+  AdminMetricTile,
+  AdminSectionPanel,
+  AdminStatusPill,
+  AdminTableShell,
+  AudioVisualizer
+} from '@/components/admin/AdminSurface';
 import TranscriptionSettings from '@/components/documentation/TranscriptionSettings';
 import {TranscriptionLanguage} from '@/hooks/useDocumentFormat';
 import {DocumentFormat, LLMProvider} from '@/types/transcription';
 import {toast} from 'sonner';
+import {
+  Activity,
+  AudioLines,
+  FileAudio,
+  FileText,
+  FlaskConical,
+  Languages,
+  Mic,
+  Radio,
+  Route,
+  Server,
+  Settings2,
+  Webhook,
+  Workflow
+} from 'lucide-react';
 
 const providers = ['ASSEMBLY_AI', 'DEEPGRAM', 'GOOGLE'] as const;
 
@@ -447,8 +469,7 @@ export default function SandboxPage() {
         throw new Error('Transcript text is required for documentation generation');
       }
 
-      let parsedTemplateVariables: Record<string, unknown> | undefined;
-      parsedTemplateVariables = parseTemplateVariables();
+      const parsedTemplateVariables: Record<string, unknown> | undefined = parseTemplateVariables();
 
       const response = await adminApiService.createSandboxDocumentation(sessionToken as string, {
         documentFormat: documentationPayload.documentFormat,
@@ -533,6 +554,20 @@ export default function SandboxPage() {
     );
   }
 
+  const enabledProviderCount = sandboxCapabilitiesQuery.data?.enabledProviders?.length ?? providerRows.filter((row) => row.enabled).length;
+  const audioReady = Boolean(resolveAudioUploadFile());
+  const latestRunLabel = combinedFlowMutation.data
+    ? 'Combined flow complete'
+    : documentationMutation.data
+      ? 'Documentation complete'
+      : transcriptionMutation.data
+        ? 'Transcription complete'
+        : recordedAudioBlob
+          ? 'Recording captured'
+          : audioFile
+            ? 'Audio file ready'
+            : 'Awaiting audio';
+
   return (
     <div className="space-y-6">
       <PlatformModuleHeader
@@ -540,107 +575,327 @@ export default function SandboxPage() {
         description="Safe environment for testing providers, transcription settings, and language options."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Providers</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold">{providerRows.length}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Default Provider</CardTitle></CardHeader>
-          <CardContent className="text-lg font-semibold">{providerConfigQuery.data?.defaultProvider || '-'}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Languages</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold">{languageRows.length}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Audio Test</CardTitle></CardHeader>
-          <CardContent className="text-sm text-muted-foreground">Upload + provider-run</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Enabled Providers</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold">{sandboxCapabilitiesQuery.data?.enabledProviders?.length ?? 0}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Capabilities API</CardTitle></CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {sandboxCapabilitiesQuery.isLoading ? 'Loading...' : 'Live endpoint wired'}
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricTile label="Providers" value={providerRows.length} helper={`${enabledProviderCount} enabled`} icon={<Server className="h-4 w-4" />} tone="info" />
+        <AdminMetricTile label="Default Provider" value={providerConfigQuery.data?.defaultProvider || '-'} helper="Routing preference" icon={<Settings2 className="h-4 w-4" />} />
+        <AdminMetricTile label="Languages" value={languageRows.length} helper="Canonical language rows" icon={<Languages className="h-4 w-4" />} tone="success" />
+        <AdminMetricTile label="Latest Test" value={latestRunLabel} helper={audioReady ? 'Audio input ready' : 'Needs audio input'} icon={<Activity className="h-4 w-4" />} tone={audioReady ? 'success' : 'warning'} />
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Provider Configuration</CardTitle>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Default:</span>
-              <Select value={defaultProvider} onValueChange={(value) => setDefaultProvider(value as ProviderType)}>
-                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {providers.map((provider) => (
-                    <SelectItem key={provider} value={provider}>{provider}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                size="sm"
-                onClick={() => updateProviderConfigMutation.mutate(providerRows)}
-                disabled={providerRows.length === 0 || updateProviderConfigMutation.isPending}
-              >
-                {updateProviderConfigMutation.isPending ? 'Saving...' : 'Save Config'}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Provider</TableHead>
-                  <TableHead>Enabled</TableHead>
-                  <TableHead>Uploaded Media</TableHead>
-                  <TableHead>Live</TableHead>
-                  <TableHead>Transport</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {providerConfigQuery.isLoading && <TableRow><TableCell colSpan={5}>Loading config...</TableCell></TableRow>}
-                {providerRows.map((row) => (
-                  <TableRow key={row.provider}>
-                    <TableCell className="font-medium">{row.provider}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Switch
-                          checked={row.enabled}
-                          disabled={toggleProviderEnabledMutation.isPending}
-                          onCheckedChange={(checked) => {
-                            const enabledCount = providerRows.filter((providerRow) => providerRow.enabled).length;
-                            if (!checked && row.enabled && enabledCount <= 1) {
-                              toast.error('At least one provider must remain enabled');
-                              return;
-                            }
-                            toggleProviderEnabledMutation.mutate({ provider: row.provider, enabled: checked });
-                          }}
-                        />
-                        <Badge variant={row.enabled ? 'default' : 'secondary'}>{row.enabled ? 'Enabled' : 'Disabled'}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>{row.supportsUploadedMedia ? 'Yes' : 'No'}</TableCell>
-                    <TableCell>{row.supportsLive ? 'Yes' : 'No'}</TableCell>
-                    <TableCell>{row.liveTransport || '-'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="provider-lab" className="space-y-5">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-white p-1 text-slate-500 md:grid-cols-5">
+          <TabsTrigger value="provider-lab" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+            <FlaskConical className="h-4 w-4" />
+            Provider Lab
+          </TabsTrigger>
+          <TabsTrigger value="audio-test" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+            <AudioLines className="h-4 w-4" />
+            Audio Test
+          </TabsTrigger>
+          <TabsTrigger value="documentation-flow" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+            <FileText className="h-4 w-4" />
+            Docs Flow
+          </TabsTrigger>
+          <TabsTrigger value="live-sessions" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+            <Radio className="h-4 w-4" />
+            Live Sessions
+          </TabsTrigger>
+          <TabsTrigger value="failover-webhooks" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+            <Route className="h-4 w-4" />
+            Failover
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Live Session Tools</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-4">
+        <TabsContent value="provider-lab" className="space-y-5">
+          <AdminSectionPanel
+            title="Provider Health Rail"
+            description="Provider routing, capability, and enabled-state controls."
+            actions={(
+              <>
+                <Select value={defaultProvider} onValueChange={(value) => setDefaultProvider(value as ProviderType)}>
+                  <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {providers.map((provider) => (
+                      <SelectItem key={provider} value={provider}>{provider}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  onClick={() => updateProviderConfigMutation.mutate(providerRows)}
+                  disabled={providerRows.length === 0 || updateProviderConfigMutation.isPending}
+                >
+                  {updateProviderConfigMutation.isPending ? 'Saving...' : 'Save Config'}
+                </Button>
+              </>
+            )}
+          >
+            <div className="grid gap-3 lg:grid-cols-3">
+              {providerRows.map((row) => (
+                <div key={row.provider} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-950">{row.provider}</p>
+                      <p className="mt-1 text-xs text-slate-500">{row.liveTransport || 'No live transport configured'}</p>
+                    </div>
+                    <Switch
+                      checked={row.enabled}
+                      disabled={toggleProviderEnabledMutation.isPending}
+                      onCheckedChange={(checked) => {
+                        const enabledCount = providerRows.filter((providerRow) => providerRow.enabled).length;
+                        if (!checked && row.enabled && enabledCount <= 1) {
+                          toast.error('At least one provider must remain enabled');
+                          return;
+                        }
+                        toggleProviderEnabledMutation.mutate({ provider: row.provider, enabled: checked });
+                      }}
+                    />
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <AdminStatusPill tone={row.enabled ? 'success' : 'neutral'} icon={row.enabled ? 'success' : undefined}>
+                      {row.enabled ? 'Enabled' : 'Disabled'}
+                    </AdminStatusPill>
+                    <AdminStatusPill tone={row.provider === defaultProvider ? 'info' : 'neutral'}>
+                      {row.provider === defaultProvider ? 'Default' : 'Standby'}
+                    </AdminStatusPill>
+                    <AdminStatusPill tone={row.supportsUploadedMedia ? 'success' : 'neutral'}>Upload</AdminStatusPill>
+                    <AdminStatusPill tone={row.supportsLive ? 'success' : 'neutral'}>Live</AdminStatusPill>
+                  </div>
+                </div>
+              ))}
+              {providerConfigQuery.isLoading && (
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  Loading provider configuration...
+                </div>
+              )}
+            </div>
+          </AdminSectionPanel>
+
+          <AdminSectionPanel title="Supported Languages" description="First 30 canonical language rows returned by the platform API.">
+            <AdminTableShell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Name</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {languagesQuery.isLoading && <TableRow><TableCell colSpan={2}>Loading languages...</TableCell></TableRow>}
+                  {languageRows.slice(0, 30).map((lang) => (
+                    <TableRow key={lang.code}>
+                      <TableCell className="font-mono text-xs">{lang.code}</TableCell>
+                      <TableCell>{lang.name || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </AdminTableShell>
+          </AdminSectionPanel>
+        </TabsContent>
+
+        <TabsContent value="audio-test" className="space-y-5">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <AdminSectionPanel
+              title="Audio Input"
+              description="Upload audio or capture a short browser recording before running transcription."
+              actions={<AdminStatusPill tone={audioReady ? 'success' : 'warning'}>{audioReady ? 'Audio ready' : 'No audio selected'}</AdminStatusPill>}
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <AdminFormField label="Audio Input" htmlFor="sandbox-audio-mode">
+                  <Select value={audioInputMode} onValueChange={(value) => setAudioInputMode(value as 'file' | 'recording')}>
+                    <SelectTrigger id="sandbox-audio-mode"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="file">Upload File</SelectItem>
+                      <SelectItem value="recording">Record Audio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </AdminFormField>
+                <AdminFormField label="Provider" htmlFor="sandbox-transcription-provider">
+                  <Select value={transcriptionPayload.provider} onValueChange={(value) => setTranscriptionPayload((prev) => ({ ...prev, provider: value }))}>
+                    <SelectTrigger id="sandbox-transcription-provider"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {providers.map((provider) => (
+                        <SelectItem key={provider} value={provider}>{provider}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </AdminFormField>
+                <AdminFormField label="Request ID (optional)" htmlFor="sandbox-transcription-request-id">
+                  <Input id="sandbox-transcription-request-id" value={transcriptionPayload.requestId} onChange={(e) => setTranscriptionPayload((prev) => ({ ...prev, requestId: e.target.value }))} />
+                </AdminFormField>
+                {audioInputMode === 'file' ? (
+                  <AdminFormField label="Audio File" htmlFor="sandbox-transcription-audio">
+                    <Input id="sandbox-transcription-audio" type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
+                  </AdminFormField>
+                ) : (
+                  <AdminFormField label="Audio Recorder" htmlFor="sandbox-recorder-controls">
+                    <div id="sandbox-recorder-controls" className="flex flex-wrap items-center gap-2">
+                      {!isRecording ? (
+                        <Button type="button" variant="outline" onClick={startRecording}><Mic className="mr-2 h-4 w-4" />Start Recording</Button>
+                      ) : (
+                        <Button type="button" variant="outline" onClick={stopRecording}>Stop</Button>
+                      )}
+                      <Button type="button" variant="ghost" onClick={() => setRecordedAudioBlob(null)} disabled={!recordedAudioBlob}>Clear</Button>
+                    </div>
+                  </AdminFormField>
+                )}
+              </div>
+
+              <div className="mt-5">
+                <TranscriptionSettings
+                  transcriptionLanguage={toTranscriptionLanguage(transcriptionPayload.languageCode)}
+                  onLanguageSelect={(language) =>
+                    setTranscriptionPayload((prev) => ({ ...prev, languageCode: fromTranscriptionLanguage(language) }))
+                  }
+                  useSpeechModelNano={transcriptionPayload.useSpeechModelNano}
+                  setUseSpeechModelNano={(value) =>
+                    setTranscriptionPayload((prev) => ({ ...prev, useSpeechModelNano: value }))
+                  }
+                  acceptSuggestions={acceptSuggestions}
+                  setAcceptSuggestions={setAcceptSuggestions}
+                />
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Button onClick={() => transcriptionMutation.mutate()} disabled={!audioReady || transcriptionMutation.isPending}>
+                  {transcriptionMutation.isPending ? 'Running...' : 'Run Transcription Test'}
+                </Button>
+                <AdminStatusPill tone="info"><FileAudio className="h-3.5 w-3.5" />Transcription only</AdminStatusPill>
+              </div>
+            </AdminSectionPanel>
+
+            <div className="space-y-5">
+              <AudioVisualizer active={isRecording || transcriptionMutation.isPending || audioReady} label={isRecording ? 'Recording live input' : audioReady ? 'Audio input staged' : 'Waiting for audio'} />
+              {transcriptionMutation.data && <AdminJsonResult title="Transcription Result" data={transcriptionMutation.data} />}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="documentation-flow" className="space-y-5">
+          <AdminSectionPanel
+            title="Documentation Flow"
+            description="Generate documentation from pasted transcript text or the latest transcription output."
+            actions={<AdminStatusPill tone={documentationPreview ? 'success' : 'neutral'}>{documentationPreview ? 'Preview ready' : 'Needs transcript'}</AdminStatusPill>}
+          >
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <AdminFormField label="LLM Provider" htmlFor="sandbox-doc-provider">
+                <Select
+                  value={documentationPayload.llmProvider}
+                  onValueChange={(value) =>
+                    setDocumentationPayload((prev) => ({
+                      ...prev,
+                      llmProvider: value as LLMProvider,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="sandbox-doc-provider"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={LLMProvider.OPENAI}>OpenAI</SelectItem>
+                    <SelectItem value={LLMProvider.CLAUDE}>Claude</SelectItem>
+                    <SelectItem value={LLMProvider.GEMINI}>Gemini</SelectItem>
+                  </SelectContent>
+                </Select>
+              </AdminFormField>
+              <AdminFormField label="Document Format" htmlFor="sandbox-doc-format">
+                <Select
+                  value={documentationPayload.documentFormat}
+                  onValueChange={(value) =>
+                    setDocumentationPayload((prev) => ({
+                      ...prev,
+                      documentFormat: value as DocumentFormat,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="sandbox-doc-format"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={DocumentFormat.SOAP}>SOAP</SelectItem>
+                    <SelectItem value={DocumentFormat.PROGRESS}>Progress</SelectItem>
+                    <SelectItem value={DocumentFormat.CONSULTATION}>Consultation</SelectItem>
+                    <SelectItem value={DocumentFormat.DISCHARGE}>Discharge</SelectItem>
+                    <SelectItem value={DocumentFormat.HISTORY_AND_PHYSICAL}>History &amp; Physical</SelectItem>
+                    <SelectItem value={DocumentFormat.DICTATION}>Dictation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </AdminFormField>
+              <AdminFormField label="Template" htmlFor="sandbox-doc-template-id">
+                <Select
+                  value={documentationPayload.templateId || '__none'}
+                  onValueChange={(value) =>
+                    setDocumentationPayload((prev) => ({
+                      ...prev,
+                      templateId: value === '__none' ? '' : value,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="sandbox-doc-template-id"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">No template</SelectItem>
+                    {templatesQuery.data?.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}{template.ownerType ? ` (${template.ownerType})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </AdminFormField>
+              <AdminFormField label="Provider for Combined Audio" htmlFor="sandbox-combined-provider">
+                <Select value={transcriptionPayload.provider} onValueChange={(value) => setTranscriptionPayload((prev) => ({ ...prev, provider: value }))}>
+                  <SelectTrigger id="sandbox-combined-provider"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {providers.map((provider) => (
+                      <SelectItem key={provider} value={provider}>{provider}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </AdminFormField>
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+              <AdminFormField label="Transcript Text" htmlFor="sandbox-doc-transcript">
+                <Textarea
+                  id="sandbox-doc-transcript"
+                  className="min-h-40"
+                  placeholder="Paste transcript text, or run transcription and leave this empty to reuse last transcript output."
+                  value={documentationPayload.transcriptText}
+                  onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, transcriptText: e.target.value }))}
+                />
+              </AdminFormField>
+              <AdminFormField label="Template Variables (JSON)" htmlFor="sandbox-doc-template-vars">
+                <Textarea
+                  id="sandbox-doc-template-vars"
+                  className="min-h-40"
+                  value={documentationPayload.templateVariables}
+                  onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, templateVariables: e.target.value }))}
+                />
+              </AdminFormField>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Button onClick={() => documentationMutation.mutate()} disabled={documentationMutation.isPending}>
+                {documentationMutation.isPending ? 'Generating...' : 'Run Documentation Only'}
+              </Button>
+              <Button onClick={() => combinedFlowMutation.mutate()} disabled={!audioReady || combinedFlowMutation.isPending} variant="outline">
+                {combinedFlowMutation.isPending ? 'Running Combined Flow...' : 'Run Combined Flow'}
+              </Button>
+              <AdminStatusPill tone="info"><Workflow className="h-3.5 w-3.5" />Template + variables + audio</AdminStatusPill>
+            </div>
+          </AdminSectionPanel>
+
+          <div className="grid gap-5 lg:grid-cols-3">
+            {documentationPreview && <AdminJsonResult title="Documentation Preview" data={documentationPreview} />}
+            {documentationMutation.data && <AdminJsonResult title="Documentation Result" data={documentationMutation.data} />}
+            {combinedFlowMutation.data && <AdminJsonResult title="Combined Flow Result" data={combinedFlowMutation.data} />}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="live-sessions" className="space-y-5">
+          <AdminSectionPanel
+            title="Live Session Tools"
+            description="Create a provider-backed live session and inspect session status."
+            actions={<AdminStatusPill tone={liveSessionStatusQuery.data ? 'success' : 'neutral'}>{liveSessionStatusQuery.data ? 'Status loaded' : 'Ready'}</AdminStatusPill>}
+          >
+            <div className="grid gap-4 md:grid-cols-4">
               <AdminFormField label="Provider" htmlFor="sandbox-live-provider">
                 <Select value={liveSessionPayload.provider} onValueChange={(value) => setLiveSessionPayload((prev) => ({ ...prev, provider: value }))}>
                   <SelectTrigger id="sandbox-live-provider"><SelectValue /></SelectTrigger>
@@ -662,7 +917,7 @@ export default function SandboxPage() {
               </AdminFormField>
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-5 grid gap-3 md:grid-cols-[auto_minmax(0,1fr)_auto]">
               <Button onClick={() => liveSessionCreateMutation.mutate()} disabled={liveSessionCreateMutation.isPending}>
                 {liveSessionCreateMutation.isPending ? 'Creating...' : 'Create Live Session'}
               </Button>
@@ -680,408 +935,111 @@ export default function SandboxPage() {
               </Button>
             </div>
 
-            {liveSessionStatusQuery.data && (
-              <pre className="mt-4 rounded border p-3 text-xs overflow-auto bg-muted/40">
-                {JSON.stringify(liveSessionStatusQuery.data, null, 2)}
-              </pre>
-            )}
-          </CardContent>
-        </Card>
+            {liveSessionStatusQuery.data && <AdminJsonResult className="mt-5" title="Live Session Status" data={liveSessionStatusQuery.data} />}
+          </AdminSectionPanel>
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Workflow Sandbox</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-4">
-              <AdminFormField label="Audio Input" htmlFor="sandbox-audio-mode">
-                <Select value={audioInputMode} onValueChange={(value) => setAudioInputMode(value as 'file' | 'recording')}>
-                  <SelectTrigger id="sandbox-audio-mode"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="file">Upload File</SelectItem>
-                    <SelectItem value="recording">Record Audio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </AdminFormField>
-              <AdminFormField label="Provider" htmlFor="sandbox-transcription-provider">
-                <Select value={transcriptionPayload.provider} onValueChange={(value) => setTranscriptionPayload((prev) => ({ ...prev, provider: value }))}>
-                  <SelectTrigger id="sandbox-transcription-provider"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {providers.map((provider) => (
-                      <SelectItem key={provider} value={provider}>{provider}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </AdminFormField>
-              <AdminFormField label="Request ID (optional)" htmlFor="sandbox-transcription-request-id">
-                <Input id="sandbox-transcription-request-id" value={transcriptionPayload.requestId} onChange={(e) => setTranscriptionPayload((prev) => ({ ...prev, requestId: e.target.value }))} />
-              </AdminFormField>
-              {audioInputMode === 'file' ? (
-                <AdminFormField label="Audio File" htmlFor="sandbox-transcription-audio">
-                  <Input id="sandbox-transcription-audio" type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
-                </AdminFormField>
-              ) : (
-                <AdminFormField label="Audio Recorder" htmlFor="sandbox-recorder-controls">
-                  <div id="sandbox-recorder-controls" className="flex items-center gap-2">
-                    {!isRecording ? (
-                      <Button type="button" variant="outline" onClick={startRecording}>Start Recording</Button>
-                    ) : (
-                      <Button type="button" variant="outline" onClick={stopRecording}>Stop</Button>
-                    )}
-                    <Button type="button" variant="ghost" onClick={() => setRecordedAudioBlob(null)} disabled={!recordedAudioBlob}>Clear</Button>
-                  </div>
-                </AdminFormField>
+        <TabsContent value="failover-webhooks" className="space-y-5">
+          <div className="grid gap-5 xl:grid-cols-2">
+            <AdminSectionPanel
+              title="Provider Failover Simulation"
+              description="Check whether a provider can route to the selected fallback."
+              actions={failoverSimulationMutation.data && (
+                <AdminStatusPill tone={failoverSimulationMutation.data.canFailover ? 'success' : 'warning'}>
+                  {failoverSimulationMutation.data.canFailover ? 'Pass' : 'Warning'}
+                </AdminStatusPill>
               )}
-            </div>
-
-            <div className="mt-4">
-              <TranscriptionSettings
-                transcriptionLanguage={toTranscriptionLanguage(transcriptionPayload.languageCode)}
-                onLanguageSelect={(language) =>
-                  setTranscriptionPayload((prev) => ({ ...prev, languageCode: fromTranscriptionLanguage(language) }))
-                }
-                useSpeechModelNano={transcriptionPayload.useSpeechModelNano}
-                setUseSpeechModelNano={(value) =>
-                  setTranscriptionPayload((prev) => ({ ...prev, useSpeechModelNano: value }))
-                }
-                acceptSuggestions={acceptSuggestions}
-                setAcceptSuggestions={setAcceptSuggestions}
-              />
-            </div>
-
-            <Tabs defaultValue="transcription" className="mt-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="transcription">Transcription Only</TabsTrigger>
-                <TabsTrigger value="documentation">Documentation Only</TabsTrigger>
-                <TabsTrigger value="combined">Combined Flow</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="transcription" className="space-y-3 mt-4">
-                <div className="flex items-center gap-3">
-                  <Button onClick={() => transcriptionMutation.mutate()} disabled={!resolveAudioUploadFile() || transcriptionMutation.isPending}>
-                    {transcriptionMutation.isPending ? 'Running...' : 'Run Transcription Test'}
-                  </Button>
-                  <Badge variant="outline">Transcription only</Badge>
-                </div>
-                {transcriptionMutation.data && (
-                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
-                    {JSON.stringify(transcriptionMutation.data, null, 2)}
-                  </pre>
-                )}
-              </TabsContent>
-
-              <TabsContent value="documentation" className="space-y-3 mt-4">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <AdminFormField label="LLM Provider" htmlFor="sandbox-doc-provider">
-                    <Select
-                      value={documentationPayload.llmProvider}
-                      onValueChange={(value) =>
-                        setDocumentationPayload((prev) => ({
-                          ...prev,
-                          llmProvider: value as LLMProvider,
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="sandbox-doc-provider"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={LLMProvider.OPENAI}>OpenAI</SelectItem>
-                        <SelectItem value={LLMProvider.CLAUDE}>Claude</SelectItem>
-                        <SelectItem value={LLMProvider.GEMINI}>Gemini</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </AdminFormField>
-
-                  <AdminFormField label="Document Format" htmlFor="sandbox-doc-format">
-                    <Select
-                      value={documentationPayload.documentFormat}
-                      onValueChange={(value) =>
-                        setDocumentationPayload((prev) => ({
-                          ...prev,
-                          documentFormat: value as DocumentFormat,
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="sandbox-doc-format"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={DocumentFormat.SOAP}>SOAP</SelectItem>
-                        <SelectItem value={DocumentFormat.PROGRESS}>Progress</SelectItem>
-                        <SelectItem value={DocumentFormat.CONSULTATION}>Consultation</SelectItem>
-                        <SelectItem value={DocumentFormat.DISCHARGE}>Discharge</SelectItem>
-                        <SelectItem value={DocumentFormat.HISTORY_AND_PHYSICAL}>History &amp; Physical</SelectItem>
-                        <SelectItem value={DocumentFormat.DICTATION}>Dictation</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </AdminFormField>
-                  <AdminFormField label="Template" htmlFor="sandbox-doc-template-id">
-                    <Select
-                      value={documentationPayload.templateId || '__none'}
-                      onValueChange={(value) =>
-                        setDocumentationPayload((prev) => ({
-                          ...prev,
-                          templateId: value === '__none' ? '' : value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="sandbox-doc-template-id"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none">No template</SelectItem>
-                        {templatesQuery.data?.map((template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}{template.ownerType ? ` (${template.ownerType})` : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </AdminFormField>
-                  <AdminFormField label="Template Variables (JSON)" htmlFor="sandbox-doc-template-vars">
-                    <Textarea
-                      id="sandbox-doc-template-vars"
-                      className="min-h-20"
-                      value={documentationPayload.templateVariables}
-                      onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, templateVariables: e.target.value }))}
-                    />
-                  </AdminFormField>
-                </div>
-                <AdminFormField label="Transcript Text" htmlFor="sandbox-doc-transcript">
-                  <Textarea
-                    id="sandbox-doc-transcript"
-                    className="min-h-28"
-                    placeholder="Paste transcript text, or run transcription and leave this empty to reuse last transcript output."
-                    value={documentationPayload.transcriptText}
-                    onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, transcriptText: e.target.value }))}
+            >
+              <div className="grid gap-4 md:grid-cols-3">
+                <AdminFormField label="Current Provider" htmlFor="sandbox-failover-current-provider">
+                  <Select
+                    value={failoverPayload.currentProvider}
+                    onValueChange={(value) => setFailoverPayload((prev) => ({ ...prev, currentProvider: value }))}
+                  >
+                    <SelectTrigger id="sandbox-failover-current-provider"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {providers.map((provider) => (
+                        <SelectItem key={provider} value={provider}>{provider}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </AdminFormField>
+                <AdminFormField label="Fallback Provider" htmlFor="sandbox-failover-fallback-provider">
+                  <Select
+                    value={failoverPayload.fallbackProvider}
+                    onValueChange={(value) => setFailoverPayload((prev) => ({ ...prev, fallbackProvider: value }))}
+                  >
+                    <SelectTrigger id="sandbox-failover-fallback-provider"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {providers.map((provider) => (
+                        <SelectItem key={provider} value={provider}>{provider}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </AdminFormField>
+                <AdminFormField label="Language Code" htmlFor="sandbox-failover-language">
+                  <Input
+                    id="sandbox-failover-language"
+                    value={failoverPayload.languageCode}
+                    onChange={(e) => setFailoverPayload((prev) => ({ ...prev, languageCode: e.target.value }))}
                   />
                 </AdminFormField>
-                <div className="flex items-center gap-3">
-                  <Button onClick={() => documentationMutation.mutate()} disabled={documentationMutation.isPending}>
-                    {documentationMutation.isPending ? 'Generating...' : 'Run Documentation Only'}
-                  </Button>
-                  <Badge variant="outline">Documentation only</Badge>
-                </div>
-                {documentationMutation.data && (
-                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
-                    {JSON.stringify(documentationMutation.data, null, 2)}
-                  </pre>
-                )}
-                {documentationPreview && (
-                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
-                    {JSON.stringify(documentationPreview, null, 2)}
-                  </pre>
-                )}
-              </TabsContent>
-
-              <TabsContent value="combined" className="space-y-3 mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Combined flow runs transcription and documentation together using the selected document format, template, and variables.
-                </p>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <AdminFormField label="Document Format" htmlFor="sandbox-combined-format">
-                    <Select
-                      value={documentationPayload.documentFormat}
-                      onValueChange={(value) =>
-                        setDocumentationPayload((prev) => ({
-                          ...prev,
-                          documentFormat: value as DocumentFormat,
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="sandbox-combined-format"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={DocumentFormat.SOAP}>SOAP</SelectItem>
-                        <SelectItem value={DocumentFormat.PROGRESS}>Progress</SelectItem>
-                        <SelectItem value={DocumentFormat.CONSULTATION}>Consultation</SelectItem>
-                        <SelectItem value={DocumentFormat.DISCHARGE}>Discharge</SelectItem>
-                        <SelectItem value={DocumentFormat.HISTORY_AND_PHYSICAL}>History &amp; Physical</SelectItem>
-                        <SelectItem value={DocumentFormat.DICTATION}>Dictation</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </AdminFormField>
-                  <AdminFormField label="Template" htmlFor="sandbox-combined-template">
-                    <Select
-                      value={documentationPayload.templateId || '__none'}
-                      onValueChange={(value) =>
-                        setDocumentationPayload((prev) => ({
-                          ...prev,
-                          templateId: value === '__none' ? '' : value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="sandbox-combined-template"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none">No template</SelectItem>
-                        {templatesQuery.data?.map((template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}{template.ownerType ? ` (${template.ownerType})` : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </AdminFormField>
-                  <AdminFormField label="Template Variables (JSON)" htmlFor="sandbox-combined-template-vars">
-                    <Textarea
-                      id="sandbox-combined-template-vars"
-                      className="min-h-20"
-                      value={documentationPayload.templateVariables}
-                      onChange={(e) => setDocumentationPayload((prev) => ({ ...prev, templateVariables: e.target.value }))}
-                    />
-                  </AdminFormField>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button onClick={() => combinedFlowMutation.mutate()} disabled={!resolveAudioUploadFile() || combinedFlowMutation.isPending}>
-                    {combinedFlowMutation.isPending ? 'Running Combined Flow...' : 'Run Combined Flow'}
-                  </Button>
-                  <Badge variant="outline">Template + variables + audio</Badge>
-                </div>
-                {combinedFlowMutation.data && (
-                  <pre className="rounded border p-3 text-xs overflow-auto bg-muted/40">
-                    {JSON.stringify(combinedFlowMutation.data, null, 2)}
-                  </pre>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Provider Failover Simulation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-3">
-              <AdminFormField label="Current Provider" htmlFor="sandbox-failover-current-provider">
-                <Select
-                  value={failoverPayload.currentProvider}
-                  onValueChange={(value) => setFailoverPayload((prev) => ({ ...prev, currentProvider: value }))}
+              </div>
+              <div className="mt-5">
+                <Button
+                  onClick={() => failoverSimulationMutation.mutate()}
+                  disabled={failoverSimulationMutation.isPending}
                 >
-                  <SelectTrigger id="sandbox-failover-current-provider"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {providers.map((provider) => (
-                      <SelectItem key={provider} value={provider}>{provider}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </AdminFormField>
+                  {failoverSimulationMutation.isPending ? 'Simulating...' : 'Run Failover Simulation'}
+                </Button>
+              </div>
+              {failoverSimulationMutation.data && <AdminJsonResult className="mt-5" title="Failover Result" data={failoverSimulationMutation.data} />}
+            </AdminSectionPanel>
 
-              <AdminFormField label="Fallback Provider" htmlFor="sandbox-failover-fallback-provider">
-                <Select
-                  value={failoverPayload.fallbackProvider}
-                  onValueChange={(value) => setFailoverPayload((prev) => ({ ...prev, fallbackProvider: value }))}
+            <AdminSectionPanel
+              title="Sandbox Webhook Test"
+              description="Submit a dry-run webhook event payload to the sandbox endpoint."
+              actions={<AdminStatusPill tone="info"><Webhook className="h-3.5 w-3.5" />Dry run</AdminStatusPill>}
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <AdminFormField label="Target URL" htmlFor="sandbox-webhook-target-url">
+                  <Input
+                    id="sandbox-webhook-target-url"
+                    value={webhookPayload.targetUrl}
+                    onChange={(e) => setWebhookPayload((prev) => ({ ...prev, targetUrl: e.target.value }))}
+                  />
+                </AdminFormField>
+                <AdminFormField label="Event Type" htmlFor="sandbox-webhook-event-type">
+                  <Input
+                    id="sandbox-webhook-event-type"
+                    value={webhookPayload.eventType}
+                    onChange={(e) => setWebhookPayload((prev) => ({ ...prev, eventType: e.target.value }))}
+                  />
+                </AdminFormField>
+              </div>
+              <div className="mt-4">
+                <AdminFormField label="Payload (optional JSON string)" htmlFor="sandbox-webhook-payload">
+                  <Textarea
+                    id="sandbox-webhook-payload"
+                    value={webhookPayload.payload}
+                    onChange={(e) => setWebhookPayload((prev) => ({ ...prev, payload: e.target.value }))}
+                    className="min-h-32"
+                  />
+                </AdminFormField>
+              </div>
+              <div className="mt-5">
+                <Button
+                  onClick={() => webhookTestMutation.mutate()}
+                  disabled={webhookTestMutation.isPending || !webhookPayload.targetUrl || !webhookPayload.eventType}
                 >
-                  <SelectTrigger id="sandbox-failover-fallback-provider"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {providers.map((provider) => (
-                      <SelectItem key={provider} value={provider}>{provider}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </AdminFormField>
-
-              <AdminFormField label="Language Code" htmlFor="sandbox-failover-language">
-                <Input
-                  id="sandbox-failover-language"
-                  value={failoverPayload.languageCode}
-                  onChange={(e) => setFailoverPayload((prev) => ({ ...prev, languageCode: e.target.value }))}
-                />
-              </AdminFormField>
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              <Button
-                onClick={() => failoverSimulationMutation.mutate()}
-                disabled={failoverSimulationMutation.isPending}
-              >
-                {failoverSimulationMutation.isPending ? 'Simulating...' : 'Run Failover Simulation'}
-              </Button>
-              {failoverSimulationMutation.data && (
-                <Badge variant={failoverSimulationMutation.data.canFailover ? 'default' : 'secondary'}>
-                  {failoverSimulationMutation.data.canFailover ? 'Pass' : 'Warning'}
-                </Badge>
-              )}
-            </div>
-
-            {failoverSimulationMutation.data && (
-              <pre className="mt-4 rounded border p-3 text-xs overflow-auto bg-muted/40">
-                {JSON.stringify(failoverSimulationMutation.data, null, 2)}
-              </pre>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Sandbox Webhook Test</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-2">
-              <AdminFormField label="Target URL" htmlFor="sandbox-webhook-target-url">
-                <Input
-                  id="sandbox-webhook-target-url"
-                  value={webhookPayload.targetUrl}
-                  onChange={(e) => setWebhookPayload((prev) => ({ ...prev, targetUrl: e.target.value }))}
-                />
-              </AdminFormField>
-              <AdminFormField label="Event Type" htmlFor="sandbox-webhook-event-type">
-                <Input
-                  id="sandbox-webhook-event-type"
-                  value={webhookPayload.eventType}
-                  onChange={(e) => setWebhookPayload((prev) => ({ ...prev, eventType: e.target.value }))}
-                />
-              </AdminFormField>
-            </div>
-
-            <div className="mt-3">
-              <AdminFormField label="Payload (optional JSON string)" htmlFor="sandbox-webhook-payload">
-              <Textarea
-                id="sandbox-webhook-payload"
-                value={webhookPayload.payload}
-                onChange={(e) => setWebhookPayload((prev) => ({ ...prev, payload: e.target.value }))}
-                className="mt-1 min-h-24"
-              />
-              </AdminFormField>
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              <Button
-                onClick={() => webhookTestMutation.mutate()}
-                disabled={webhookTestMutation.isPending || !webhookPayload.targetUrl || !webhookPayload.eventType}
-              >
-                {webhookTestMutation.isPending ? 'Submitting...' : 'Create Webhook Test'}
-              </Button>
-              <Badge variant="outline">Dry-run endpoint</Badge>
-            </div>
-
-            {webhookTestMutation.data && (
-              <pre className="mt-4 rounded border p-3 text-xs overflow-auto bg-muted/40">
-                {JSON.stringify(webhookTestMutation.data, null, 2)}
-              </pre>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Supported Languages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {languagesQuery.isLoading && <TableRow><TableCell colSpan={2}>Loading languages...</TableCell></TableRow>}
-                {languageRows.slice(0, 30).map((lang) => (
-                  <TableRow key={lang.code}>
-                    <TableCell className="font-mono">{lang.code}</TableCell>
-                    <TableCell>{lang.name || '-'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+                  {webhookTestMutation.isPending ? 'Submitting...' : 'Create Webhook Test'}
+                </Button>
+              </div>
+              {webhookTestMutation.data && <AdminJsonResult className="mt-5" title="Webhook Result" data={webhookTestMutation.data} />}
+            </AdminSectionPanel>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

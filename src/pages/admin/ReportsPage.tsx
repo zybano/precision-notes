@@ -8,10 +8,12 @@ import {Input} from '@/components/ui/input';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import AdminFormField from '@/components/admin/AdminFormField';
+import {AdminMetricTile, AdminSectionPanel, AdminTableShell} from '@/components/admin/AdminSurface';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
 import type {Tenant} from '@/types/platformAdmin';
 import {Bar, BarChart, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
+import {Activity, Building2, CircleDollarSign, CreditCard, ShieldCheck} from 'lucide-react';
 
 export default function ReportsPage() {
   const { sessionToken } = useAdminAuth();
@@ -183,37 +185,12 @@ export default function ReportsPage() {
         description="Operational and executive reporting for tenant usage and platform health."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Organizations</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{metrics.totalOrganizations}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Active Orgs</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-emerald-600">{metrics.activeOrganizations}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Total Requests</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{metrics.totalRequests}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Credits Balance</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{metrics.credits}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Revenue (cents)</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{metrics.revenueCents}</CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <AdminMetricTile label="Organizations" value={metrics.totalOrganizations} helper="Total tenants" icon={<Building2 className="h-4 w-4" />} tone="info" />
+        <AdminMetricTile label="Active Orgs" value={metrics.activeOrganizations} helper="Currently active" icon={<ShieldCheck className="h-4 w-4" />} tone="success" />
+        <AdminMetricTile label="Total Requests" value={metrics.totalRequests} helper="Platform usage" icon={<Activity className="h-4 w-4" />} />
+        <AdminMetricTile label="Credits Balance" value={metrics.credits} helper="Total available" icon={<CreditCard className="h-4 w-4" />} />
+        <AdminMetricTile label="Revenue (cents)" value={metrics.revenueCents} helper="Captured revenue" icon={<CircleDollarSign className="h-4 w-4" />} tone="success" />
       </div>
 
       <div className="space-y-6">
@@ -276,11 +253,7 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Usage Report Query</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <AdminSectionPanel title="Usage Report Query" description="Run bounded usage reports for a selected date window.">
             <div className="grid gap-3 md:grid-cols-4">
               <AdminFormField label="Start Date" htmlFor="reports-start-date">
                 <Input id="reports-start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
@@ -314,37 +287,18 @@ export default function ReportsPage() {
 
             {usageQuery.data && (
               <div className="grid gap-4 mt-4 md:grid-cols-2 xl:grid-cols-5">
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-sm">Total</CardTitle></CardHeader>
-                  <CardContent className="text-xl font-semibold">{usageQuery.data.totalRequests}</CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-sm">Successful</CardTitle></CardHeader>
-                  <CardContent className="text-xl font-semibold text-emerald-600">{usageQuery.data.successfulRequests}</CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-sm">Failed</CardTitle></CardHeader>
-                  <CardContent className="text-xl font-semibold text-destructive">{usageQuery.data.failedRequests}</CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-sm">Credits Used</CardTitle></CardHeader>
-                  <CardContent className="text-xl font-semibold">{usageQuery.data.totalCreditsUsed}</CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-sm">Avg Proc. (ms)</CardTitle></CardHeader>
-                  <CardContent className="text-xl font-semibold">{Math.round(usageQuery.data.averageProcessingTimeMs || 0)}</CardContent>
-                </Card>
+                <AdminMetricTile label="Total" value={usageQuery.data.totalRequests} />
+                <AdminMetricTile label="Successful" value={usageQuery.data.successfulRequests} tone="success" />
+                <AdminMetricTile label="Failed" value={usageQuery.data.failedRequests} tone="danger" />
+                <AdminMetricTile label="Credits Used" value={usageQuery.data.totalCreditsUsed} />
+                <AdminMetricTile label="Avg Proc. (ms)" value={Math.round(usageQuery.data.averageProcessingTimeMs || 0)} />
               </div>
             )}
-          </CardContent>
-        </Card>
+        </AdminSectionPanel>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Organizations by Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
+        <AdminSectionPanel title="Top Organizations by Requests" description="Highest-request tenants from the currently loaded organization set.">
+            <AdminTableShell>
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
@@ -368,9 +322,9 @@ export default function ReportsPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </Table>
+            </AdminTableShell>
+        </AdminSectionPanel>
 
         {(overviewQuery.isError || revenueQuery.isError || planAdoptionQuery.isError || providerPerformanceQuery.isError) && (
           <Alert>

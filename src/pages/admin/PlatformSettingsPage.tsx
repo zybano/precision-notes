@@ -6,8 +6,10 @@ import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {Button} from '@/components/ui/button';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
+import {AdminMetricTile, AdminSectionPanel, AdminStatusPill, AdminTableShell} from '@/components/admin/AdminSurface';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
+import {KeyRound, Settings2} from 'lucide-react';
 
 const controls = [
   { name: 'Audit log retention policy', status: 'Defined' },
@@ -62,53 +64,48 @@ export default function PlatformSettingsPage() {
         description="Centralized configuration for platform-level operational policies."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Settings API</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant={configQuery.isError ? 'secondary' : 'default'}>
-              {configQuery.isError ? 'Unavailable' : configQuery.isSuccess ? 'Connected' : 'Checking'}
-            </Badge>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Loaded Config Keys</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{configRows.length}</CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricTile
+          label="Settings API"
+          value={configQuery.isError ? 'Unavailable' : configQuery.isSuccess ? 'Connected' : 'Checking'}
+          helper="System config endpoint"
+          icon={<Settings2 className="h-4 w-4" />}
+          tone={configQuery.isError ? 'warning' : 'success'}
+        />
+        <AdminMetricTile
+          label="Loaded Config Keys"
+          value={configRows.length}
+          helper="Returned platform keys"
+          icon={<KeyRound className="h-4 w-4" />}
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Operational Control Areas</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <AdminSectionPanel title="Operational Control Areas" description="Governed platform policies and operational guardrails.">
           <div className="space-y-3">
             {controls.map((control) => (
-              <div key={control.name} className="flex items-center justify-between rounded-md border px-3 py-2">
+              <div key={control.name} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
                 <span className="text-sm font-medium">{control.name}</span>
-                <Badge variant="outline">{control.status}</Badge>
+                <AdminStatusPill>{control.status}</AdminStatusPill>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+      </AdminSectionPanel>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Current Platform Configuration</CardTitle>
+      <AdminSectionPanel
+        title="Current Platform Configuration"
+        description="Raw configuration values returned by the platform."
+        actions={(
           <Button size="sm" variant="outline" onClick={() => configQuery.refetch()} disabled={configQuery.isFetching}>
             {configQuery.isFetching ? 'Refreshing...' : 'Refresh'}
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-3">
+        )}
+        contentClassName="space-y-3"
+      >
           {configQuery.isLoading && <p className="text-sm text-muted-foreground">Loading system configuration...</p>}
 
           {configRows.length > 0 && (
-            <Table>
+            <AdminTableShell>
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Setting</TableHead>
@@ -123,7 +120,8 @@ export default function PlatformSettingsPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </AdminTableShell>
           )}
 
           {!configQuery.isLoading && !configQuery.isError && configRows.length === 0 && (
@@ -136,8 +134,7 @@ export default function PlatformSettingsPage() {
               <AlertDescription>{(configQuery.error as Error).message}</AlertDescription>
             </Alert>
           )}
-        </CardContent>
-      </Card>
+      </AdminSectionPanel>
     </div>
   );
 }

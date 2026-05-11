@@ -18,24 +18,24 @@ export default function PlatformSidebar() {
   const visibleItems = navItems.filter((item) => !item.permission || hasPermission(item.permission));
 
   return (
-    <aside className="hidden md:block w-72 shrink-0 border-r bg-white">
-      <div className="h-16 px-6 flex items-center border-b">
+    <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white md:block">
+      <div className="flex h-16 items-center border-b border-slate-200 px-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Precision Notes</p>
-          <h1 className="text-lg font-semibold">Platform Admin</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Precision Notes</p>
+          <h1 className="text-lg font-semibold text-slate-950">Platform Admin</h1>
         </div>
       </div>
 
-      <nav className="p-3 space-y-1">
+      <nav className="space-y-1 p-3">
         {visibleItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+              `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
                 isActive
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? 'bg-slate-950 text-white font-medium shadow-[0_6px_18px_rgba(15,23,42,0.12)]'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950'
               }`
             }
           >

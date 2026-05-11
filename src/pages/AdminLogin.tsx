@@ -7,8 +7,45 @@ import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Eye, EyeOff, Loader2} from "lucide-react";
 import {useAdminAuth} from "@/contexts/AdminAuthContext";
+import {AudioVisualizer} from "@/components/admin/AdminSurface";
 import precisionLogo from '/lovable-uploads/precision.jpeg';
 import precisionNote from '/lovable-uploads/PrecisionNote.jpeg';
+
+function AdminAuthStateCard({
+  title,
+  description,
+  label,
+}: {
+  title: string;
+  description: string;
+  label: string;
+}) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+      <Card className="w-full max-w-lg overflow-hidden">
+        <div className="border-b border-slate-100 bg-white px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-200 bg-white">
+              <img src={precisionLogo} alt="Precision Notes" className="h-9 w-9 object-contain" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Platform Admin</p>
+              <CardTitle className="mt-1 text-xl text-slate-950">{title}</CardTitle>
+            </div>
+          </div>
+          <CardDescription className="mt-3 text-sm leading-6 text-slate-500">{description}</CardDescription>
+        </div>
+        <CardContent className="space-y-4 p-6">
+          <AudioVisualizer active compact label={label} />
+          <div className="flex items-center gap-3 rounded-md border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Secure admin session handshake in progress
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -48,50 +85,32 @@ export default function AdminLogin() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-xl">Loading Admin Console</CardTitle>
-            <CardDescription>Checking existing session...</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <span>Almost ready</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <AdminAuthStateCard
+        title="Loading Admin Console"
+        description="Checking your current Precision Notes platform admin session."
+        label="Validating session"
+      />
     );
   }
 
   if (isSubmitting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-xl">Signing You In</CardTitle>
-            <CardDescription>Setting up your platform admin session...</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <span>Please wait</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <AdminAuthStateCard
+        title="Signing You In"
+        description="Setting up your platform admin session and control-center permissions."
+        label="Opening control center"
+      />
     );
   }
 
   return (
-    <div className="min-h-screen w-full overflow-hidden">
-      <div className="flex h-screen flex-col md:flex-row">
-        <div className="flex flex-1 items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+    <div className="min-h-screen w-full overflow-hidden bg-slate-50">
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <div className="flex flex-1 items-center justify-center p-4 md:p-8">
+          <Card className="w-full max-w-md overflow-hidden">
             <CardHeader className="space-y-1">
               <div className="flex items-center justify-center mb-4">
-                <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-md border border-slate-200 bg-white">
                   <a href="/" target="_self" rel="noreferrer">
                     <img
                       src={precisionLogo}
@@ -101,9 +120,9 @@ export default function AdminLogin() {
                   </a>
                 </div>
               </div>
-              <CardTitle className="text-2xl text-center">Login to PrecisionNote</CardTitle>
-              <CardDescription className="text-center">
-                Enter your credentials to access your account
+              <CardTitle className="text-center text-2xl text-slate-950">Login to Precision Notes</CardTitle>
+              <CardDescription className="text-center text-slate-500">
+                Enter your platform admin credentials to access the control center.
               </CardDescription>
             </CardHeader>
 
@@ -162,7 +181,7 @@ export default function AdminLogin() {
                 </div>
 
                 <div className="text-center">
-                  <a href="mailto:support@precisionnote.ai" className="text-sm text-primary hover:underline">
+                  <a href="mailto:support@precisionnote.ai" className="text-sm font-medium text-indigo-600 hover:underline">
                     Forgot password?
                   </a>
                 </div>
@@ -192,11 +211,11 @@ export default function AdminLogin() {
           </Card>
         </div>
 
-        <div className="hidden md:flex md:flex-1 items-center justify-center bg-gray-100">
+        <div className="hidden flex-1 items-center justify-center border-l border-slate-200 bg-white md:flex">
           <img
             src={precisionNote}
             alt="Admin login illustration"
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain p-8"
           />
         </div>
       </div>

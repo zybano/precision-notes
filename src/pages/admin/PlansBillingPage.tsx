@@ -27,7 +27,9 @@ import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
 import type {CreatePlanRequest, PaymentTransaction, PaymentWebhookEvent, Plan, Tenant} from '@/types/platformAdmin';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
+import {AdminMetricTile} from '@/components/admin/AdminSurface';
 import {toast} from 'sonner';
+import {Building2, CreditCard, Receipt, Webhook} from 'lucide-react';
 
 export default function PlansBillingPage() {
   const { sessionToken } = useAdminAuth();
@@ -354,31 +356,11 @@ export default function PlansBillingPage() {
         description="Control plan catalog, pricing, contracts, and operational payment visibility."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">B2B Plans</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{plans.length}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Organizations</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{organizations.length}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Transactions</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{transactions.length}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Webhook Events</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{webhookEvents.length}</CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricTile label="B2B Plans" value={plans.length} helper="Reusable plan templates" icon={<CreditCard className="h-4 w-4" />} tone="info" />
+        <AdminMetricTile label="Organizations" value={organizations.length} helper="Eligible tenants" icon={<Building2 className="h-4 w-4" />} />
+        <AdminMetricTile label="Transactions" value={transactions.length} helper="Payment operations" icon={<Receipt className="h-4 w-4" />} />
+        <AdminMetricTile label="Webhook Events" value={webhookEvents.length} helper="Recent events" icon={<Webhook className="h-4 w-4" />} tone="success" />
       </div>
 
       <div className="space-y-6">
@@ -460,7 +442,7 @@ export default function PlansBillingPage() {
                       <Label>Usage Unit</Label>
                       <Select
                         value={featureForm.usageUnit}
-                        onValueChange={(value) => setFeatureForm((prev) => ({ ...prev, usageUnit: value as any }))}
+                        onValueChange={(value) => setFeatureForm((prev) => ({ ...prev, usageUnit: value as typeof featureForm.usageUnit }))}
                       >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -474,7 +456,7 @@ export default function PlansBillingPage() {
                       <Label>Window Type</Label>
                       <Select
                         value={featureForm.windowType}
-                        onValueChange={(value) => setFeatureForm((prev) => ({ ...prev, windowType: value as any }))}
+                        onValueChange={(value) => setFeatureForm((prev) => ({ ...prev, windowType: value as typeof featureForm.windowType }))}
                       >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -562,7 +544,7 @@ export default function PlansBillingPage() {
                         <Label>Billing Interval</Label>
                         <Select
                           value={priceForm.billingInterval}
-                          onValueChange={(value) => setPriceForm((prev) => ({ ...prev, billingInterval: value as any }))}
+                          onValueChange={(value) => setPriceForm((prev) => ({ ...prev, billingInterval: value as typeof priceForm.billingInterval }))}
                         >
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>

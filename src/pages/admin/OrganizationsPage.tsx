@@ -28,7 +28,9 @@ import {adminApiService} from '@/services/adminApiService';
 import type {CreateTenantRequest, Tenant, TenantUsage} from '@/types/platformAdmin';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import AdminFormField from '@/components/admin/AdminFormField';
+import {AdminMetricTile, AdminTableShell} from '@/components/admin/AdminSurface';
 import {toast} from 'sonner';
+import {Building2, CreditCard, ShieldCheck, ShieldOff} from 'lucide-react';
 
 export default function OrganizationsPage() {
   const { sessionToken } = useAdminAuth();
@@ -238,31 +240,11 @@ export default function OrganizationsPage() {
         description="Create, manage, and operate organizations across the platform."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Total Organizations</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{orgSummary.total}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Active</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-emerald-600">{orgSummary.active}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Inactive</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-amber-600">{orgSummary.inactive}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Total Credits</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{orgSummary.credits}</CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricTile label="Total Organizations" value={orgSummary.total} helper="Tenant records" icon={<Building2 className="h-4 w-4" />} tone="info" />
+        <AdminMetricTile label="Active" value={orgSummary.active} helper="Operational tenants" icon={<ShieldCheck className="h-4 w-4" />} tone="success" />
+        <AdminMetricTile label="Inactive" value={orgSummary.inactive} helper="Paused tenants" icon={<ShieldOff className="h-4 w-4" />} tone="warning" />
+        <AdminMetricTile label="Total Credits" value={orgSummary.credits} helper="Credits across tenants" icon={<CreditCard className="h-4 w-4" />} />
       </div>
 
       <Card>
@@ -366,7 +348,8 @@ export default function OrganizationsPage() {
           </Dialog>
         </CardHeader>
         <CardContent>
-          <Table>
+          <AdminTableShell>
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -431,7 +414,7 @@ export default function OrganizationsPage() {
                       onClick={() =>
                         updateTenantMutation.mutate({
                           tenantId: tenant.id,
-                          isActive: !Boolean(tenant.isActive),
+                          isActive: !tenant.isActive,
                         })
                       }
                       disabled={updateTenantMutation.isPending}
@@ -442,7 +425,8 @@ export default function OrganizationsPage() {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </AdminTableShell>
         </CardContent>
       </Card>
 
@@ -522,46 +506,16 @@ export default function OrganizationsPage() {
                 </TabsList>
                 <TabsContent value="summary" className="mt-4">
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Credits</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xl font-semibold">{usageQuery.data.credits}</CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Total Requests</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xl font-semibold">{usageQuery.data.totalRequests}</CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Transcriptions</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xl font-semibold">{usageQuery.data.totalTranscriptions}</CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Documents Generated</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xl font-semibold">{usageQuery.data.totalDocumentsGenerated}</CardContent>
-                    </Card>
+                    <AdminMetricTile label="Credits" value={usageQuery.data.credits} />
+                    <AdminMetricTile label="Total Requests" value={usageQuery.data.totalRequests} />
+                    <AdminMetricTile label="Transcriptions" value={usageQuery.data.totalTranscriptions} />
+                    <AdminMetricTile label="Documents Generated" value={usageQuery.data.totalDocumentsGenerated} />
                   </div>
                 </TabsContent>
                 <TabsContent value="limits" className="mt-4">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Rate Limit Per Hour</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xl font-semibold">{usageQuery.data.rateLimitPerHour}</CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Request Limit</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xl font-semibold">{usageQuery.data.requestLimit}</CardContent>
-                    </Card>
+                    <AdminMetricTile label="Rate Limit Per Hour" value={usageQuery.data.rateLimitPerHour} />
+                    <AdminMetricTile label="Request Limit" value={usageQuery.data.requestLimit} />
                   </div>
                 </TabsContent>
               </Tabs>
