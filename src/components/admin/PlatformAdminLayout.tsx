@@ -14,7 +14,7 @@ export default function PlatformAdminLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen w-full bg-slate-50">
       <PlatformSidebar />
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur md:px-7">
@@ -28,7 +28,7 @@ export default function PlatformAdminLayout() {
           </Button>
         </header>
         <main className="p-4 md:p-7">
-          <div className="mx-auto w-full max-w-[1380px]">
+          <div className="w-full">
             <Outlet />
           </div>
         </main>
