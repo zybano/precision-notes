@@ -7,42 +7,29 @@ import {Label} from "@/components/ui/label";
 import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Eye, EyeOff, Loader2} from "lucide-react";
 import {useAdminAuth} from "@/contexts/AdminAuthContext";
-import {AudioVisualizer} from "@/components/admin/AdminSurface";
 import precisionLogo from '/lovable-uploads/precision.jpeg';
 import precisionNote from '/lovable-uploads/PrecisionNote.jpeg';
 
-function AdminAuthStateCard({
+function AdminAuthProgressOverlay({
   title,
   description,
-  label,
 }: {
   title: string;
   description: string;
-  label: string;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-lg overflow-hidden">
-        <div className="border-b border-slate-100 bg-white px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-200 bg-white">
-              <img src={precisionLogo} alt="Precision Notes" className="h-9 w-9 object-contain" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Platform Admin</p>
-              <CardTitle className="mt-1 text-xl text-slate-950">{title}</CardTitle>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-5 text-left shadow-[0_20px_70px_rgba(15,23,42,0.18)]">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-950 text-white">
+            <Loader2 className="h-5 w-5 animate-spin" />
           </div>
-          <CardDescription className="mt-3 text-sm leading-6 text-slate-500">{description}</CardDescription>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-950">{title}</p>
+            <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>
+          </div>
         </div>
-        <CardContent className="space-y-4 p-6">
-          <AudioVisualizer active compact label={label} />
-          <div className="flex items-center gap-3 rounded-md border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Secure admin session handshake in progress
-          </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -82,26 +69,6 @@ export default function AdminLogin() {
       setIsSubmitting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <AdminAuthStateCard
-        title="Loading Admin Console"
-        description="Checking your current Precision Notes platform admin session."
-        label="Validating session"
-      />
-    );
-  }
-
-  if (isSubmitting) {
-    return (
-      <AdminAuthStateCard
-        title="Signing You In"
-        description="Setting up your platform admin session and control-center permissions."
-        label="Opening control center"
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen w-full overflow-hidden bg-slate-50">
@@ -219,6 +186,18 @@ export default function AdminLogin() {
           />
         </div>
       </div>
+      {isLoading && (
+        <AdminAuthProgressOverlay
+          title="Loading admin console"
+          description="Checking your current platform admin session."
+        />
+      )}
+      {isSubmitting && (
+        <AdminAuthProgressOverlay
+          title="Signing you in"
+          description="Creating your admin session and opening the control center."
+        />
+      )}
     </div>
   );
 }
