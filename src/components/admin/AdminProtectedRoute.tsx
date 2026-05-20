@@ -1,7 +1,7 @@
 import React from 'react';
 import {Navigate, useLocation} from 'react-router-dom';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
-import {Loader2} from 'lucide-react';
+import {AdminAuthProgressOverlay} from '@/components/admin/AdminAuthProgressOverlay';
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
@@ -17,17 +17,10 @@ export function AdminProtectedRoute({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <div>
-              <p className="text-sm font-medium">Preparing your admin workspace</p>
-              <p className="text-xs text-muted-foreground">Validating session and permissions...</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AdminAuthProgressOverlay
+        title="Loading admin console"
+        description="Checking your current platform admin session."
+      />
     );
   }
 

@@ -220,6 +220,14 @@ class AdminApiService {
     });
   }
 
+  async getOrganization(sessionToken: string, organizationId: string) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/tenants/${organizationPathId}`,
+    });
+  }
+
   async createOrganization(sessionToken: string, organizationData: any) {
     return this.makeAdminApiCall({
       sessionToken,
@@ -304,6 +312,28 @@ class AdminApiService {
       sessionToken,
       endpoint: `/tenants/${organizationPathId}/rotate-key`,
       method: 'POST'
+    });
+  }
+
+  async deleteOrganization(sessionToken: string, organizationId: string) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/tenants/${organizationPathId}`,
+      method: 'DELETE',
+    });
+  }
+
+  async listOrganizationUsers(sessionToken: string, organizationId: string, role?: 'ADMIN' | 'STAFF') {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    const params = new URLSearchParams();
+    if (role) {
+      params.append('role', role);
+    }
+    const suffix = params.toString() ? `?${params}` : '';
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/platform-admin/tenants/${organizationPathId}/users${suffix}`,
     });
   }
 
@@ -410,10 +440,9 @@ class AdminApiService {
   }
 
   async updateAdminUser(sessionToken: string, userId: string, userData: Partial<{
-    name: string;
-    role: string;
-    permissions: Record<string, boolean>;
-    is_active: boolean;
+    email: string;
+    fullName: string;
+    isActive: boolean;
   }>) {
     const userPathId = this.pathSegment(userId, 'userId');
     return this.makeAdminApiCall({
@@ -428,8 +457,46 @@ class AdminApiService {
     const userPathId = this.pathSegment(userId, 'userId');
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: `/platform-admin/users/${userPathId}`,
-      method: 'DELETE'
+      endpoint: `/platform-admin/users/${userPathId}/disable`,
+      method: 'POST'
+    });
+  }
+
+  async resetAdminUserPassword(sessionToken: string, userId: string, newPassword: string) {
+    const userPathId = this.pathSegment(userId, 'userId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/platform-admin/users/${userPathId}/reset-password`,
+      method: 'POST',
+      body: { newPassword },
+    });
+  }
+
+  async listAdminSessions(sessionToken: string) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/platform-admin/sessions',
+    });
+  }
+
+  async revokeAdminSession(sessionToken: string, sessionId: string) {
+    const sessionPathId = this.pathSegment(sessionId, 'sessionId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/platform-admin/sessions/${sessionPathId}`,
+      method: 'DELETE',
+    });
+  }
+
+  async changeAdminPassword(sessionToken: string, currentPassword: string, newPassword: string) {
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: '/platform-admin/auth/change-password',
+      method: 'POST',
+      body: {
+        currentPassword,
+        newPassword,
+      },
     });
   }
 

@@ -1,10 +1,9 @@
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {Badge} from '@/components/ui/badge';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
+import {Button} from '@/components/ui/button';
+import {Card, CardContent} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,222 +11,357 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {Switch} from '@/components/ui/switch';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import AdminFormField from '@/components/admin/AdminFormField';
+import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
+import {AdminMetricTile, AdminSectionPanel, AdminTableShell} from '@/components/admin/AdminSurface';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
-import type {CreateTenantRequest, Tenant, TenantUsage} from '@/types/platformAdmin';
-import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
-import AdminFormField from '@/components/admin/AdminFormField';
-import {AdminMetricTile, AdminTableShell} from '@/components/admin/AdminSurface';
+import type {CreateTenantRequest, OrganizationUser, Tenant, TenantUsage} from '@/types/platformAdmin';
 import {toast} from 'sonner';
-import {Building2, CreditCard, ShieldCheck, ShieldOff} from 'lucide-react';
+import {
+  Building2,
+  Copy,
+  CreditCard,
+  Eye,
+  Search,
+  ShieldCheck,
+  ShieldOff,
+  Trash2,
+} from 'lucide-react';
+
+type StatusFilter = 'all' | 'active' | 'inactive';
+
+type TenantSettingsForm = {
+  name: string;
+  contactEmail: string;
+  contactName: string;
+  industry: string;
+  webhookUrl: string;
+  rateLimitPerHour: number;
+  requestLimit: number;
+  dataStoragePreference: string;
+  allowedDocumentTypes: string;
+  isActive: boolean;
+};
+
+const emptyCreateForm: CreateTenantRequest = {
+  name: '',
+  contactEmail: '',
+  contactName: '',
+  industry: '',
+  webhookUrl: '',
+  initialCredits: 0,
+  rateLimitPerHour: 1000,
+  requestLimit: 100,
+  dataStoragePreference: 'none',
+};
+
+function toSettingsForm(tenant: Tenant | null): TenantSettingsForm {
+  return {
+    name: tenant?.name || '',
+    contactEmail: tenant?.contactEmail || '',
+    contactName: tenant?.contactName || '',
+    industry: tenant?.industry || '',
+    webhookUrl: tenant?.webhookUrl || '',
+    rateLimitPerHour: tenant?.rateLimitPerHour ?? 1000,
+    requestLimit: tenant?.requestLimit ?? 100,
+    dataStoragePreference: tenant?.dataStoragePreference || 'none',
+    allowedDocumentTypes: (tenant?.allowedDocumentTypes || []).join(', '),
+    isActive: tenant?.isActive !== false,
+  };
+}
+
+function splitDocumentTypes(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function formatDate(value?: string) {
+  if (!value) return '-';
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
+function maskSecret(value?: string) {
+  if (!value) return '-';
+  if (value.length <= 12) return value;
+  return `${value.slice(0, 6)}...${value.slice(-6)}`;
+}
 
 export default function OrganizationsPage() {
-  const { sessionToken } = useAdminAuth();
+  const {sessionToken} = useAdminAuth();
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [createForm, setCreateForm] = useState<CreateTenantRequest>({
-    name: '',
-    contactEmail: '',
-    contactName: '',
-    industry: '',
-    initialCredits: 0,
-    rateLimitPerHour: 1000,
-    requestLimit: 100,
-  });
-  const [creditAdjustment, setCreditAdjustment] = useState<number>(0);
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [createForm, setCreateForm] = useState<CreateTenantRequest>(emptyCreateForm);
+  const [settingsForm, setSettingsForm] = useState<TenantSettingsForm>(toSettingsForm(null));
+  const [creditAdjustment, setCreditAdjustment] = useState(0);
   const [creditDescription, setCreditDescription] = useState('Manual adjustment from platform admin');
-  const [usageTenantId, setUsageTenantId] = useState<string>('');
-  const [usageStartDate, setUsageStartDate] = useState<string>('');
-  const [usageEndDate, setUsageEndDate] = useState<string>('');
+  const [usageStartDate, setUsageStartDate] = useState('');
+  const [usageEndDate, setUsageEndDate] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   const organizationsQuery = useQuery({
     queryKey: ['platform-admin', 'organizations'],
     enabled: Boolean(sessionToken),
     queryFn: async () => {
       const response = await adminApiService.listOrganizations(sessionToken as string);
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to load organizations');
-      }
-
+      if (!response.success) throw new Error(response.error || 'Failed to load organizations');
       return (response.data as Tenant[]) || [];
     },
   });
 
+  const selectedTenantQuery = useQuery({
+    queryKey: ['platform-admin', 'organization', selectedTenantId],
+    enabled: Boolean(sessionToken && selectedTenantId),
+    queryFn: async () => {
+      const response = await adminApiService.getOrganization(sessionToken as string, selectedTenantId);
+      if (!response.success) throw new Error(response.error || 'Failed to load organization');
+      return response.data as Tenant;
+    },
+  });
+
+  const usageQuery = useQuery({
+    queryKey: ['platform-admin', 'organization-usage', selectedTenantId, usageStartDate, usageEndDate],
+    enabled: Boolean(sessionToken && selectedTenantId),
+    queryFn: async () => {
+      const response = await adminApiService.getTenantUsage(
+        sessionToken as string,
+        selectedTenantId,
+        usageStartDate || undefined,
+        usageEndDate || undefined
+      );
+      if (!response.success) throw new Error(response.error || 'Failed to load usage data');
+      return response.data as TenantUsage;
+    },
+  });
+
+  const organizationUsersQuery = useQuery({
+    queryKey: ['platform-admin', 'organization-users', selectedTenantId],
+    enabled: Boolean(sessionToken && selectedTenantId),
+    queryFn: async () => {
+      const response = await adminApiService.listOrganizationUsers(sessionToken as string, selectedTenantId);
+      if (!response.success) throw new Error(response.error || 'Failed to load organization admins');
+      return (response.data as OrganizationUser[]) || [];
+    },
+  });
+
+  const selectedTenant = selectedTenantQuery.data
+    || organizationsQuery.data?.find((tenant) => tenant.id === selectedTenantId)
+    || null;
+
+  useEffect(() => {
+    setSettingsForm(toSettingsForm(selectedTenant));
+    setDeleteConfirmation('');
+  }, [selectedTenant]);
+
+  const organizations = useMemo(() => organizationsQuery.data || [], [organizationsQuery.data]);
+
+  const filteredOrganizations = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    return organizations.filter((tenant) => {
+      const matchesStatus = statusFilter === 'all'
+        || (statusFilter === 'active' && tenant.isActive !== false)
+        || (statusFilter === 'inactive' && tenant.isActive === false);
+      const matchesSearch = !query
+        || [tenant.name, tenant.contactEmail, tenant.contactName, tenant.industry]
+          .some((value) => value?.toLowerCase().includes(query));
+      return matchesStatus && matchesSearch;
+    });
+  }, [organizations, searchTerm, statusFilter]);
+
+  const orgSummary = useMemo(() => {
+    const active = organizations.filter((org) => org.isActive !== false).length;
+    const inactive = Math.max(organizations.length - active, 0);
+    const credits = organizations.reduce((sum, org) => sum + (org.credits || 0), 0);
+    return {total: organizations.length, active, inactive, credits};
+  }, [organizations]);
+
+  const createFormError = useMemo(() => {
+    if (!createForm.name.trim()) return 'Organization name is required.';
+    if (createForm.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(createForm.contactEmail)) return 'Enter a valid email address.';
+    if ((createForm.initialCredits ?? 0) < 0) return 'Initial credits cannot be negative.';
+    if ((createForm.rateLimitPerHour ?? 0) <= 0) return 'Rate limit must be greater than 0.';
+    if ((createForm.requestLimit ?? 0) <= 0) return 'Request limit must be greater than 0.';
+    return '';
+  }, [createForm]);
+
+  const settingsFormError = useMemo(() => {
+    if (!settingsForm.name.trim()) return 'Organization name is required.';
+    if (settingsForm.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settingsForm.contactEmail)) return 'Enter a valid email address.';
+    if (settingsForm.rateLimitPerHour <= 0) return 'Rate limit must be greater than 0.';
+    if (settingsForm.requestLimit <= 0) return 'Request limit must be greater than 0.';
+    return '';
+  }, [settingsForm]);
+
+  const usageDateError = usageStartDate && usageEndDate && usageStartDate > usageEndDate
+    ? 'Start date must be before or equal to end date.'
+    : '';
+
+  const creditFormError = !creditDescription.trim()
+    ? 'Description is required.'
+    : creditAdjustment === 0
+      ? 'Credit adjustment cannot be 0.'
+      : '';
+
   const createTenantMutation = useMutation({
     mutationFn: async (payload: CreateTenantRequest) => {
-      const response = await adminApiService.createOrganization(sessionToken as string, payload);
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to create organization');
-      }
+      const response = await adminApiService.createOrganization(sessionToken as string, {
+        ...payload,
+        contactEmail: payload.contactEmail || undefined,
+        contactName: payload.contactName || undefined,
+        industry: payload.industry || undefined,
+        webhookUrl: payload.webhookUrl || undefined,
+        dataStoragePreference: payload.dataStoragePreference || undefined,
+      });
+      if (!response.success) throw new Error(response.error || 'Failed to create organization');
       return response.data;
     },
     onSuccess: () => {
       toast.success('Organization created');
       setCreateDialogOpen(false);
-      setCreateForm({
-        name: '',
-        contactEmail: '',
-        contactName: '',
-        industry: '',
-        initialCredits: 0,
-        rateLimitPerHour: 1000,
-        requestLimit: 100,
-      });
-      queryClient.invalidateQueries({ queryKey: ['platform-admin', 'organizations'] });
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
-  const adjustCreditsMutation = useMutation({
-    mutationFn: async (payload: { tenantId: string; adjustment: number; description: string }) => {
-      const response = await adminApiService.manageCredits(
-        sessionToken as string,
-        payload.tenantId,
-        payload.adjustment,
-        payload.description
-      );
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to adjust credits');
-      }
-      return response.data;
-    },
-    onSuccess: () => {
-      toast.success('Credits adjusted');
-      setSelectedTenant(null);
-      setCreditAdjustment(0);
-      queryClient.invalidateQueries({ queryKey: ['platform-admin', 'organizations'] });
+      setCreateForm(emptyCreateForm);
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organizations']});
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
   const updateTenantMutation = useMutation({
-    mutationFn: async (payload: { tenantId: string; isActive: boolean }) => {
-      const response = await adminApiService.updateOrganization(sessionToken as string, payload.tenantId, {
-        isActive: payload.isActive,
+    mutationFn: async () => {
+      if (!selectedTenantId) throw new Error('Select an organization first');
+      const response = await adminApiService.updateOrganization(sessionToken as string, selectedTenantId, {
+        name: settingsForm.name.trim(),
+        contactEmail: settingsForm.contactEmail.trim(),
+        contactName: settingsForm.contactName.trim(),
+        industry: settingsForm.industry.trim(),
+        webhookUrl: settingsForm.webhookUrl.trim(),
+        rateLimitPerHour: settingsForm.rateLimitPerHour,
+        requestLimit: settingsForm.requestLimit,
+        dataStoragePreference: settingsForm.dataStoragePreference.trim() || 'none',
+        allowedDocumentTypes: splitDocumentTypes(settingsForm.allowedDocumentTypes),
+        isActive: settingsForm.isActive,
       });
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to update organization state');
-      }
+      if (!response.success) throw new Error(response.error || 'Failed to update organization');
       return response.data;
     },
     onSuccess: () => {
       toast.success('Organization updated');
-      queryClient.invalidateQueries({ queryKey: ['platform-admin', 'organizations'] });
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organizations']});
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization', selectedTenantId]});
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedTenant) throw new Error('Select an organization first');
+      const response = await adminApiService.updateOrganization(sessionToken as string, selectedTenant.id, {
+        isActive: selectedTenant.isActive === false,
+      });
+      if (!response.success) throw new Error(response.error || 'Failed to update organization status');
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Organization status updated');
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organizations']});
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization', selectedTenantId]});
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const adjustCreditsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await adminApiService.manageCredits(
+        sessionToken as string,
+        selectedTenantId,
+        creditAdjustment,
+        creditDescription
+      );
+      if (!response.success) throw new Error(response.error || 'Failed to adjust credits');
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Credits adjusted');
+      setCreditAdjustment(0);
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organizations']});
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization', selectedTenantId]});
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization-usage']});
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
   const rotateKeyMutation = useMutation({
-    mutationFn: async (tenantId: string) => {
-      const response = await adminApiService.rotateApiKey(sessionToken as string, tenantId);
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to rotate API key');
-      }
-      return response.data as { apiKey?: string };
+    mutationFn: async () => {
+      const response = await adminApiService.rotateApiKey(sessionToken as string, selectedTenantId);
+      if (!response.success) throw new Error(response.error || 'Failed to rotate API key');
+      return response.data as {apiKey?: string};
     },
     onSuccess: (data) => {
       toast.success(data?.apiKey ? `API key rotated: ${data.apiKey}` : 'API key rotated');
-      queryClient.invalidateQueries({ queryKey: ['platform-admin', 'organizations'] });
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organizations']});
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization', selectedTenantId]});
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const organizations = useMemo(() => organizationsQuery.data || [], [organizationsQuery.data]);
-
-  const orgSummary = useMemo(() => {
-    const active = organizations.filter((org) => Boolean(org.isActive)).length;
-    const inactive = Math.max(organizations.length - active, 0);
-    const credits = organizations.reduce((sum, org) => sum + (org.credits || 0), 0);
-    return {
-      total: organizations.length,
-      active,
-      inactive,
-      credits,
-    };
-  }, [organizations]);
-
-  const createFormErrors = useMemo(() => {
-    const errors: Partial<Record<keyof CreateTenantRequest, string>> = {};
-    if (!createForm.name?.trim()) {
-      errors.name = 'Organization name is required.';
-    }
-    if (createForm.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(createForm.contactEmail)) {
-      errors.contactEmail = 'Enter a valid email address.';
-    }
-    if ((createForm.initialCredits ?? 0) < 0) {
-      errors.initialCredits = 'Initial credits cannot be negative.';
-    }
-    if ((createForm.rateLimitPerHour ?? 0) <= 0) {
-      errors.rateLimitPerHour = 'Rate limit must be greater than 0.';
-    }
-    if ((createForm.requestLimit ?? 0) <= 0) {
-      errors.requestLimit = 'Request limit must be greater than 0.';
-    }
-    return errors;
-  }, [createForm]);
-
-  const usageDateError = useMemo(() => {
-    if (!usageStartDate || !usageEndDate) {
-      return '';
-    }
-    if (usageStartDate > usageEndDate) {
-      return 'Start date must be before or equal to end date.';
-    }
-    return '';
-  }, [usageEndDate, usageStartDate]);
-
-  const creditFormError = useMemo(() => {
-    if (!creditDescription.trim()) {
-      return 'Description is required.';
-    }
-    if (creditAdjustment === 0) {
-      return 'Credit adjustment cannot be 0.';
-    }
-    return '';
-  }, [creditAdjustment, creditDescription]);
-
-  const isCreateFormValid = Object.keys(createFormErrors).length === 0;
-
-  const usageQuery = useQuery({
-    queryKey: ['platform-admin', 'organization-usage', usageTenantId, usageStartDate, usageEndDate],
-    enabled: Boolean(sessionToken && usageTenantId),
-    queryFn: async () => {
-      const response = await adminApiService.getTenantUsage(
-        sessionToken as string,
-        usageTenantId,
-        usageStartDate || undefined,
-        usageEndDate || undefined
-      );
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to load usage data');
-      }
-      return response.data as TenantUsage;
+  const deleteTenantMutation = useMutation({
+    mutationFn: async () => {
+      const response = await adminApiService.deleteOrganization(sessionToken as string, selectedTenantId);
+      if (!response.success) throw new Error(response.error || 'Failed to delete organization');
+      return response.data;
     },
+    onSuccess: () => {
+      toast.success('Organization deleted');
+      setSelectedTenantId('');
+      setDeleteConfirmation('');
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organizations']});
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
+
+  const copyValue = async (value?: string, label = 'Value') => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error(`Unable to copy ${label.toLowerCase()}`);
+    }
+  };
 
   if (!sessionToken) {
     return (
       <div className="space-y-6">
-        <PlatformModuleHeader
-          title="Organizations"
-          description="Create, manage, and operate organizations across the platform."
-        />
+        <PlatformModuleHeader title="Organizations" description="Create, manage, and operate organizations across the platform." />
         <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            Sign in as platform admin to load organizations.
-          </CardContent>
+          <CardContent className="py-8 text-sm text-muted-foreground">Sign in as platform admin to load organizations.</CardContent>
         </Card>
       </div>
     );
@@ -235,10 +369,7 @@ export default function OrganizationsPage() {
 
   return (
     <div className="space-y-6">
-      <PlatformModuleHeader
-        title="Organizations"
-        description="Create, manage, and operate organizations across the platform."
-      />
+      <PlatformModuleHeader title="Organizations" description="Create, manage, and operate organizations across the platform." />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <AdminMetricTile label="Total Organizations" value={orgSummary.total} helper="Tenant records" icon={<Building2 className="h-4 w-4" />} tone="info" />
@@ -247,327 +378,349 @@ export default function OrganizationsPage() {
         <AdminMetricTile label="Total Credits" value={orgSummary.credits} helper="Credits across tenants" icon={<CreditCard className="h-4 w-4" />} />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Tenant Directory</CardTitle>
+      <AdminSectionPanel
+        title="Organization Directory"
+        description="Search tenants, inspect configuration, and perform platform-admin operations."
+        actions={(
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">Create Organization</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Create Organization</DialogTitle>
-                <DialogDescription>Create a new tenant on the platform.</DialogDescription>
+                <DialogDescription>Create a tenant and send the initial admin setup invitation when contact email is present.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-3 py-2">
-                <div>
-                  <Label htmlFor="org-name">Name</Label>
-                  <Input
-                    id="org-name"
-                    value={createForm.name}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
-                  />
-                  {createFormErrors.name && <p className="text-xs text-destructive mt-1">{createFormErrors.name}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="org-email">Contact Email</Label>
-                  <Input
-                    id="org-email"
-                    type="email"
-                    value={createForm.contactEmail || ''}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, contactEmail: e.target.value }))}
-                  />
-                  {createFormErrors.contactEmail && (
-                    <p className="text-xs text-destructive mt-1">{createFormErrors.contactEmail}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="org-contact">Contact Name</Label>
-                  <Input
-                    id="org-contact"
-                    value={createForm.contactName || ''}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, contactName: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="org-industry">Industry</Label>
-                  <Input
-                    id="org-industry"
-                    value={createForm.industry || ''}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, industry: e.target.value }))}
-                  />
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div>
-                  <Label htmlFor="org-credits">Initial Credits</Label>
-                  <Input
-                    id="org-credits"
-                    type="number"
-                    value={createForm.initialCredits ?? 0}
-                    onChange={(e) => setCreateForm((prev) => ({ ...prev, initialCredits: Number(e.target.value) }))}
-                  />
-                    {createFormErrors.initialCredits && (
-                      <p className="text-xs text-destructive mt-1">{createFormErrors.initialCredits}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="org-rate-limit">Rate Limit / Hour</Label>
-                    <Input
-                      id="org-rate-limit"
-                      type="number"
-                      value={createForm.rateLimitPerHour ?? 0}
-                      onChange={(e) => setCreateForm((prev) => ({ ...prev, rateLimitPerHour: Number(e.target.value) }))}
-                    />
-                    {createFormErrors.rateLimitPerHour && (
-                      <p className="text-xs text-destructive mt-1">{createFormErrors.rateLimitPerHour}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="org-request-limit">Request Limit</Label>
-                    <Input
-                      id="org-request-limit"
-                      type="number"
-                      value={createForm.requestLimit ?? 0}
-                      onChange={(e) => setCreateForm((prev) => ({ ...prev, requestLimit: Number(e.target.value) }))}
-                    />
-                    {createFormErrors.requestLimit && (
-                      <p className="text-xs text-destructive mt-1">{createFormErrors.requestLimit}</p>
-                    )}
-                  </div>
-                </div>
+              <div className="grid gap-3 py-1 md:grid-cols-2">
+                <AdminFormField label="Name" htmlFor="org-name">
+                  <Input id="org-name" value={createForm.name} onChange={(e) => setCreateForm((prev) => ({...prev, name: e.target.value}))} />
+                </AdminFormField>
+                <AdminFormField label="Contact Email" htmlFor="org-email">
+                  <Input id="org-email" type="email" value={createForm.contactEmail || ''} onChange={(e) => setCreateForm((prev) => ({...prev, contactEmail: e.target.value}))} />
+                </AdminFormField>
+                <AdminFormField label="Contact Name" htmlFor="org-contact">
+                  <Input id="org-contact" value={createForm.contactName || ''} onChange={(e) => setCreateForm((prev) => ({...prev, contactName: e.target.value}))} />
+                </AdminFormField>
+                <AdminFormField label="Industry" htmlFor="org-industry">
+                  <Input id="org-industry" value={createForm.industry || ''} onChange={(e) => setCreateForm((prev) => ({...prev, industry: e.target.value}))} />
+                </AdminFormField>
+                <AdminFormField label="Webhook URL" htmlFor="org-webhook">
+                  <Input id="org-webhook" value={createForm.webhookUrl || ''} onChange={(e) => setCreateForm((prev) => ({...prev, webhookUrl: e.target.value}))} />
+                </AdminFormField>
+                <AdminFormField label="Data Storage" htmlFor="org-storage">
+                  <Input id="org-storage" value={createForm.dataStoragePreference || ''} onChange={(e) => setCreateForm((prev) => ({...prev, dataStoragePreference: e.target.value}))} placeholder="none" />
+                </AdminFormField>
+                <AdminFormField label="Initial Credits" htmlFor="org-credits">
+                  <Input id="org-credits" type="number" value={createForm.initialCredits ?? 0} onChange={(e) => setCreateForm((prev) => ({...prev, initialCredits: Number(e.target.value)}))} />
+                </AdminFormField>
+                <AdminFormField label="Rate Limit / Hour" htmlFor="org-rate-limit">
+                  <Input id="org-rate-limit" type="number" value={createForm.rateLimitPerHour ?? 0} onChange={(e) => setCreateForm((prev) => ({...prev, rateLimitPerHour: Number(e.target.value)}))} />
+                </AdminFormField>
+                <AdminFormField label="Request Limit" htmlFor="org-request-limit">
+                  <Input id="org-request-limit" type="number" value={createForm.requestLimit ?? 0} onChange={(e) => setCreateForm((prev) => ({...prev, requestLimit: Number(e.target.value)}))} />
+                </AdminFormField>
               </div>
+              {createFormError && <p className="text-xs text-destructive">{createFormError}</p>}
               <DialogFooter>
-                <Button
-                  onClick={() => createTenantMutation.mutate(createForm)}
-                  disabled={!isCreateFormValid || createTenantMutation.isPending}
-                >
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+                <Button onClick={() => createTenantMutation.mutate(createForm)} disabled={Boolean(createFormError) || createTenantMutation.isPending}>
                   {createTenantMutation.isPending ? 'Creating...' : 'Create'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </CardHeader>
-        <CardContent>
-          <AdminTableShell>
-            <Table>
+        )}
+      >
+        <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_180px]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input className="pl-9" placeholder="Search by name, contact, or industry" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {organizationsQuery.isError && (
+          <Alert className="mb-4">
+            <AlertTitle>Unable to load organizations</AlertTitle>
+            <AlertDescription>{(organizationsQuery.error as Error).message}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid gap-3 md:hidden">
+          {organizationsQuery.isLoading && <p className="text-sm text-muted-foreground">Loading organizations...</p>}
+          {filteredOrganizations.map((tenant) => (
+            <button
+              type="button"
+              key={tenant.id}
+              onClick={() => setSelectedTenantId(tenant.id)}
+              className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-950">{tenant.name}</p>
+                  <p className="mt-1 truncate text-xs text-slate-500">{tenant.contactEmail || 'No contact email'}</p>
+                </div>
+                <Badge variant={tenant.isActive === false ? 'secondary' : 'default'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
+                <span>Credits: <strong className="text-slate-800">{tenant.credits ?? 0}</strong></span>
+                <span>Requests: <strong className="text-slate-800">{tenant.totalRequests ?? 0}</strong></span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <AdminTableShell className="hidden md:block">
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Contact</TableHead>
+                <TableHead>Industry</TableHead>
                 <TableHead>Credits</TableHead>
                 <TableHead>Requests</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {organizationsQuery.isLoading && (
-                <TableRow>
-                  <TableCell colSpan={6}>Loading organizations...</TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={7}>Loading organizations...</TableCell></TableRow>
               )}
-              {organizationsQuery.isError && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-destructive">
-                    {(organizationsQuery.error as Error).message}
-                  </TableCell>
-                </TableRow>
+              {!organizationsQuery.isLoading && filteredOrganizations.length === 0 && (
+                <TableRow><TableCell colSpan={7} className="text-muted-foreground">No organizations found.</TableCell></TableRow>
               )}
-              {!organizationsQuery.isLoading && organizations.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-muted-foreground">No organizations found.</TableCell>
-                </TableRow>
-              )}
-              {organizations.map((tenant) => (
+              {filteredOrganizations.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">{tenant.name}</TableCell>
                   <TableCell>{tenant.contactEmail || '-'}</TableCell>
+                  <TableCell>{tenant.industry || '-'}</TableCell>
                   <TableCell>{tenant.credits ?? 0}</TableCell>
                   <TableCell>{tenant.totalRequests ?? 0}</TableCell>
                   <TableCell>
-                    <Badge variant={tenant.isActive ? 'default' : 'secondary'}>
-                      {tenant.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
+                    <Badge variant={tenant.isActive === false ? 'secondary' : 'default'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedTenant(tenant);
-                        setCreditAdjustment(0);
-                      }}
-                    >
-                      Credits
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => rotateKeyMutation.mutate(tenant.id)}
-                      disabled={rotateKeyMutation.isPending}
-                    >
-                      Rotate Key
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        updateTenantMutation.mutate({
-                          tenantId: tenant.id,
-                          isActive: !tenant.isActive,
-                        })
-                      }
-                      disabled={updateTenantMutation.isPending}
-                    >
-                      {tenant.isActive ? 'Deactivate' : 'Activate'}
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedTenantId(tenant.id)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Open
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
-            </Table>
-          </AdminTableShell>
-        </CardContent>
-      </Card>
+          </Table>
+        </AdminTableShell>
+      </AdminSectionPanel>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Organization Usage</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-4">
-            <AdminFormField label="Organization" htmlFor="usage-tenant">
-              <Select value={usageTenantId || undefined} onValueChange={setUsageTenantId}>
-                <SelectTrigger id="usage-tenant">
-                  <SelectValue placeholder="Select organization" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </AdminFormField>
-            <AdminFormField label="Start Date" htmlFor="usage-start">
-              <Input
-                id="usage-start"
-                type="date"
-                value={usageStartDate}
-                onChange={(e) => setUsageStartDate(e.target.value)}
-              />
-            </AdminFormField>
-            <AdminFormField label="End Date" htmlFor="usage-end">
-              <Input
-                id="usage-end"
-                type="date"
-                value={usageEndDate}
-                onChange={(e) => setUsageEndDate(e.target.value)}
-              />
-            </AdminFormField>
-            <div className="flex items-end">
-              <Button
-                className="w-full"
-                onClick={() => usageQuery.refetch()}
-                disabled={!usageTenantId || usageQuery.isFetching || Boolean(usageDateError)}
-              >
-                {usageQuery.isFetching ? 'Loading...' : 'Load Usage'}
-              </Button>
-            </div>
-          </div>
-          {usageDateError && <p className="text-xs text-destructive mt-2">{usageDateError}</p>}
-
-          <div className="mt-4 text-xs text-muted-foreground">
-            Quick select organization:
-            <div className="mt-2 flex flex-wrap gap-2">
-              {organizations.slice(0, 8).map((org) => (
-                <Button
-                  key={org.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setUsageTenantId(org.id)}
-                >
-                  {org.name}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6">
-            {usageQuery.isError && (
-              <p className="text-sm text-destructive">{(usageQuery.error as Error).message}</p>
+      <Sheet open={Boolean(selectedTenantId)} onOpenChange={(open) => !open && setSelectedTenantId('')}>
+        <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-3xl">
+          <SheetHeader className="border-b border-slate-200 px-5 py-4">
+            <SheetTitle>{selectedTenant?.name || 'Organization'}</SheetTitle>
+            <SheetDescription>{selectedTenant?.contactEmail || 'Tenant configuration and operations'}</SheetDescription>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            {selectedTenantQuery.isError && (
+              <Alert className="mb-4">
+                <AlertTitle>Unable to load organization</AlertTitle>
+                <AlertDescription>{(selectedTenantQuery.error as Error).message}</AlertDescription>
+              </Alert>
             )}
-            {!usageQuery.isError && usageQuery.data && (
-              <Tabs defaultValue="summary">
-                <TabsList>
-                  <TabsTrigger value="summary">Summary</TabsTrigger>
-                  <TabsTrigger value="limits">Limits</TabsTrigger>
-                </TabsList>
-                <TabsContent value="summary" className="mt-4">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Tabs defaultValue="overview" className="space-y-4">
+              <TabsList className="grid h-auto grid-cols-2 gap-1 md:grid-cols-6">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+                <TabsTrigger value="usage">Usage</TabsTrigger>
+                <TabsTrigger value="credits">Credits</TabsTrigger>
+                <TabsTrigger value="admins">Admins</TabsTrigger>
+                <TabsTrigger value="danger">Danger</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <AdminMetricTile label="Credits" value={selectedTenant?.credits ?? 0} helper="Current balance" />
+                  <AdminMetricTile label="Total Requests" value={selectedTenant?.totalRequests ?? 0} helper="Recorded on tenant" />
+                  <AdminMetricTile label="Rate Limit / Hour" value={selectedTenant?.rateLimitPerHour ?? '-'} />
+                  <AdminMetricTile label="Request Limit" value={selectedTenant?.requestLimit ?? '-'} />
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Info label="Contact Name" value={selectedTenant?.contactName} />
+                    <Info label="Contact Email" value={selectedTenant?.contactEmail} />
+                    <Info label="Industry" value={selectedTenant?.industry} />
+                    <Info label="Data Storage" value={selectedTenant?.dataStoragePreference} />
+                    <Info label="Created" value={formatDate(selectedTenant?.createdAt)} />
+                    <Info label="Updated" value={formatDate(selectedTenant?.updatedAt)} />
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    <SecretRow label="API Key" value={selectedTenant?.apiKey} onCopy={() => copyValue(selectedTenant?.apiKey, 'API key')} />
+                    <SecretRow label="Webhook Secret" value={selectedTenant?.webhookSecret} onCopy={() => copyValue(selectedTenant?.webhookSecret, 'Webhook secret')} />
+                    <Info label="Webhook URL" value={selectedTenant?.webhookUrl} />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="settings" className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <AdminFormField label="Name" htmlFor="settings-name"><Input id="settings-name" value={settingsForm.name} onChange={(e) => setSettingsForm((prev) => ({...prev, name: e.target.value}))} /></AdminFormField>
+                  <AdminFormField label="Contact Email" htmlFor="settings-email"><Input id="settings-email" type="email" value={settingsForm.contactEmail} onChange={(e) => setSettingsForm((prev) => ({...prev, contactEmail: e.target.value}))} /></AdminFormField>
+                  <AdminFormField label="Contact Name" htmlFor="settings-contact"><Input id="settings-contact" value={settingsForm.contactName} onChange={(e) => setSettingsForm((prev) => ({...prev, contactName: e.target.value}))} /></AdminFormField>
+                  <AdminFormField label="Industry" htmlFor="settings-industry"><Input id="settings-industry" value={settingsForm.industry} onChange={(e) => setSettingsForm((prev) => ({...prev, industry: e.target.value}))} /></AdminFormField>
+                  <AdminFormField label="Webhook URL" htmlFor="settings-webhook"><Input id="settings-webhook" value={settingsForm.webhookUrl} onChange={(e) => setSettingsForm((prev) => ({...prev, webhookUrl: e.target.value}))} /></AdminFormField>
+                  <AdminFormField label="Data Storage" htmlFor="settings-storage"><Input id="settings-storage" value={settingsForm.dataStoragePreference} onChange={(e) => setSettingsForm((prev) => ({...prev, dataStoragePreference: e.target.value}))} /></AdminFormField>
+                  <AdminFormField label="Rate Limit / Hour" htmlFor="settings-rate"><Input id="settings-rate" type="number" value={settingsForm.rateLimitPerHour} onChange={(e) => setSettingsForm((prev) => ({...prev, rateLimitPerHour: Number(e.target.value)}))} /></AdminFormField>
+                  <AdminFormField label="Request Limit" htmlFor="settings-request"><Input id="settings-request" type="number" value={settingsForm.requestLimit} onChange={(e) => setSettingsForm((prev) => ({...prev, requestLimit: Number(e.target.value)}))} /></AdminFormField>
+                  <div className="md:col-span-2">
+                    <AdminFormField label="Allowed Document Types" htmlFor="settings-doc-types">
+                      <Input id="settings-doc-types" value={settingsForm.allowedDocumentTypes} onChange={(e) => setSettingsForm((prev) => ({...prev, allowedDocumentTypes: e.target.value}))} placeholder="Leave empty for unrestricted access" />
+                    </AdminFormField>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3 md:col-span-2">
+                    <div>
+                      <Label htmlFor="settings-active">Organization active</Label>
+                      <p className="text-xs text-slate-500">Inactive tenants cannot operate through tenant auth.</p>
+                    </div>
+                    <Switch id="settings-active" checked={settingsForm.isActive} onCheckedChange={(checked) => setSettingsForm((prev) => ({...prev, isActive: checked}))} />
+                  </div>
+                </div>
+                {settingsFormError && <p className="text-xs text-destructive">{settingsFormError}</p>}
+                <Button onClick={() => updateTenantMutation.mutate()} disabled={Boolean(settingsFormError) || updateTenantMutation.isPending}>
+                  {updateTenantMutation.isPending ? 'Saving...' : 'Save Settings'}
+                </Button>
+              </TabsContent>
+
+              <TabsContent value="usage" className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                  <AdminFormField label="Start Date" htmlFor="usage-start"><Input id="usage-start" type="date" value={usageStartDate} onChange={(e) => setUsageStartDate(e.target.value)} /></AdminFormField>
+                  <AdminFormField label="End Date" htmlFor="usage-end"><Input id="usage-end" type="date" value={usageEndDate} onChange={(e) => setUsageEndDate(e.target.value)} /></AdminFormField>
+                  <div className="flex items-end"><Button className="w-full" onClick={() => usageQuery.refetch()} disabled={usageQuery.isFetching || Boolean(usageDateError)}>{usageQuery.isFetching ? 'Loading...' : 'Refresh'}</Button></div>
+                </div>
+                {usageDateError && <p className="text-xs text-destructive">{usageDateError}</p>}
+                {usageQuery.isError && <p className="text-sm text-destructive">{(usageQuery.error as Error).message}</p>}
+                {usageQuery.data && (
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <AdminMetricTile label="Credits" value={usageQuery.data.credits} />
                     <AdminMetricTile label="Total Requests" value={usageQuery.data.totalRequests} />
                     <AdminMetricTile label="Transcriptions" value={usageQuery.data.totalTranscriptions} />
-                    <AdminMetricTile label="Documents Generated" value={usageQuery.data.totalDocumentsGenerated} />
+                    <AdminMetricTile label="Documents" value={usageQuery.data.totalDocumentsGenerated} />
                   </div>
-                </TabsContent>
-                <TabsContent value="limits" className="mt-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <AdminMetricTile label="Rate Limit Per Hour" value={usageQuery.data.rateLimitPerHour} />
-                    <AdminMetricTile label="Request Limit" value={usageQuery.data.requestLimit} />
-                  </div>
-                </TabsContent>
-              </Tabs>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                )}
+              </TabsContent>
 
-      <Dialog open={Boolean(selectedTenant)} onOpenChange={(open) => !open && setSelectedTenant(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adjust Credits</DialogTitle>
-            <DialogDescription>
-              {selectedTenant ? `Apply credit changes for ${selectedTenant.name}.` : ''}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 py-2">
-            <AdminFormField label="Credit Adjustment" htmlFor="credit-adjustment">
-              <Input
-                id="credit-adjustment"
-                type="number"
-                value={creditAdjustment}
-                onChange={(e) => setCreditAdjustment(Number(e.target.value))}
-              />
-            </AdminFormField>
-            <AdminFormField label="Description" htmlFor="credit-description" errorText={creditFormError || undefined}>
-              <Input
-                id="credit-description"
-                value={creditDescription}
-                onChange={(e) => setCreditDescription(e.target.value)}
-              />
-            </AdminFormField>
+              <TabsContent value="credits" className="space-y-4">
+                <AdminMetricTile label="Current Credits" value={selectedTenant?.credits ?? 0} icon={<CreditCard className="h-4 w-4" />} />
+                <div className="grid gap-3">
+                  <AdminFormField label="Credit Adjustment" htmlFor="credit-adjustment"><Input id="credit-adjustment" type="number" value={creditAdjustment} onChange={(e) => setCreditAdjustment(Number(e.target.value))} /></AdminFormField>
+                  <AdminFormField label="Description" htmlFor="credit-description" errorText={creditFormError || undefined}><Input id="credit-description" value={creditDescription} onChange={(e) => setCreditDescription(e.target.value)} /></AdminFormField>
+                </div>
+                <Button onClick={() => adjustCreditsMutation.mutate()} disabled={Boolean(creditFormError) || adjustCreditsMutation.isPending}>
+                  {adjustCreditsMutation.isPending ? 'Applying...' : 'Apply Credit Adjustment'}
+                </Button>
+              </TabsContent>
+
+              <TabsContent value="admins" className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-slate-500">View organization users provisioned under this tenant.</p>
+                  <Button size="sm" variant="outline" onClick={() => organizationUsersQuery.refetch()} disabled={organizationUsersQuery.isFetching}>
+                    {organizationUsersQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                </div>
+                {organizationUsersQuery.isError && <p className="text-sm text-destructive">{(organizationUsersQuery.error as Error).message}</p>}
+                <AdminTableShell>
+                  <Table>
+                    <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Last Login</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {organizationUsersQuery.isLoading && <TableRow><TableCell colSpan={4}>Loading users...</TableCell></TableRow>}
+                      {!organizationUsersQuery.isLoading && (organizationUsersQuery.data || []).length === 0 && <TableRow><TableCell colSpan={4} className="text-muted-foreground">No organization users found.</TableCell></TableRow>}
+                      {(organizationUsersQuery.data || []).map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div className="font-medium">{[user.firstName, user.lastName].filter(Boolean).join(' ') || user.email}</div>
+                            <div className="text-xs text-slate-500">{user.email}</div>
+                          </TableCell>
+                          <TableCell>{user.role || '-'}</TableCell>
+                          <TableCell><Badge variant={user.isActive === false ? 'secondary' : 'default'}>{user.isActive === false ? 'Inactive' : 'Active'}</Badge></TableCell>
+                          <TableCell>{formatDate(user.lastLoginAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </AdminTableShell>
+              </TabsContent>
+
+              <TabsContent value="danger" className="space-y-4">
+                <div className="rounded-lg border border-slate-200 bg-white p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-medium text-slate-950">{settingsForm.isActive ? 'Deactivate organization' : 'Activate organization'}</p>
+                      <p className="text-sm text-slate-500">Toggle operational access without deleting tenant data.</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => toggleStatusMutation.mutate()}
+                      disabled={toggleStatusMutation.isPending}
+                    >
+                      {selectedTenant?.isActive === false ? 'Activate' : 'Deactivate'}
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <Trash2 className="mt-0.5 h-4 w-4 text-red-700" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-red-950">Permanently delete organization</p>
+                      <p className="mt-1 text-sm text-red-700">This calls the backend hard-delete path and cannot be undone.</p>
+                      <div className="mt-3 grid gap-2">
+                        <Label htmlFor="delete-confirmation">Type {selectedTenant?.name || 'organization name'} to confirm</Label>
+                        <Input id="delete-confirmation" value={deleteConfirmation} onChange={(e) => setDeleteConfirmation(e.target.value)} />
+                      </div>
+                      <Button
+                        className="mt-3"
+                        variant="destructive"
+                        onClick={() => deleteTenantMutation.mutate()}
+                        disabled={!selectedTenant || deleteConfirmation !== selectedTenant.name || deleteTenantMutation.isPending}
+                      >
+                        {deleteTenantMutation.isPending ? 'Deleting...' : 'Delete Organization'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                if (!selectedTenant) {
-                  return;
-                }
-                adjustCreditsMutation.mutate({
-                  tenantId: selectedTenant.id,
-                  adjustment: creditAdjustment,
-                  description: creditDescription,
-                });
-              }}
-              disabled={!selectedTenant || adjustCreditsMutation.isPending || Boolean(creditFormError)}
-            >
-              {adjustCreditsMutation.isPending ? 'Updating...' : 'Apply'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+function Info({label, value}: {label: string; value?: string | number | null}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <p className="mt-1 break-words text-sm text-slate-950">{value || '-'}</p>
+    </div>
+  );
+}
+
+function SecretRow({label, value, onCopy}: {label: string; value?: string; onCopy: () => void}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-slate-200 p-3">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+        <p className="mt-1 truncate font-mono text-sm text-slate-950">{maskSecret(value)}</p>
+      </div>
+      <Button type="button" variant="outline" size="sm" onClick={onCopy} disabled={!value}>
+        <Copy className="mr-2 h-4 w-4" />
+        Copy
+      </Button>
     </div>
   );
 }

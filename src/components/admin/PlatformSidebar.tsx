@@ -1,6 +1,7 @@
 import {NavLink} from 'react-router-dom';
 import {BarChart3, Building2, FlaskConical, LayoutDashboard, Settings, ShieldCheck, Wallet} from 'lucide-react';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
+import {cn} from '@/lib/utils';
 
 const navItems = [
   { to: '/admin/overview', label: 'Overview', icon: LayoutDashboard, permission: null },
@@ -12,13 +13,13 @@ const navItems = [
   { to: '/admin/settings', label: 'Settings', icon: Settings, permission: 'settings' },
 ];
 
-export default function PlatformSidebar() {
+export default function PlatformSidebar({mobile = false, className}: {mobile?: boolean; className?: string}) {
   const { hasPermission } = useAdminAuth();
 
   const visibleItems = navItems.filter((item) => !item.permission || hasPermission(item.permission));
 
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white md:block">
+    <aside className={cn(mobile ? 'block w-full bg-white' : 'hidden w-72 shrink-0 border-r border-slate-200 bg-white md:block', className)}>
       <div className="flex h-16 items-center border-b border-slate-200 px-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Precision Notes</p>

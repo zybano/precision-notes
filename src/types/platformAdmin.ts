@@ -79,6 +79,30 @@ export interface TenantUsage {
   requestLimit: number;
 }
 
+export interface OrganizationUser {
+  id: string;
+  organizationId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role?: 'ADMIN' | 'STAFF' | string;
+  department?: string;
+  lastLoginAt?: string;
+  isActive?: boolean;
+}
+
+export interface PlatformAdminSession {
+  sessionId: string;
+  adminId: string;
+  adminUsername?: string;
+  adminEmail?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt?: string;
+  expiresAt?: string;
+  expired?: boolean;
+}
+
 export interface PlanFeature {
   id: string;
   planId: string;
