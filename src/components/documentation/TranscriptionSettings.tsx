@@ -19,14 +19,17 @@ interface TranscriptionSettingsProps {
 
 const getLanguageDisplayName = (language: TranscriptionLanguage): string => {
   switch (language) {
-    case TranscriptionLanguage.ENGLISH:
-      return 'English';
-    case TranscriptionLanguage.YORUBA:
-      return 'Yoruba';
-    case TranscriptionLanguage.HAUSA:
-      return 'Hausa';
-    default:
-      return 'English';
+    case TranscriptionLanguage.ENGLISH:    return 'English (US)';
+    case TranscriptionLanguage.YORUBA:     return 'Yoruba (Nigeria)';
+    case TranscriptionLanguage.HAUSA:      return 'Hausa (Nigeria)';
+    case TranscriptionLanguage.SWAHILI_KE: return 'Swahili (Kenya)';
+    case TranscriptionLanguage.SWAHILI_TZ: return 'Swahili (Tanzania)';
+    case TranscriptionLanguage.ZULU:       return 'Zulu (South Africa)';
+    case TranscriptionLanguage.AFRIKAANS:  return 'Afrikaans (South Africa)';
+    case TranscriptionLanguage.AMHARIC:    return 'Amharic (Ethiopia)';
+    case TranscriptionLanguage.FRENCH:     return 'French (France)';
+    case TranscriptionLanguage.ARABIC:     return 'Arabic (Egypt)';
+    default: return 'English (US)';
   }
 };
 
@@ -76,9 +79,16 @@ const TranscriptionSettings: React.FC<TranscriptionSettingsProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={TranscriptionLanguage.ENGLISH}>English</SelectItem>
-                <SelectItem value={TranscriptionLanguage.YORUBA}>Yoruba</SelectItem>
-                <SelectItem value={TranscriptionLanguage.HAUSA}>Hausa</SelectItem>
+                <SelectItem value={TranscriptionLanguage.ENGLISH}>English (US)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.YORUBA}>Yoruba (Nigeria)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.HAUSA}>Hausa (Nigeria)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.SWAHILI_KE}>Swahili (Kenya)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.SWAHILI_TZ}>Swahili (Tanzania)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.ZULU}>Zulu (South Africa)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.AFRIKAANS}>Afrikaans (S. Africa)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.AMHARIC}>Amharic (Ethiopia)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.FRENCH}>French (France)</SelectItem>
+                <SelectItem value={TranscriptionLanguage.ARABIC}>Arabic (Egypt)</SelectItem>
               </SelectContent>
             </Select>
           </div>

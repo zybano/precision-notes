@@ -88,6 +88,7 @@ export default function SandboxPage() {
     provider: 'ASSEMBLY_AI',
     languageCode: 'en-US',
     useSpeechModelNano: false,
+    translateToEnglish: false,
     requestId: '',
   });
   const [acceptSuggestions, setAcceptSuggestions] = useState(false);
@@ -148,27 +149,25 @@ export default function SandboxPage() {
   };
 
   const toTranscriptionLanguage = (value: string): TranscriptionLanguage => {
-    switch (value.toLowerCase()) {
-      case 'yo':
-      case 'yoruba':
-        return TranscriptionLanguage.YORUBA;
-      case 'ha':
-      case 'hausa':
-        return TranscriptionLanguage.HAUSA;
-      default:
-        return TranscriptionLanguage.ENGLISH;
+    // Accept both BCP-47 codes and short alias codes
+    const norm = value?.toLowerCase().replace('_', '-');
+    switch (norm) {
+      case 'yo-ng': case 'yo':               return TranscriptionLanguage.YORUBA;
+      case 'ha-ng': case 'ha':               return TranscriptionLanguage.HAUSA;
+      case 'sw-ke': case 'sw':              return TranscriptionLanguage.SWAHILI_KE;
+      case 'sw-tz':                         return TranscriptionLanguage.SWAHILI_TZ;
+      case 'zu-za': case 'zu':             return TranscriptionLanguage.ZULU;
+      case 'af-za': case 'af':             return TranscriptionLanguage.AFRIKAANS;
+      case 'am-et': case 'am':             return TranscriptionLanguage.AMHARIC;
+      case 'fr-fr': case 'fr':              return TranscriptionLanguage.FRENCH;
+      case 'ar-eg': case 'ar':              return TranscriptionLanguage.ARABIC;
+      default:                              return TranscriptionLanguage.ENGLISH;
     }
   };
 
   const fromTranscriptionLanguage = (value: TranscriptionLanguage): string => {
-    switch (value) {
-      case TranscriptionLanguage.YORUBA:
-        return 'yo';
-      case TranscriptionLanguage.HAUSA:
-        return 'ha';
-      default:
-        return 'en-US';
-    }
+    // Return the canonical BCP-47 code that matches the backend catalog
+    return value; // enum values ARE the BCP-47 codes
   };
 
   const sandboxCapabilitiesQuery = useQuery({
@@ -205,8 +204,10 @@ export default function SandboxPage() {
     queryFn: async () => {
       const response = await adminApiService.getSupportedTranscriptionLanguages(sessionToken as string);
       if (!response.success) throw new Error(response.error || 'Failed to load languages');
-      return response.data as {
-        canonicalLanguages?: Array<{ code: string; name?: string }>;
+      // Backend returns { defaultLanguageCode, languages } — map `languages` not `canonicalLanguages`
+      const raw = response.data as { languages?: Array<{ code: string; displayName?: string }>; canonicalLanguages?: Array<{ code: string; displayName?: string }> };
+      return {
+        canonicalLanguages: raw?.languages ?? raw?.canonicalLanguages ?? [],
       };
     },
   });
@@ -226,7 +227,10 @@ export default function SandboxPage() {
   });
 
   const providerRows = useMemo(() => providerConfigQuery.data?.providers || [], [providerConfigQuery.data]);
-  const languageRows = useMemo(() => languagesQuery.data?.canonicalLanguages || [], [languagesQuery.data]);
+  const languageRows = useMemo(
+    () => (languagesQuery.data?.canonicalLanguages || []) as Array<{ code: string; displayName?: string; name?: string }>,
+    [languagesQuery.data]
+  );
 
   const parseTemplateVariables = () => {
     if (!documentationPayload.templateVariables.trim()) {
@@ -388,10 +392,11 @@ export default function SandboxPage() {
         provider: transcriptionPayload.provider,
         languageCode: transcriptionPayload.languageCode || undefined,
         useSpeechModelNano: transcriptionPayload.useSpeechModelNano,
+        translateToEnglish: transcriptionPayload.translateToEnglish,
         requestId: transcriptionPayload.requestId || undefined,
       });
       if (!response.success) throw new Error(response.error || 'Failed to transcribe audio');
-      return response.data as { transcript?: string; text?: string; provider?: string };
+      return response.data as { transcript?: string; text?: string; provider?: string; translated?: boolean; sourceLanguageCode?: string; finalLanguageCode?: string };
     },
     onSuccess: () => {
       toast.success('Transcription test completed');
@@ -442,6 +447,7 @@ export default function SandboxPage() {
         documentFormat: documentationPayload.documentFormat,
         languageCode: transcriptionPayload.languageCode || undefined,
         useSpeechModelNano: transcriptionPayload.useSpeechModelNano,
+        translateToEnglish: transcriptionPayload.translateToEnglish,
         modelName: documentationPayload.llmProvider,
         requestId: transcriptionPayload.requestId || undefined,
         includeSummary: true,
@@ -685,7 +691,7 @@ export default function SandboxPage() {
                   {languageRows.slice(0, 30).map((lang) => (
                     <TableRow key={lang.code}>
                       <TableCell className="font-mono text-xs">{lang.code}</TableCell>
-                      <TableCell>{lang.name || '-'}</TableCell>
+                      <TableCell>{lang.displayName || lang.name || '-'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -757,11 +763,31 @@ export default function SandboxPage() {
                 />
               </div>
 
+              {/* Translate to English toggle — only meaningful when a non-English language is selected */}
+              {transcriptionPayload.languageCode && transcriptionPayload.languageCode !== 'en-US' && (
+                <div className="mt-4 flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Translate to English</p>
+                    <p className="text-xs text-blue-600">Post-transcription translation via Google Translate</p>
+                  </div>
+                  <Switch
+                    id="sandbox-translate-to-english"
+                    checked={transcriptionPayload.translateToEnglish}
+                    onCheckedChange={(value) =>
+                      setTranscriptionPayload((prev) => ({ ...prev, translateToEnglish: value }))
+                    }
+                  />
+                </div>
+              )}
+
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button onClick={() => transcriptionMutation.mutate()} disabled={!audioReady || transcriptionMutation.isPending}>
                   {transcriptionMutation.isPending ? 'Running...' : 'Run Transcription Test'}
                 </Button>
                 <AdminStatusPill tone="info"><FileAudio className="h-3.5 w-3.5" />Transcription only</AdminStatusPill>
+                {transcriptionPayload.translateToEnglish && transcriptionPayload.languageCode !== 'en-US' && (
+                  <AdminStatusPill tone="info"><Languages className="h-3.5 w-3.5" />Translation enabled</AdminStatusPill>
+                )}
               </div>
             </AdminSectionPanel>
 

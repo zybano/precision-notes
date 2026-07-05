@@ -756,6 +756,7 @@ class AdminApiService {
     provider: string;
     languageCode?: string;
     useSpeechModelNano?: boolean;
+    translateToEnglish?: boolean;
     requestId?: string;
   }) {
     const formData = new FormData();
@@ -764,6 +765,9 @@ class AdminApiService {
     if (request.languageCode) formData.append('languageCode', request.languageCode);
     if (request.useSpeechModelNano !== undefined) {
       formData.append('useSpeechModelNano', String(request.useSpeechModelNano));
+    }
+    if (request.translateToEnglish !== undefined) {
+      formData.append('translateToEnglish', String(request.translateToEnglish));
     }
     if (request.requestId) formData.append('requestId', request.requestId);
 
@@ -780,6 +784,7 @@ class AdminApiService {
     documentFormat: string;
     languageCode?: string;
     useSpeechModelNano?: boolean;
+    translateToEnglish?: boolean;
     modelName?: string;
     requestId?: string;
     includeSummary?: boolean;
@@ -794,6 +799,9 @@ class AdminApiService {
     if (request.languageCode) formData.append('languageCode', request.languageCode);
     if (request.useSpeechModelNano !== undefined) {
       formData.append('useSpeechModelNano', String(request.useSpeechModelNano));
+    }
+    if (request.translateToEnglish !== undefined) {
+      formData.append('translateToEnglish', String(request.translateToEnglish));
     }
     if (request.modelName) formData.append('modelName', request.modelName);
     if (request.requestId) formData.append('requestId', request.requestId);

@@ -2,9 +2,16 @@ import {useState} from "react";
 import {DocumentFormat, LLMProvider, TranscriptionProvider} from '@/types/transcription';
 
 export enum TranscriptionLanguage {
-  ENGLISH = 'en_us',
-  YORUBA = 'yo',
-  HAUSA = 'ha'
+  ENGLISH = 'en-US',
+  YORUBA = 'yo-NG',
+  HAUSA = 'ha-NG',
+  SWAHILI_KE = 'sw-KE',
+  SWAHILI_TZ = 'sw-TZ',
+  ZULU = 'zu-ZA',
+  AFRIKAANS = 'af-ZA',
+  AMHARIC = 'am-ET',
+  FRENCH = 'fr-FR',
+  ARABIC = 'ar-EG',
 }
 
 export const useDocumentFormat = () => {
