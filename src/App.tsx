@@ -96,6 +96,11 @@ function App() {
                   }
                 />
               </Route>
+              {import.meta.env.DEV && (
+                <Route path="/__dev" element={<PlatformAdminLayout />}>
+                  <Route path="plans-billing" element={<PlansBillingPage />} />
+                </Route>
+              )}
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster position="top-right" richColors />

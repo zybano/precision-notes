@@ -35,6 +35,9 @@ export interface CreateTenantRequest {
 
 export interface Plan {
   id: string;
+  stableCode?: string;
+  version?: number;
+  catalogStatus?: 'DRAFT' | 'ACTIVE' | 'RETIRED';
   name: string;
   description?: string;
   planScope: 'B2B' | 'B2C';
@@ -47,11 +50,25 @@ export interface Plan {
 
 export interface CreatePlanRequest {
   name: string;
+  stableCode?: string;
+  version?: number;
   description?: string;
   planScope: 'B2B' | 'B2C';
   isDefault?: boolean;
   isActive?: boolean;
   refreshTimezone?: string;
+}
+
+export type PlanCapabilityCode =
+  | 'PREMIUM_TEMPLATES'
+  | 'CUSTOM_TEMPLATES'
+  | 'STANDALONE_TRANSLATION'
+  | 'ADVANCED_EXPORTS'
+  | 'INTEGRATIONS';
+
+export interface PlanCapability {
+  code: PlanCapabilityCode;
+  enabled: boolean;
 }
 
 export interface PaymentTransaction {
@@ -107,7 +124,7 @@ export interface PlanFeature {
   id: string;
   planId: string;
   featureCode: string;
-  usageUnit: 'DOCUMENT_INPUT_TOKENS' | 'DOCUMENT_OUTPUT_TOKENS' | 'TRANSCRIPTION_MINUTES';
+  usageUnit: BillingUsageUnitCode;
   windowType: 'HOURLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
   limitValue: number;
   isEnabled: boolean;
@@ -117,6 +134,7 @@ export interface PlanPrice {
   id: string;
   planId: string;
   provider: string;
+  providerPriceId?: string;
   currency: string;
   amountCents: number;
   billingInterval: 'MONTH' | 'YEAR';
@@ -124,6 +142,22 @@ export interface PlanPrice {
   countryCode?: string;
   isDefault: boolean;
   isActive: boolean;
+}
+
+export type BillingUsageUnitCode = 'AI_ACTIONS' | 'TRANSCRIPTION_SECONDS';
+
+export interface BillingFeatureCode {
+  code: string;
+  displayName: string;
+  description?: string;
+  planScope?: 'B2B' | 'B2C';
+}
+
+export interface BillingUsageUnit {
+  code: BillingUsageUnitCode;
+  displayName: string;
+  description?: string;
+  decimalScale?: number;
 }
 
 export interface PaymentWebhookEvent {

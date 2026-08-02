@@ -528,6 +528,8 @@ class AdminApiService {
 
   async createPlan(sessionToken: string, request: {
     name: string;
+    stableCode?: string;
+    version?: number;
     description?: string;
     planScope: 'B2B' | 'B2C';
     isDefault?: boolean;
@@ -542,9 +544,52 @@ class AdminApiService {
     });
   }
 
+  async updatePlan(sessionToken: string, planId: string, request: {
+    name?: string;
+    description?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+    refreshTimezone?: string;
+  }) {
+    const planPathId = this.pathSegment(planId, 'planId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans/${planPathId}`,
+      method: 'PATCH',
+      body: request,
+    });
+  }
+
+  async activatePlan(sessionToken: string, planId: string) {
+    const planPathId = this.pathSegment(planId, 'planId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans/${planPathId}/activate`,
+      method: 'POST',
+    });
+  }
+
+  async listPlanCapabilities(sessionToken: string, planId: string) {
+    const planPathId = this.pathSegment(planId, 'planId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans/${planPathId}/capabilities`,
+    });
+  }
+
+  async replacePlanCapabilities(sessionToken: string, planId: string, enabled: string[]) {
+    const planPathId = this.pathSegment(planId, 'planId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/plans/${planPathId}/capabilities`,
+      method: 'PUT',
+      body: { enabled },
+    });
+  }
+
   async addPlanFeature(sessionToken: string, planId: string, request: {
     featureCode: string;
-    usageUnit: 'DOCUMENT_INPUT_TOKENS' | 'DOCUMENT_OUTPUT_TOKENS' | 'TRANSCRIPTION_MINUTES';
+    usageUnit: 'AI_ACTIONS' | 'TRANSCRIPTION_SECONDS';
     windowType: 'HOURLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
     limitValue: number;
     isEnabled?: boolean;
