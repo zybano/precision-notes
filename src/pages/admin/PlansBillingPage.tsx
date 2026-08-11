@@ -60,6 +60,8 @@ const capabilityLabels: Record<PlanCapabilityCode, string> = {
   ADVANCED_EXPORTS: 'Advanced export formats',
   INTEGRATIONS: 'Integrations and API access',
 };
+const planManagedCapabilityCodes = (Object.keys(capabilityLabels) as PlanCapabilityCode[])
+  .filter((code) => code !== 'INTEGRATIONS');
 
 const billingPreviewPlans: Plan[] = [
   {id: 'preview-free', stableCode: 'FREE_INDIVIDUAL', version: 1, catalogStatus: 'ACTIVE', name: 'Free Individual', description: 'One-time access for new individual customers.', planScope: 'B2C', isDefault: true, isActive: true, refreshTimezone: 'UTC'},
@@ -529,7 +531,7 @@ export default function PlansBillingPage() {
           </DialogHeader>
           {capabilitiesQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading capabilities...</p> : (
             <div className="space-y-3">
-              {(Object.keys(capabilityLabels) as PlanCapabilityCode[]).map((code) => (
+              {planManagedCapabilityCodes.map((code) => (
                 <label key={code} className="flex items-center gap-3 rounded-lg border p-3 text-sm">
                   <input
                     type="checkbox"
@@ -541,6 +543,11 @@ export default function PlansBillingPage() {
                   <span>{capabilityLabels[code]}</span>
                 </label>
               ))}
+              {capabilityPlan?.planScope === 'B2B' ? (
+                <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+                  Integrations and API access are included for every organization and are not controlled by plan.
+                </p>
+              ) : null}
             </div>
           )}
           {capabilitiesQuery.isError ? <p className="text-sm text-destructive">{(capabilitiesQuery.error as Error).message}</p> : null}
