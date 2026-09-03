@@ -7,7 +7,6 @@ export interface Tenant {
   contactEmail?: string;
   contactName?: string;
   industry?: string;
-  credits?: number;
   rateLimitPerHour?: number;
   requestLimit?: number;
   dataStoragePreference?: string;
@@ -26,7 +25,6 @@ export interface CreateTenantRequest {
   contactName?: string;
   industry?: string;
   webhookUrl?: string;
-  initialCredits?: number;
   rateLimitPerHour?: number;
   requestLimit?: number;
   dataStoragePreference?: string;
@@ -88,12 +86,34 @@ export interface PaymentTransaction {
 
 export interface TenantUsage {
   tenantId: string;
-  credits: number;
   totalRequests: number;
   totalTranscriptions: number;
   totalDocumentsGenerated: number;
   rateLimitPerHour: number;
   requestLimit: number;
+}
+
+export interface AdminOrganizationBilling {
+  organizationId: string;
+  accessStatus: 'ACTIVE' | 'EXPIRED' | string;
+  planCode: string;
+  planName: string;
+  periodStart: string;
+  periodEnd: string;
+  meters: AdminOrganizationMeterBalance[];
+  updatedAt: string;
+}
+
+export interface AdminOrganizationMeterBalance {
+  metric: BillingUsageUnitCode;
+  unit: 'actions' | 'seconds' | string;
+  included: number;
+  topUps: number;
+  adminAdjustments: number;
+  allowance: number;
+  used: number;
+  reserved: number;
+  remaining: number;
 }
 
 export interface OrganizationUser {

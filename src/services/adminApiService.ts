@@ -237,14 +237,29 @@ class AdminApiService {
     });
   }
 
-  async manageCredits(sessionToken: string, organizationId: string, creditAdjustment: number, description: string) {
+  async getOrganizationBilling(sessionToken: string, organizationId: string) {
     const organizationPathId = this.pathSegment(organizationId, 'organizationId');
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: `/tenants/${organizationPathId}/credits`,
+      endpoint: `/admin/organizations/${organizationPathId}/billing`,
+    });
+  }
+
+  async adjustOrganizationAllowance(
+    sessionToken: string,
+    organizationId: string,
+    metric: 'AI_ACTIONS' | 'TRANSCRIPTION_SECONDS',
+    adjustment: number,
+    description: string,
+  ) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/organizations/${organizationPathId}/billing/allowance-adjustments`,
       method: 'POST',
       body: {
-        creditAdjustment,
+        metric,
+        adjustment,
         description
       }
     });
@@ -352,7 +367,8 @@ class AdminApiService {
       totalOrganizations: number;
       activeOrganizations: number;
       totalRequests: number;
-      totalCreditsBalance: number;
+      totalAiActionsRemaining: number;
+      totalTranscriptionSecondsRemaining: number;
       totalPaymentTransactions: number;
       succeededPaymentTransactions: number;
       failedPaymentTransactions: number;

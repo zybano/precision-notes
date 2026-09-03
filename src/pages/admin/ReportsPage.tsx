@@ -80,7 +80,6 @@ export default function ReportsPage() {
         totalRequests: number;
         successfulRequests: number;
         failedRequests: number;
-        totalCreditsUsed: number;
         averageProcessingTimeMs: number;
       };
     },
@@ -97,7 +96,8 @@ export default function ReportsPage() {
       totalOrganizations: overview?.totalOrganizations ?? organizations.length,
       activeOrganizations: overview?.activeOrganizations ?? organizations.filter((org) => org.isActive).length,
       totalRequests: overview?.totalRequests ?? organizations.reduce((sum, org) => sum + (org.totalRequests || 0), 0),
-      credits: overview?.totalCreditsBalance ?? organizations.reduce((sum, org) => sum + (org.credits || 0), 0),
+      aiActionsRemaining: overview?.totalAiActionsRemaining ?? 0,
+      transcriptionSecondsRemaining: overview?.totalTranscriptionSecondsRemaining ?? 0,
       revenueCents,
     };
   }, [organizations, overviewQuery.data, revenueQuery.data?.items]);
@@ -185,11 +185,12 @@ export default function ReportsPage() {
         description="Operational and executive reporting for tenant usage and platform health."
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         <AdminMetricTile label="Organizations" value={metrics.totalOrganizations} helper="Total tenants" icon={<Building2 className="h-4 w-4" />} tone="info" />
         <AdminMetricTile label="Active Orgs" value={metrics.activeOrganizations} helper="Currently active" icon={<ShieldCheck className="h-4 w-4" />} tone="success" />
         <AdminMetricTile label="Total Requests" value={metrics.totalRequests} helper="Platform usage" icon={<Activity className="h-4 w-4" />} />
-        <AdminMetricTile label="Credits Balance" value={metrics.credits} helper="Total available" icon={<CreditCard className="h-4 w-4" />} />
+        <AdminMetricTile label="AI Actions Remaining" value={metrics.aiActionsRemaining} helper="Billing V2" icon={<CreditCard className="h-4 w-4" />} />
+        <AdminMetricTile label="Transcription Seconds" value={metrics.transcriptionSecondsRemaining} helper="Billing V2" icon={<CreditCard className="h-4 w-4" />} />
         <AdminMetricTile label="Revenue (cents)" value={metrics.revenueCents} helper="Captured revenue" icon={<CircleDollarSign className="h-4 w-4" />} tone="success" />
       </div>
 
@@ -290,7 +291,6 @@ export default function ReportsPage() {
                 <AdminMetricTile label="Total" value={usageQuery.data.totalRequests} />
                 <AdminMetricTile label="Successful" value={usageQuery.data.successfulRequests} tone="success" />
                 <AdminMetricTile label="Failed" value={usageQuery.data.failedRequests} tone="danger" />
-                <AdminMetricTile label="Credits Used" value={usageQuery.data.totalCreditsUsed} />
                 <AdminMetricTile label="Avg Proc. (ms)" value={Math.round(usageQuery.data.averageProcessingTimeMs || 0)} />
               </div>
             )}
@@ -304,12 +304,11 @@ export default function ReportsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Requests</TableHead>
-                  <TableHead>Credits</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {organizationsQuery.isLoading && (
-                  <TableRow><TableCell colSpan={4}>Loading organizations...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3}>Loading organizations...</TableCell></TableRow>
                 )}
                 {topOrganizations.map((org) => (
                   <TableRow key={org.id}>
@@ -318,7 +317,6 @@ export default function ReportsPage() {
                       <Badge variant={org.isActive ? 'default' : 'secondary'}>{org.isActive ? 'Active' : 'Inactive'}</Badge>
                     </TableCell>
                     <TableCell>{org.totalRequests || 0}</TableCell>
-                    <TableCell>{org.credits || 0}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

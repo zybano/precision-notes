@@ -37,7 +37,7 @@ import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import {AdminMetricTile, AdminSectionPanel, AdminTableShell} from '@/components/admin/AdminSurface';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
-import type {CreateTenantRequest, OrganizationUser, Tenant, TenantUsage} from '@/types/platformAdmin';
+import type {AdminOrganizationBilling, BillingUsageUnitCode, CreateTenantRequest, OrganizationUser, Tenant, TenantUsage} from '@/types/platformAdmin';
 import {toast} from 'sonner';
 import {
   Building2,
@@ -71,7 +71,6 @@ const emptyCreateForm: CreateTenantRequest = {
   contactName: '',
   industry: '',
   webhookUrl: '',
-  initialCredits: 0,
   rateLimitPerHour: 1000,
   requestLimit: 100,
   dataStoragePreference: 'none',
@@ -122,8 +121,9 @@ export default function OrganizationsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [createForm, setCreateForm] = useState<CreateTenantRequest>(emptyCreateForm);
   const [settingsForm, setSettingsForm] = useState<TenantSettingsForm>(toSettingsForm(null));
-  const [creditAdjustment, setCreditAdjustment] = useState(0);
-  const [creditDescription, setCreditDescription] = useState('Manual adjustment from platform admin');
+  const [allowanceMetric, setAllowanceMetric] = useState<BillingUsageUnitCode>('AI_ACTIONS');
+  const [allowanceAdjustment, setAllowanceAdjustment] = useState(0);
+  const [allowanceDescription, setAllowanceDescription] = useState('Manual allowance adjustment from platform admin');
   const [usageStartDate, setUsageStartDate] = useState('');
   const [usageEndDate, setUsageEndDate] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
@@ -160,6 +160,16 @@ export default function OrganizationsPage() {
       );
       if (!response.success) throw new Error(response.error || 'Failed to load usage data');
       return response.data as TenantUsage;
+    },
+  });
+
+  const billingQuery = useQuery({
+    queryKey: ['platform-admin', 'organization-billing-v2', selectedTenantId],
+    enabled: Boolean(sessionToken && selectedTenantId),
+    queryFn: async () => {
+      const response = await adminApiService.getOrganizationBilling(sessionToken as string, selectedTenantId);
+      if (!response.success) throw new Error(response.error || 'Failed to load Billing V2 balances');
+      return response.data as AdminOrganizationBilling;
     },
   });
 
@@ -200,14 +210,13 @@ export default function OrganizationsPage() {
   const orgSummary = useMemo(() => {
     const active = organizations.filter((org) => org.isActive !== false).length;
     const inactive = Math.max(organizations.length - active, 0);
-    const credits = organizations.reduce((sum, org) => sum + (org.credits || 0), 0);
-    return {total: organizations.length, active, inactive, credits};
+    const totalRequests = organizations.reduce((sum, org) => sum + (org.totalRequests || 0), 0);
+    return {total: organizations.length, active, inactive, totalRequests};
   }, [organizations]);
 
   const createFormError = useMemo(() => {
     if (!createForm.name.trim()) return 'Organization name is required.';
     if (createForm.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(createForm.contactEmail)) return 'Enter a valid email address.';
-    if ((createForm.initialCredits ?? 0) < 0) return 'Initial credits cannot be negative.';
     if ((createForm.rateLimitPerHour ?? 0) <= 0) return 'Rate limit must be greater than 0.';
     if ((createForm.requestLimit ?? 0) <= 0) return 'Request limit must be greater than 0.';
     return '';
@@ -225,10 +234,10 @@ export default function OrganizationsPage() {
     ? 'Start date must be before or equal to end date.'
     : '';
 
-  const creditFormError = !creditDescription.trim()
+  const allowanceFormError = !allowanceDescription.trim()
     ? 'Description is required.'
-    : creditAdjustment === 0
-      ? 'Credit adjustment cannot be 0.'
+    : allowanceAdjustment === 0
+      ? 'Allowance adjustment cannot be 0.'
       : '';
 
   const createTenantMutation = useMutation({
@@ -296,23 +305,22 @@ export default function OrganizationsPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const adjustCreditsMutation = useMutation({
+  const adjustAllowanceMutation = useMutation({
     mutationFn: async () => {
-      const response = await adminApiService.manageCredits(
+      const response = await adminApiService.adjustOrganizationAllowance(
         sessionToken as string,
         selectedTenantId,
-        creditAdjustment,
-        creditDescription
+        allowanceMetric,
+        allowanceAdjustment,
+        allowanceDescription
       );
-      if (!response.success) throw new Error(response.error || 'Failed to adjust credits');
+      if (!response.success) throw new Error(response.error || 'Failed to adjust allowance');
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Credits adjusted');
-      setCreditAdjustment(0);
-      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organizations']});
-      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization', selectedTenantId]});
-      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization-usage']});
+      toast.success('Billing V2 allowance adjusted');
+      setAllowanceAdjustment(0);
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization-billing-v2', selectedTenantId]});
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -375,7 +383,7 @@ export default function OrganizationsPage() {
         <AdminMetricTile label="Total Organizations" value={orgSummary.total} helper="Tenant records" icon={<Building2 className="h-4 w-4" />} tone="info" />
         <AdminMetricTile label="Active" value={orgSummary.active} helper="Operational tenants" icon={<ShieldCheck className="h-4 w-4" />} tone="success" />
         <AdminMetricTile label="Inactive" value={orgSummary.inactive} helper="Paused tenants" icon={<ShieldOff className="h-4 w-4" />} tone="warning" />
-        <AdminMetricTile label="Total Credits" value={orgSummary.credits} helper="Credits across tenants" icon={<CreditCard className="h-4 w-4" />} />
+        <AdminMetricTile label="Total Requests" value={orgSummary.totalRequests} helper="Across organizations" icon={<CreditCard className="h-4 w-4" />} />
       </div>
 
       <AdminSectionPanel
@@ -409,9 +417,6 @@ export default function OrganizationsPage() {
                 </AdminFormField>
                 <AdminFormField label="Data Storage" htmlFor="org-storage">
                   <Input id="org-storage" value={createForm.dataStoragePreference || ''} onChange={(e) => setCreateForm((prev) => ({...prev, dataStoragePreference: e.target.value}))} placeholder="none" />
-                </AdminFormField>
-                <AdminFormField label="Initial Credits" htmlFor="org-credits">
-                  <Input id="org-credits" type="number" value={createForm.initialCredits ?? 0} onChange={(e) => setCreateForm((prev) => ({...prev, initialCredits: Number(e.target.value)}))} />
                 </AdminFormField>
                 <AdminFormField label="Rate Limit / Hour" htmlFor="org-rate-limit">
                   <Input id="org-rate-limit" type="number" value={createForm.rateLimitPerHour ?? 0} onChange={(e) => setCreateForm((prev) => ({...prev, rateLimitPerHour: Number(e.target.value)}))} />
@@ -470,7 +475,6 @@ export default function OrganizationsPage() {
                 <Badge variant={tenant.isActive === false ? 'secondary' : 'default'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
-                <span>Credits: <strong className="text-slate-800">{tenant.credits ?? 0}</strong></span>
                 <span>Requests: <strong className="text-slate-800">{tenant.totalRequests ?? 0}</strong></span>
               </div>
             </button>
@@ -484,7 +488,6 @@ export default function OrganizationsPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Industry</TableHead>
-                <TableHead>Credits</TableHead>
                 <TableHead>Requests</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Details</TableHead>
@@ -492,17 +495,16 @@ export default function OrganizationsPage() {
             </TableHeader>
             <TableBody>
               {organizationsQuery.isLoading && (
-                <TableRow><TableCell colSpan={7}>Loading organizations...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6}>Loading organizations...</TableCell></TableRow>
               )}
               {!organizationsQuery.isLoading && filteredOrganizations.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-muted-foreground">No organizations found.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-muted-foreground">No organizations found.</TableCell></TableRow>
               )}
               {filteredOrganizations.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">{tenant.name}</TableCell>
                   <TableCell>{tenant.contactEmail || '-'}</TableCell>
                   <TableCell>{tenant.industry || '-'}</TableCell>
-                  <TableCell>{tenant.credits ?? 0}</TableCell>
                   <TableCell>{tenant.totalRequests ?? 0}</TableCell>
                   <TableCell>
                     <Badge variant={tenant.isActive === false ? 'secondary' : 'default'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
@@ -538,14 +540,14 @@ export default function OrganizationsPage() {
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
                 <TabsTrigger value="usage">Usage</TabsTrigger>
-                <TabsTrigger value="credits">Credits</TabsTrigger>
+                <TabsTrigger value="billing">Billing V2</TabsTrigger>
                 <TabsTrigger value="admins">Admins</TabsTrigger>
                 <TabsTrigger value="danger">Danger</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <AdminMetricTile label="Credits" value={selectedTenant?.credits ?? 0} helper="Current balance" />
+                  <AdminMetricTile label="AI Actions Remaining" value={billingQuery.data?.meters.find((meter) => meter.metric === 'AI_ACTIONS')?.remaining ?? '-'} helper="Billing V2" />
                   <AdminMetricTile label="Total Requests" value={selectedTenant?.totalRequests ?? 0} helper="Recorded on tenant" />
                   <AdminMetricTile label="Rate Limit / Hour" value={selectedTenant?.rateLimitPerHour ?? '-'} />
                   <AdminMetricTile label="Request Limit" value={selectedTenant?.requestLimit ?? '-'} />
@@ -606,7 +608,6 @@ export default function OrganizationsPage() {
                 {usageQuery.isError && <p className="text-sm text-destructive">{(usageQuery.error as Error).message}</p>}
                 {usageQuery.data && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <AdminMetricTile label="Credits" value={usageQuery.data.credits} />
                     <AdminMetricTile label="Total Requests" value={usageQuery.data.totalRequests} />
                     <AdminMetricTile label="Transcriptions" value={usageQuery.data.totalTranscriptions} />
                     <AdminMetricTile label="Documents" value={usageQuery.data.totalDocumentsGenerated} />
@@ -614,14 +615,38 @@ export default function OrganizationsPage() {
                 )}
               </TabsContent>
 
-              <TabsContent value="credits" className="space-y-4">
-                <AdminMetricTile label="Current Credits" value={selectedTenant?.credits ?? 0} icon={<CreditCard className="h-4 w-4" />} />
-                <div className="grid gap-3">
-                  <AdminFormField label="Credit Adjustment" htmlFor="credit-adjustment"><Input id="credit-adjustment" type="number" value={creditAdjustment} onChange={(e) => setCreditAdjustment(Number(e.target.value))} /></AdminFormField>
-                  <AdminFormField label="Description" htmlFor="credit-description" errorText={creditFormError || undefined}><Input id="credit-description" value={creditDescription} onChange={(e) => setCreditDescription(e.target.value)} /></AdminFormField>
+              <TabsContent value="billing" className="space-y-4">
+                {billingQuery.isError && <p className="text-sm text-destructive">{(billingQuery.error as Error).message}</p>}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(billingQuery.data?.meters || []).map((meter) => (
+                    <AdminMetricTile
+                      key={meter.metric}
+                      label={meter.metric === 'AI_ACTIONS' ? 'AI Actions Remaining' : 'Transcription Seconds Remaining'}
+                      value={meter.remaining}
+                      helper={`${meter.allowance} total · ${meter.used} used · resets ${formatDate(billingQuery.data?.periodEnd)}`}
+                      icon={<CreditCard className="h-4 w-4" />}
+                    />
+                  ))}
                 </div>
-                <Button onClick={() => adjustCreditsMutation.mutate()} disabled={Boolean(creditFormError) || adjustCreditsMutation.isPending}>
-                  {adjustCreditsMutation.isPending ? 'Applying...' : 'Apply Credit Adjustment'}
+                <div className="grid gap-3">
+                  <AdminFormField label="Billing Meter" htmlFor="allowance-metric">
+                    <Select value={allowanceMetric} onValueChange={(value) => setAllowanceMetric(value as BillingUsageUnitCode)}>
+                      <SelectTrigger id="allowance-metric"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AI_ACTIONS">AI actions</SelectItem>
+                        <SelectItem value="TRANSCRIPTION_SECONDS">Transcription seconds</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </AdminFormField>
+                  <AdminFormField label="Allowance Adjustment" htmlFor="allowance-adjustment">
+                    <Input id="allowance-adjustment" type="number" value={allowanceAdjustment} onChange={(e) => setAllowanceAdjustment(Number(e.target.value))} />
+                  </AdminFormField>
+                  <AdminFormField label="Description" htmlFor="allowance-description" errorText={allowanceFormError || undefined}>
+                    <Input id="allowance-description" value={allowanceDescription} onChange={(e) => setAllowanceDescription(e.target.value)} />
+                  </AdminFormField>
+                </div>
+                <Button onClick={() => adjustAllowanceMutation.mutate()} disabled={Boolean(allowanceFormError) || adjustAllowanceMutation.isPending}>
+                  {adjustAllowanceMutation.isPending ? 'Applying...' : 'Apply Allowance Adjustment'}
                 </Button>
               </TabsContent>
 
