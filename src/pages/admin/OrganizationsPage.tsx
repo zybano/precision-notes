@@ -123,6 +123,7 @@ export default function OrganizationsPage() {
   const [settingsForm, setSettingsForm] = useState<TenantSettingsForm>(toSettingsForm(null));
   const [allowanceMetric, setAllowanceMetric] = useState<BillingUsageUnitCode>('AI_ACTIONS');
   const [allowanceAdjustment, setAllowanceAdjustment] = useState(0);
+  const [allowanceAdjustmentTouched, setAllowanceAdjustmentTouched] = useState(false);
   const [allowanceDescription, setAllowanceDescription] = useState('Manual allowance adjustment from platform admin');
   const [usageStartDate, setUsageStartDate] = useState('');
   const [usageEndDate, setUsageEndDate] = useState('');
@@ -234,11 +235,9 @@ export default function OrganizationsPage() {
     ? 'Start date must be before or equal to end date.'
     : '';
 
-  const allowanceFormError = !allowanceDescription.trim()
-    ? 'Description is required.'
-    : allowanceAdjustment === 0
-      ? 'Allowance adjustment cannot be 0.'
-      : '';
+  const allowanceAdjustmentError = allowanceAdjustment === 0 ? 'Allowance adjustment cannot be 0.' : '';
+  const allowanceDescriptionError = allowanceDescription.trim() ? '' : 'Description is required.';
+  const allowanceFormError = allowanceAdjustmentError || allowanceDescriptionError;
 
   const createTenantMutation = useMutation({
     mutationFn: async (payload: CreateTenantRequest) => {
@@ -320,6 +319,7 @@ export default function OrganizationsPage() {
     onSuccess: () => {
       toast.success('Billing V2 allowance adjusted');
       setAllowanceAdjustment(0);
+      setAllowanceAdjustmentTouched(false);
       queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization-billing-v2', selectedTenantId]});
     },
     onError: (error: Error) => toast.error(error.message),
@@ -638,10 +638,22 @@ export default function OrganizationsPage() {
                       </SelectContent>
                     </Select>
                   </AdminFormField>
-                  <AdminFormField label="Allowance Adjustment" htmlFor="allowance-adjustment">
-                    <Input id="allowance-adjustment" type="number" value={allowanceAdjustment} onChange={(e) => setAllowanceAdjustment(Number(e.target.value))} />
+                  <AdminFormField
+                    label="Allowance Adjustment"
+                    htmlFor="allowance-adjustment"
+                    errorText={allowanceAdjustmentTouched ? allowanceAdjustmentError || undefined : undefined}
+                  >
+                    <Input
+                      id="allowance-adjustment"
+                      type="number"
+                      value={allowanceAdjustment}
+                      onChange={(e) => {
+                        setAllowanceAdjustmentTouched(true);
+                        setAllowanceAdjustment(Number(e.target.value));
+                      }}
+                    />
                   </AdminFormField>
-                  <AdminFormField label="Description" htmlFor="allowance-description" errorText={allowanceFormError || undefined}>
+                  <AdminFormField label="Description" htmlFor="allowance-description" errorText={allowanceDescriptionError || undefined}>
                     <Input id="allowance-description" value={allowanceDescription} onChange={(e) => setAllowanceDescription(e.target.value)} />
                   </AdminFormField>
                 </div>
