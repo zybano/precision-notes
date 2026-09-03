@@ -13,6 +13,39 @@ interface AdminApiResponse<T = any> {
   error?: string;
 }
 
+export interface PartnerCreditDashboard {
+  settings: {
+    enabled: boolean;
+    checkIntervalMinutes: number;
+    warningThresholdPercent: number;
+    balanceWarningAmount: number;
+    alertCooldownMinutes: number;
+    lastCheckStartedAt?: string;
+  };
+  admins: Array<{id: string; name?: string; email: string; selected: boolean}>;
+  providers: Array<{
+    provider: string;
+    monitorMode: 'SPEND_LIMIT' | 'BALANCE' | 'ERROR_SIGNAL';
+    state: 'HEALTHY' | 'LOW' | 'EXHAUSTED' | 'UNCONFIGURED' | 'SIGNAL_ONLY' | 'CHECK_FAILED' | 'UNKNOWN';
+    remainingAmount?: number;
+    spentAmount?: number;
+    limitAmount?: number;
+    currency?: string;
+    message?: string;
+    lastCheckedAt?: string;
+    lastAlertedAt?: string;
+  }>;
+}
+
+export interface PartnerCreditSettingsUpdate {
+  enabled: boolean;
+  checkIntervalMinutes: number;
+  warningThresholdPercent: number;
+  balanceWarningAmount: number;
+  alertCooldownMinutes: number;
+  recipientAdminIds: string[];
+}
+
 class AdminApiService {
   private baseUrl: string;
 
@@ -970,6 +1003,30 @@ class AdminApiService {
       endpoint: '/platform-admin/sandbox/documentation/generate',
       method: 'POST',
       body: request,
+    });
+  }
+
+  async getPartnerCreditDashboard(sessionToken: string) {
+    return this.makeAdminApiCall<PartnerCreditDashboard>({
+      sessionToken,
+      endpoint: '/platform-admin/partners/credits',
+    });
+  }
+
+  async updatePartnerCreditSettings(sessionToken: string, request: PartnerCreditSettingsUpdate) {
+    return this.makeAdminApiCall<PartnerCreditDashboard>({
+      sessionToken,
+      endpoint: '/platform-admin/partners/credits/settings',
+      method: 'PUT',
+      body: request,
+    });
+  }
+
+  async checkPartnerCreditsNow(sessionToken: string) {
+    return this.makeAdminApiCall<PartnerCreditDashboard>({
+      sessionToken,
+      endpoint: '/platform-admin/partners/credits/check',
+      method: 'POST',
     });
   }
 }
