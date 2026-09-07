@@ -104,6 +104,15 @@ export interface AdminOrganizationBilling {
   updatedAt: string;
 }
 
+export interface AdminContractPlan {
+  planId: string;
+  status: string;
+  provider: string;
+  timezone: string;
+  periodStart: string;
+  periodEnd: string;
+}
+
 export interface AdminOrganizationMeterBalance {
   metric: BillingUsageUnitCode;
   unit: 'actions' | 'seconds' | string;

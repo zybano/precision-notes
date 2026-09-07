@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
@@ -26,6 +26,7 @@ import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/c
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
 import type {
+  AdminContractPlan,
   BillingFeatureCode,
   BillingUsageUnit,
   BillingUsageUnitCode,
@@ -76,6 +77,27 @@ const billingPreviewUnits: BillingUsageUnit[] = [
   {code: 'TRANSCRIPTION_SECONDS', displayName: 'Transcription time', description: 'Exact successfully processed audio time.'},
 ];
 
+function defaultContractPeriod() {
+  const periodStart = new Date();
+  const periodEnd = new Date(periodStart);
+  periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+  const toLocalInput = (value: Date) => {
+    const localValue = new Date(value.getTime() - value.getTimezoneOffset() * 60_000);
+    return localValue.toISOString().slice(0, 16);
+  };
+  return {periodStart: toLocalInput(periodStart), periodEnd: toLocalInput(periodEnd)};
+}
+
+function toUtcLocalDateTime(value: string) {
+  return new Date(value).toISOString().slice(0, 19);
+}
+
+function fromUtcLocalDateTime(value: string) {
+  const utcValue = new Date(value.endsWith('Z') ? value : `${value}Z`);
+  const localValue = new Date(utcValue.getTime() - utcValue.getTimezoneOffset() * 60_000);
+  return localValue.toISOString().slice(0, 16);
+}
+
 export default function PlansBillingPage() {
   const { sessionToken } = useAdminAuth();
   const queryClient = useQueryClient();
@@ -101,13 +123,14 @@ export default function PlansBillingPage() {
     refreshTimezone: 'UTC',
   });
 
-  const [assignment, setAssignment] = useState({
+  const [assignment, setAssignment] = useState(() => ({
     organizationId: '',
     planId: '',
     provider: 'manual',
     status: 'ACTIVE',
     timezone: 'UTC',
-  });
+    ...defaultContractPeriod(),
+  }));
 
   const [featureForm, setFeatureForm] = useState({
     planId: '',
@@ -226,6 +249,30 @@ export default function PlansBillingPage() {
     },
   });
 
+  const contractPlanQuery = useQuery({
+    queryKey: ['platform-admin', 'organization-contract-plan', assignment.organizationId],
+    enabled: Boolean(sessionToken && assignment.organizationId && !devFixture),
+    queryFn: async () => {
+      const response = await adminApiService.getContractPlan(sessionToken as string, assignment.organizationId);
+      if (!response.success) throw new Error(response.error || 'Failed to load the organization contract');
+      return response.data as AdminContractPlan | null;
+    },
+  });
+
+  useEffect(() => {
+    const contract = contractPlanQuery.data;
+    if (!contract) return;
+    setAssignment((current) => current.organizationId ? {
+      ...current,
+      planId: contract.planId,
+      provider: contract.provider || 'manual',
+      status: contract.status || 'ACTIVE',
+      timezone: contract.timezone || 'UTC',
+      periodStart: fromUtcLocalDateTime(contract.periodStart),
+      periodEnd: fromUtcLocalDateTime(contract.periodEnd),
+    } : current);
+  }, [contractPlanQuery.data]);
+
   const transactionsQuery = useQuery({
     queryKey: ['platform-admin', 'payment-transactions'],
     enabled: Boolean(sessionToken || devFixture),
@@ -288,25 +335,32 @@ export default function PlansBillingPage() {
 
   const assignContractMutation = useMutation({
     mutationFn: async () => {
-      const response = await adminApiService.assignContractPlan(sessionToken as string, assignment.organizationId, {
+      const request = {
         planId: assignment.planId,
         provider: assignment.provider,
         status: assignment.status,
         timezone: assignment.timezone,
-      });
+        periodStart: toUtcLocalDateTime(assignment.periodStart),
+        periodEnd: toUtcLocalDateTime(assignment.periodEnd),
+      };
+      const response = contractPlanQuery.data
+        ? await adminApiService.updateContractPlan(sessionToken as string, assignment.organizationId, request)
+        : await adminApiService.assignContractPlan(sessionToken as string, assignment.organizationId, request);
       if (!response.success) {
         throw new Error(response.error || 'Failed to assign contract plan');
       }
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Contract plan assigned');
+      toast.success('Contract plan assigned or updated');
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization-contract-plan']});
       setAssignment({
         organizationId: '',
         planId: '',
         provider: 'manual',
         status: 'ACTIVE',
         timezone: 'UTC',
+        ...defaultContractPeriod(),
       });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -447,8 +501,14 @@ export default function PlansBillingPage() {
     if (!assignment.provider.trim()) {
       return 'Provider is required.';
     }
+    if (!assignment.periodStart || !assignment.periodEnd) {
+      return 'Contract start and end are required.';
+    }
+    if (new Date(assignment.periodEnd) <= new Date(assignment.periodStart)) {
+      return 'Contract end must be after the start.';
+    }
     return '';
-  }, [assignment.organizationId, assignment.planId, assignment.provider]);
+  }, [assignment.organizationId, assignment.periodEnd, assignment.periodStart, assignment.planId, assignment.provider]);
 
   const featureError = useMemo(() => {
     if (!featureForm.planId) {
@@ -1002,7 +1062,15 @@ export default function PlansBillingPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="assignment-org">Organization</Label>
-                <Select value={assignment.organizationId || undefined} onValueChange={(value) => setAssignment((prev) => ({ ...prev, organizationId: value }))}>
+                <Select value={assignment.organizationId || undefined} onValueChange={(value) => setAssignment((prev) => ({
+                  ...prev,
+                  organizationId: value,
+                  planId: '',
+                  provider: 'manual',
+                  status: 'ACTIVE',
+                  timezone: 'UTC',
+                  ...defaultContractPeriod(),
+                }))}>
                   <SelectTrigger id="assignment-org">
                     <SelectValue placeholder="Select organization" />
                   </SelectTrigger>
@@ -1042,17 +1110,38 @@ export default function PlansBillingPage() {
                   onChange={(e) => setAssignment((prev) => ({ ...prev, timezone: e.target.value }))}
                 />
               </div>
+              <div>
+                <Label htmlFor="assignment-period-start">Contract starts</Label>
+                <Input
+                  id="assignment-period-start"
+                  type="datetime-local"
+                  value={assignment.periodStart}
+                  onChange={(e) => setAssignment((prev) => ({ ...prev, periodStart: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="assignment-period-end">Contract ends</Label>
+                <Input
+                  id="assignment-period-end"
+                  type="datetime-local"
+                  value={assignment.periodEnd}
+                  min={assignment.periodStart}
+                  onChange={(e) => setAssignment((prev) => ({ ...prev, periodEnd: e.target.value }))}
+                />
+              </div>
             </div>
 
             <div className="mt-4 flex items-center gap-3">
               <Button
                 onClick={() => assignContractMutation.mutate()}
-                disabled={Boolean(assignmentError) || assignContractMutation.isPending}
+                disabled={Boolean(assignmentError) || assignContractMutation.isPending || contractPlanQuery.isFetching}
               >
-                {assignContractMutation.isPending ? 'Assigning...' : 'Assign Contract Plan'}
+                {assignContractMutation.isPending ? 'Saving...' : 'Assign or Update Contract Plan'}
               </Button>
-              <p className="text-sm text-muted-foreground">Use B2B plan IDs from the table above.</p>
+              <p className="text-sm text-muted-foreground">The saved contract period controls when the organization can use the plan.</p>
             </div>
+            {contractPlanQuery.isFetching && <p className="text-xs text-muted-foreground mt-2">Loading current contract period...</p>}
+            {contractPlanQuery.isError && <p className="text-xs text-destructive mt-2">{(contractPlanQuery.error as Error).message}</p>}
             {assignmentError && <p className="text-xs text-destructive mt-2">{assignmentError}</p>}
 
             <div className="mt-6">
@@ -1064,7 +1153,15 @@ export default function PlansBillingPage() {
                     <button
                       type="button"
                       className="text-primary"
-                      onClick={() => setAssignment((prev) => ({ ...prev, organizationId: org.id }))}
+                      onClick={() => setAssignment((prev) => ({
+                        ...prev,
+                        organizationId: org.id,
+                        planId: '',
+                        provider: 'manual',
+                        status: 'ACTIVE',
+                        timezone: 'UTC',
+                        ...defaultContractPeriod(),
+                      }))}
                     >
                       {org.id}
                     </button>

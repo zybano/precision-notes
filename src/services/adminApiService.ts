@@ -691,6 +691,8 @@ class AdminApiService {
     provider?: string;
     status?: string;
     timezone?: string;
+    periodStart?: string;
+    periodEnd?: string;
   }) {
     const organizationPathId = this.pathSegment(organizationId, 'organizationId');
     return this.makeAdminApiCall({
@@ -701,11 +703,21 @@ class AdminApiService {
     });
   }
 
+  async getContractPlan(sessionToken: string, organizationId: string) {
+    const organizationPathId = this.pathSegment(organizationId, 'organizationId');
+    return this.makeAdminApiCall({
+      sessionToken,
+      endpoint: `/admin/organizations/${organizationPathId}/contract-plan`,
+    });
+  }
+
   async updateContractPlan(sessionToken: string, organizationId: string, request: {
     planId: string;
     provider?: string;
     status?: string;
     timezone?: string;
+    periodStart?: string;
+    periodEnd?: string;
   }) {
     const organizationPathId = this.pathSegment(organizationId, 'organizationId');
     return this.makeAdminApiCall({
