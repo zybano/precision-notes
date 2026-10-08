@@ -4,6 +4,7 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
 import {Switch} from '@/components/ui/switch';
 import {Textarea} from '@/components/ui/textarea';
 import {
@@ -25,9 +26,7 @@ import {
   AdminSectionPanel,
   AdminStatusPill,
   AdminTableShell,
-  AudioVisualizer
 } from '@/components/admin/AdminSurface';
-import TranscriptionSettings from '@/components/documentation/TranscriptionSettings';
 import {TranscriptionLanguage} from '@/hooks/useDocumentFormat';
 import {DocumentFormat, LLMProvider} from '@/types/transcription';
 import {toast} from 'sonner';
@@ -61,6 +60,7 @@ type ProviderConfigRow = {
 export default function SandboxPage() {
   const { sessionToken } = useAdminAuth();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('audio-test');
 
   const [defaultProvider, setDefaultProvider] = useState<ProviderType>('ASSEMBLY_AI');
   const [liveSessionPayload, setLiveSessionPayload] = useState({
@@ -549,7 +549,8 @@ export default function SandboxPage() {
       <div className="space-y-6">
         <PlatformModuleHeader
           title="Sandbox"
-          description="Safe environment for testing providers, transcription settings, and language options."
+          description="Test platform transcription and documentation."
+        actions={<Button variant="outline" onClick={() => setActiveTab('provider-lab')}><Settings2 className="mr-2 h-4 w-4" />Provider settings</Button>}
         />
         <Card>
           <CardContent className="py-8 text-sm text-muted-foreground">
@@ -560,55 +561,36 @@ export default function SandboxPage() {
     );
   }
 
-  const enabledProviderCount = sandboxCapabilitiesQuery.data?.enabledProviders?.length ?? providerRows.filter((row) => row.enabled).length;
   const audioReady = Boolean(resolveAudioUploadFile());
-  const latestRunLabel = combinedFlowMutation.data
-    ? 'Combined flow complete'
-    : documentationMutation.data
-      ? 'Documentation complete'
-      : transcriptionMutation.data
-        ? 'Transcription complete'
-        : recordedAudioBlob
-          ? 'Recording captured'
-          : audioFile
-            ? 'Audio file ready'
-            : 'Awaiting audio';
+
 
   return (
     <div className="space-y-6">
       <PlatformModuleHeader
         title="Sandbox"
-        description="Safe environment for testing providers, transcription settings, and language options."
+        description="Test platform transcription and documentation."
+        actions={<Button variant="outline" onClick={() => setActiveTab('provider-lab')}><Settings2 className="mr-2 h-4 w-4" />Provider settings</Button>}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricTile label="Providers" value={providerRows.length} helper={`${enabledProviderCount} enabled`} icon={<Server className="h-4 w-4" />} tone="info" />
-        <AdminMetricTile label="Default Provider" value={providerConfigQuery.data?.defaultProvider || '-'} helper="Routing preference" icon={<Settings2 className="h-4 w-4" />} />
-        <AdminMetricTile label="Languages" value={languageRows.length} helper="Canonical language rows" icon={<Languages className="h-4 w-4" />} tone="success" />
-        <AdminMetricTile label="Latest Test" value={latestRunLabel} helper={audioReady ? 'Audio input ready' : 'Needs audio input'} icon={<Activity className="h-4 w-4" />} tone={audioReady ? 'success' : 'warning'} />
-      </div>
+      <p className="rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">Transcription, documentation, and live sessions use configured providers and may incur provider charges.</p>
 
-      <Tabs defaultValue="provider-lab" className="space-y-5">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-white p-1 text-slate-500 md:grid-cols-5">
-          <TabsTrigger value="provider-lab" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
-            <FlaskConical className="h-4 w-4" />
-            Provider Lab
-          </TabsTrigger>
-          <TabsTrigger value="audio-test" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-white p-1 text-slate-500 md:grid-cols-4">
+          <TabsTrigger value="audio-test" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600">
             <AudioLines className="h-4 w-4" />
-            Audio Test
+            Audio
           </TabsTrigger>
-          <TabsTrigger value="documentation-flow" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+          <TabsTrigger value="documentation-flow" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600">
             <FileText className="h-4 w-4" />
-            Docs Flow
+            Documentation
           </TabsTrigger>
-          <TabsTrigger value="live-sessions" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+          <TabsTrigger value="live-sessions" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600">
             <Radio className="h-4 w-4" />
             Live Sessions
           </TabsTrigger>
-          <TabsTrigger value="failover-webhooks" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-slate-950 data-[state=active]:text-white">
+          <TabsTrigger value="failover-webhooks" className="gap-2 rounded-md py-2.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600">
             <Route className="h-4 w-4" />
-            Failover
+            Routing & webhooks
           </TabsTrigger>
         </TabsList>
 
@@ -748,19 +730,9 @@ export default function SandboxPage() {
                 )}
               </div>
 
-              <div className="mt-5">
-                <TranscriptionSettings
-                  transcriptionLanguage={toTranscriptionLanguage(transcriptionPayload.languageCode)}
-                  onLanguageSelect={(language) =>
-                    setTranscriptionPayload((prev) => ({ ...prev, languageCode: fromTranscriptionLanguage(language) }))
-                  }
-                  useSpeechModelNano={transcriptionPayload.useSpeechModelNano}
-                  setUseSpeechModelNano={(value) =>
-                    setTranscriptionPayload((prev) => ({ ...prev, useSpeechModelNano: value }))
-                  }
-                  acceptSuggestions={acceptSuggestions}
-                  setAcceptSuggestions={setAcceptSuggestions}
-                />
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <AdminFormField label="Language" htmlFor="sandbox-language"><Select value={transcriptionPayload.languageCode || 'auto'} onValueChange={value => setTranscriptionPayload(prev => ({...prev, languageCode: value === 'auto' ? '' : value}))}><SelectTrigger id="sandbox-language"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="auto">Default (English US)</SelectItem>{languageRows.map(language => <SelectItem key={language.code} value={language.code}>{language.displayName || language.name || language.code}</SelectItem>)}</SelectContent></Select></AdminFormField>
+                {transcriptionPayload.provider === 'ASSEMBLY_AI' && <div className="flex items-center justify-between rounded-md border px-3"><Label htmlFor="sandbox-nano">Nano speech model</Label><Switch id="sandbox-nano" checked={transcriptionPayload.useSpeechModelNano} onCheckedChange={value => setTranscriptionPayload(prev => ({...prev, useSpeechModelNano: value}))} /></div>}
               </div>
 
               {/* Translate to English toggle — only meaningful when a non-English language is selected */}
@@ -782,7 +754,7 @@ export default function SandboxPage() {
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button onClick={() => transcriptionMutation.mutate()} disabled={!audioReady || transcriptionMutation.isPending}>
-                  {transcriptionMutation.isPending ? 'Running...' : 'Run Transcription Test'}
+                  {transcriptionMutation.isPending ? 'Running...' : 'Run transcription'}
                 </Button>
                 <AdminStatusPill tone="info"><FileAudio className="h-3.5 w-3.5" />Transcription only</AdminStatusPill>
                 {transcriptionPayload.translateToEnglish && transcriptionPayload.languageCode !== 'en-US' && (
@@ -791,10 +763,13 @@ export default function SandboxPage() {
               </div>
             </AdminSectionPanel>
 
-            <div className="space-y-5">
-              <AudioVisualizer active={isRecording || transcriptionMutation.isPending || audioReady} label={isRecording ? 'Recording live input' : audioReady ? 'Audio input staged' : 'Waiting for audio'} />
-              {transcriptionMutation.data && <AdminJsonResult title="Transcription Result" data={transcriptionMutation.data} />}
-            </div>
+            <AdminSectionPanel title="Transcript" contentClassName="space-y-4">
+              <div className="min-h-60 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-7">{transcriptionMutation.isPending ? 'Transcribing audio…' : transcriptionMutation.data?.transcript || transcriptionMutation.data?.text || 'Run a transcription to see the result here.'}</div>
+              {transcriptionMutation.isError && <p role="alert" className="text-sm text-destructive">{transcriptionMutation.error.message}</p>}
+              <p className="text-xs text-slate-500">Provider: {transcriptionMutation.data?.provider || '—'}</p>
+              <Button variant="outline" className="w-full" disabled={!transcriptionMutation.data?.transcript && !transcriptionMutation.data?.text} onClick={() => {setDocumentationPayload(prev => ({...prev, transcriptText: transcriptionMutation.data?.transcript || transcriptionMutation.data?.text || ''})); setActiveTab('documentation-flow');}}>Use in documentation</Button>
+              {transcriptionMutation.data && <details><summary className="cursor-pointer text-xs text-slate-500">Response details</summary><AdminJsonResult title="Transcription result" data={transcriptionMutation.data} /></details>}
+            </AdminSectionPanel>
           </div>
         </TabsContent>
 
@@ -968,11 +943,11 @@ export default function SandboxPage() {
         <TabsContent value="failover-webhooks" className="space-y-5">
           <div className="grid gap-5 xl:grid-cols-2">
             <AdminSectionPanel
-              title="Provider Failover Simulation"
-              description="Check whether a provider can route to the selected fallback."
+              title="Routing configuration preview"
+              description="Check whether two distinct providers are enabled. This preview does not call providers or check language compatibility."
               actions={failoverSimulationMutation.data && (
                 <AdminStatusPill tone={failoverSimulationMutation.data.canFailover ? 'success' : 'warning'}>
-                  {failoverSimulationMutation.data.canFailover ? 'Pass' : 'Warning'}
+                  {failoverSimulationMutation.data.canFailover ? 'Configured' : 'Review configuration'}
                 </AdminStatusPill>
               )}
             >
@@ -1016,15 +991,15 @@ export default function SandboxPage() {
                   onClick={() => failoverSimulationMutation.mutate()}
                   disabled={failoverSimulationMutation.isPending}
                 >
-                  {failoverSimulationMutation.isPending ? 'Simulating...' : 'Run Failover Simulation'}
+                  {failoverSimulationMutation.isPending ? 'Simulating...' : 'Check configuration'}
                 </Button>
               </div>
               {failoverSimulationMutation.data && <AdminJsonResult className="mt-5" title="Failover Result" data={failoverSimulationMutation.data} />}
             </AdminSectionPanel>
 
             <AdminSectionPanel
-              title="Sandbox Webhook Test"
-              description="Submit a dry-run webhook event payload to the sandbox endpoint."
+              title="Webhook payload preview"
+              description="Preview a webhook payload. No outbound request is sent."
               actions={<AdminStatusPill tone="info"><Webhook className="h-3.5 w-3.5" />Dry run</AdminStatusPill>}
             >
               <div className="grid gap-4 md:grid-cols-2">
@@ -1066,6 +1041,7 @@ export default function SandboxPage() {
           </div>
         </TabsContent>
       </Tabs>
+      <AdminSectionPanel title="Supported workflows"><div className="grid gap-3 sm:grid-cols-2">{[{tab: 'audio-test', label: 'Uploaded audio', text: 'Upload or record audio and inspect the transcript.'}, {tab: 'documentation-flow', label: 'Documentation', text: 'Generate documentation from a transcript and template.'}, {tab: 'live-sessions', label: 'Live sessions', text: 'Issue provider credentials and inspect session status.'}, {tab: 'failover-webhooks', label: 'Routing & webhooks', text: 'Preview failover selection and webhook payloads.'}].map(item => <button key={item.tab} onClick={() => setActiveTab(item.tab)} className="rounded-md border border-slate-200 p-4 text-left hover:border-blue-300"><p className="text-sm font-medium">{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-500">{item.text}</p></button>)}</div></AdminSectionPanel>
     </div>
   );
 }

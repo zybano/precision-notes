@@ -98,10 +98,10 @@ export default function PlatformAdminLayout() {
   });
 
   return (
-    <div className="flex min-h-screen w-full bg-slate-50">
+    <div className="admin-workspace flex min-h-screen w-full bg-[#f5f7fb]">
       <PlatformSidebar />
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur md:px-7">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 backdrop-blur md:px-8">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
               <SheetTrigger asChild>
@@ -110,12 +110,13 @@ export default function PlatformAdminLayout() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">
-                <PlatformSidebar mobile />
+                <SheetTitle className="sr-only">Platform navigation</SheetTitle>
+                <SheetDescription className="sr-only">Choose a platform admin page.</SheetDescription>
+                <PlatformSidebar mobile onNavigate={() => setMobileNavOpen(false)} />
               </SheetContent>
             </Sheet>
             <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Control Center</p>
-            <p className="truncate text-sm text-slate-700">Signed in as {adminUser?.email || 'platform admin'}</p>
+            <p className="text-base font-semibold text-[#14213d]">Platform Admin</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setProfileOpen(true)} className="shrink-0 px-3">
@@ -124,10 +125,10 @@ export default function PlatformAdminLayout() {
           </Button>
           <Button variant="outline" size="sm" onClick={handleSignOut} className="shrink-0 px-3">
             <LogOut className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Sign Out</span>
+            <span className="hidden sm:inline">Sign out</span>
           </Button>
         </header>
-        <main className="p-4 md:p-7">
+        <main className="p-4 md:p-8">
           <div className="w-full">
             <Outlet />
           </div>

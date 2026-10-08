@@ -1,14 +1,9 @@
-interface PlatformModuleHeaderProps {
-  title: string;
-  description: string;
-}
-
-export default function PlatformModuleHeader({ title, description }: PlatformModuleHeaderProps) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] md:px-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Control module</p>
-      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
-      <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>
-    </div>
-  );
+import type {ReactNode} from 'react';
+interface PlatformModuleHeaderProps { title: string; description: string; actions?: ReactNode; }
+export default function PlatformModuleHeader({title, description, actions}: PlatformModuleHeaderProps) {
+  return <div className="flex flex-wrap items-start justify-between gap-4 pb-1">
+    <div><h1 className="text-[32px] font-semibold leading-tight tracking-tight text-[#14213d] md:text-[38px]">{title}</h1>
+    <p className="mt-2 text-base leading-6 text-slate-500">{description}</p></div>
+    {actions && <div className="flex items-center gap-2 pt-1">{actions}</div>}
+  </div>;
 }

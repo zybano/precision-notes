@@ -99,7 +99,8 @@ export interface AdminOrganizationBilling {
   planCode: string;
   planName: string;
   periodStart: string;
-  periodEnd: string;
+  periodEnd: string | null;
+  grants: Array<{id: string; metric: BillingUsageUnitCode; source: string; granted: number; used: number; reserved: number; remaining: number; expiresAt: string | null; createdAt: string}>;
   meters: AdminOrganizationMeterBalance[];
   updatedAt: string;
 }
@@ -198,4 +199,23 @@ export interface PaymentWebhookEvent {
   processingNote?: string;
   createdAt?: string;
   processedAt?: string;
+}
+
+export interface BillingOwnerUsage {
+  ownerId: string; ownerType: 'B2B' | 'B2C'; ownerName: string;
+  aiActionsUsed: number; transcriptionSecondsUsed: number; completedActions: number;
+  remainingAiActions: number; remainingTranscriptionSeconds: number;
+  permanentAiActions: number; permanentTranscriptionSeconds: number; lastActivity: string | null;
+}
+export interface PlatformBillingUsage {
+  scope: string; startDate: string | null; endDate: string | null; generatedAt: string;
+  totals: {aiActionsUsed: number; transcriptionSecondsUsed: number; completedActions: number; reservedAiActions: number; reservedTranscriptionSeconds: number};
+  owners: BillingOwnerUsage[];
+  daily: Array<{date: string; aiActionsUsed: number; transcriptionSecondsUsed: number}>;
+  sources: Array<{source: string; aiActionsUsed: number; transcriptionSecondsUsed: number}>;
+}
+
+export interface PlanConfiguration {
+  allowances: Array<{id: string; featureCode: string; metric: BillingUsageUnitCode; windowType: string; limit: number; enabled: boolean}>;
+  prices: Array<{id: string; provider: string; providerPriceId: string; currency: string; amountCents: number; billingInterval: string; countryCode: string | null; regionCode: string | null; active: boolean; defaultPrice: boolean}>;
 }

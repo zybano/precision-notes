@@ -17,15 +17,22 @@ import {
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import AdminFormField from '@/components/admin/AdminFormField';
-import {AdminMetricTile, AdminSectionPanel, AdminTableShell} from '@/components/admin/AdminSurface';
+import {AdminMetricStrip, AdminSectionPanel, AdminTableShell} from '@/components/admin/AdminSurface';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
 import {toast} from 'sonner';
-import {ShieldCheck, UserCheck, UserX, Wifi} from 'lucide-react';
+import {Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger} from '@/components/ui/sheet';
+import type {PlatformAdminSession} from '@/types/platformAdmin';
 
+type Operator = {id: string; username?: string; email: string; fullName?: string; isActive?: boolean};
 export default function PlatformAdminsPage() {
   const { sessionToken, adminUser } = useAdminAuth();
   const queryClient = useQueryClient();
+  const [editUser, setEditUser] = useState<Operator | null>(null);
+  const [editForm, setEditForm] = useState({email: '', fullName: ''});
+  const [passwordUser, setPasswordUser] = useState<Operator | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [disableUser, setDisableUser] = useState<Operator | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     username: '',
@@ -47,6 +54,20 @@ export default function PlatformAdminsPage() {
       ) || [];
     },
   });
+
+  const sessionsQuery = useQuery({queryKey: ['platform-admin', 'sessions'], enabled: Boolean(sessionToken), queryFn: async () => {
+    const response = await adminApiService.listAdminSessions(sessionToken!);
+    if (!response.success) throw new Error(response.error || 'Unable to load sessions'); return (response.data || []) as PlatformAdminSession[];
+  }});
+  const operatorMutation = useMutation({mutationFn: async ({action, user}: {action: 'edit' | 'disable' | 'enable' | 'password'; user: Operator}) => {
+    const response = action === 'disable' ? await adminApiService.deleteAdminUser(sessionToken!, user.id)
+      : action === 'password' ? await adminApiService.resetAdminUserPassword(sessionToken!, user.id, newPassword)
+      : await adminApiService.updateAdminUser(sessionToken!, user.id, action === 'enable' ? {isActive: true} : {email: editForm.email.trim(), fullName: editForm.fullName.trim()});
+    if (!response.success) throw new Error(response.error || 'Unable to update operator');
+  }, onSuccess: () => {setEditUser(null); setPasswordUser(null); setDisableUser(null); setNewPassword(''); void queryClient.invalidateQueries({queryKey: ['platform-admin', 'users']}); void queryClient.invalidateQueries({queryKey: ['platform-admin', 'sessions']}); toast.success('Operator updated');}, onError: (error: Error) => toast.error(error.message)});
+  const revokeMutation = useMutation({mutationFn: async (id: string) => {
+    const response = await adminApiService.revokeAdminSession(sessionToken!, id); if (!response.success) throw new Error(response.error || 'Unable to revoke session');
+  }, onSuccess: () => {void queryClient.invalidateQueries({queryKey: ['platform-admin', 'sessions']}); toast.success('Session revoked');}, onError: (error: Error) => toast.error(error.message)});
 
   const createAdminMutation = useMutation({
     mutationFn: async () => {
@@ -93,18 +114,12 @@ export default function PlatformAdminsPage() {
     };
   }, [users]);
 
-  const apiStatusLabel = usersQuery.isError
-    ? 'Unavailable'
-    : usersQuery.isSuccess
-      ? 'Connected'
-      : 'Checking';
-
   if (!sessionToken) {
     return (
       <div className="space-y-6">
         <PlatformModuleHeader
           title="Platform Admins"
-          description="Control platform operator identities, role scopes, and active sessions."
+          description="Operators and sessions."
         />
         <Card>
           <CardContent className="py-8 text-sm text-muted-foreground">
@@ -119,30 +134,25 @@ export default function PlatformAdminsPage() {
     <div className="space-y-6">
       <PlatformModuleHeader
         title="Platform Admins"
-        description="Control platform operator identities, role scopes, and active sessions."
+        description="Operators and sessions."
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricTile label="Platform Admin Users" value={summary.total} helper="Total operators" icon={<ShieldCheck className="h-4 w-4" />} tone="info" />
-        <AdminMetricTile label="Active" value={summary.active} helper="Can access console" icon={<UserCheck className="h-4 w-4" />} tone="success" />
-        <AdminMetricTile label="Inactive" value={summary.inactive} helper="Disabled accounts" icon={<UserX className="h-4 w-4" />} tone="warning" />
-        <AdminMetricTile label="Admin API Status" value={apiStatusLabel} helper="Identity endpoint" icon={<Wifi className="h-4 w-4" />} tone={usersQuery.isError ? 'warning' : 'success'} />
-      </div>
+      <AdminMetricStrip items={[{label: 'Operators', value: usersQuery.isSuccess ? summary.total : '—'}, {label: 'Active', value: usersQuery.isSuccess ? summary.active : '—', success: true}, {label: 'Disabled', value: usersQuery.isSuccess ? summary.inactive : '—'}, {label: 'Active sessions', value: sessionsQuery.isSuccess ? sessionsQuery.data.filter(session => !session.expired).length : '—'}]} />
 
       <AdminSectionPanel
         title="Platform Admin Users"
         description={`Signed in as ${adminUser?.email || 'platform admin'}`}
         actions={(
           <div className="flex items-center gap-3">
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm">Invite Admin</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Invite Platform Admin</DialogTitle>
-                  <DialogDescription>Create a new platform admin account.</DialogDescription>
-                </DialogHeader>
+            <Sheet modal={false} open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <SheetTrigger asChild>
+                <Button size="sm">Create admin</Button>
+              </SheetTrigger>
+              <SheetContent className="admin-workspace top-16 h-[calc(100dvh-4rem)] w-full overflow-y-auto sm:max-w-[470px]">
+                <SheetHeader>
+                  <SheetTitle>Create platform admin</SheetTitle>
+                  <SheetDescription>Create a new platform admin account.</SheetDescription>
+                </SheetHeader>
 
                 <div className="grid gap-3 py-1">
                   <AdminFormField label="Username" htmlFor="create-admin-username">
@@ -190,8 +200,8 @@ export default function PlatformAdminsPage() {
                     {createAdminMutation.isPending ? 'Creating...' : 'Create Admin'}
                   </Button>
                 </DialogFooter>
-              </DialogContent>
-            </Dialog>
+              </SheetContent>
+            </Sheet>
             <Button size="sm" variant="outline" onClick={() => usersQuery.refetch()} disabled={usersQuery.isFetching}>
               {usersQuery.isFetching ? 'Refreshing...' : 'Refresh'}
             </Button>
@@ -213,7 +223,7 @@ export default function PlatformAdminsPage() {
                   <TableHead>Username</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Full Name</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -227,6 +237,7 @@ export default function PlatformAdminsPage() {
                         {user.isActive === false ? 'Inactive' : 'Active'}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right"><div className="flex justify-end gap-2"><Button variant="ghost" size="sm" onClick={() => {setEditUser(user); setEditForm({email: user.email, fullName: user.fullName || ''});}}>Edit</Button><Button variant="ghost" size="sm" disabled={user.id === adminUser?.id} onClick={() => {setPasswordUser(user); setNewPassword('');}}>Reset password</Button><Button variant="ghost" size="sm" disabled={user.id === adminUser?.id || operatorMutation.isPending} onClick={() => user.isActive === false ? operatorMutation.mutate({action: 'enable', user}) : setDisableUser(user)}>{user.isActive === false ? 'Enable' : 'Disable'}</Button></div></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -237,6 +248,18 @@ export default function PlatformAdminsPage() {
             <p className="text-sm text-muted-foreground">No platform admin users found.</p>
           )}
       </AdminSectionPanel>
+      <AdminSectionPanel title="Sessions" description="Review and revoke platform operator sessions.">
+        {sessionsQuery.isError && <p role="alert" className="text-sm text-destructive">{sessionsQuery.error.message}</p>}
+        <AdminTableShell><Table><TableHeader><TableRow><TableHead>Operator</TableHead><TableHead>Created</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>
+          {sessionsQuery.isLoading && <TableRow><TableCell colSpan={4}>Loading sessions…</TableCell></TableRow>}
+          {sessionsQuery.isSuccess && !sessionsQuery.data.length && <TableRow><TableCell colSpan={4} className="text-slate-500">No sessions found.</TableCell></TableRow>}
+          {sessionsQuery.data?.map(session => <TableRow key={session.sessionId}><TableCell>{session.adminUsername || session.adminEmail || '—'}</TableCell><TableCell>{session.createdAt ? new Date(session.createdAt).toLocaleString() : '—'}</TableCell><TableCell>{session.expired ? 'Expired' : 'Active'}</TableCell><TableCell className="text-right"><Button variant="outline" size="sm" disabled={session.expired || revokeMutation.isPending} onClick={() => revokeMutation.mutate(session.sessionId)}>Revoke</Button></TableCell></TableRow>)}
+        </TableBody></Table></AdminTableShell>
+      </AdminSectionPanel>
+      <p className="text-sm text-slate-500">Use Profile to change your own password.</p>
+      <Dialog open={Boolean(editUser)} onOpenChange={open => !open && setEditUser(null)}><DialogContent><DialogHeader><DialogTitle>Edit operator</DialogTitle><DialogDescription>{editUser?.username}</DialogDescription></DialogHeader><AdminFormField label="Email" htmlFor="operator-email"><Input id="operator-email" type="email" value={editForm.email} onChange={event => setEditForm({...editForm, email: event.target.value})} /></AdminFormField><AdminFormField label="Full name" htmlFor="operator-name"><Input id="operator-name" value={editForm.fullName} onChange={event => setEditForm({...editForm, fullName: event.target.value})} /></AdminFormField><DialogFooter><Button disabled={operatorMutation.isPending || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email.trim())} onClick={() => editUser && operatorMutation.mutate({action: 'edit', user: editUser})}>Save operator</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={Boolean(passwordUser)} onOpenChange={open => !open && setPasswordUser(null)}><DialogContent><DialogHeader><DialogTitle>Reset password</DialogTitle><DialogDescription>Set a new password for {passwordUser?.username}. Other sessions will be revoked.</DialogDescription></DialogHeader><AdminFormField label="New password" htmlFor="operator-password"><Input id="operator-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} /></AdminFormField><DialogFooter><Button disabled={operatorMutation.isPending || newPassword.length < 8} onClick={() => passwordUser && operatorMutation.mutate({action: 'password', user: passwordUser})}>Reset password</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={Boolean(disableUser)} onOpenChange={open => !open && setDisableUser(null)}><DialogContent><DialogHeader><DialogTitle>Disable operator?</DialogTitle><DialogDescription>{disableUser?.username} will lose platform access. You can enable this operator again.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setDisableUser(null)}>Cancel</Button><Button disabled={operatorMutation.isPending} onClick={() => disableUser && operatorMutation.mutate({action: 'disable', user: disableUser})}>Disable operator</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }

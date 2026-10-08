@@ -38,6 +38,8 @@ import type {
   PlanCapabilityCode,
   Tenant,
 } from '@/types/platformAdmin';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import {formatCapturedPayment, formatDuration, formatQuantity} from '@/components/admin/billing/BillingUsageView';
 import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import {toast} from 'sonner';
 import {
@@ -109,7 +111,8 @@ export default function PlansBillingPage() {
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [capabilityPlan, setCapabilityPlan] = useState<Plan | null>(null);
   const [enabledCapabilities, setEnabledCapabilities] = useState<PlanCapabilityCode[]>([]);
-  const [planScope, setPlanScope] = useState<PlanScope>('B2C');
+  const [planScope, setPlanScope] = useState<PlanScope>('B2B');
+  const [editingAllowanceId, setEditingAllowanceId] = useState('');
   const [selectedPlanId, setSelectedPlanId] = useState('');
 
   const [planForm, setPlanForm] = useState<CreatePlanRequest>({
@@ -170,7 +173,7 @@ export default function PlansBillingPage() {
       if (!response.success) {
         throw new Error(response.error || 'Failed to load plans');
       }
-      return (response.data as Plan[]) || [];
+      return ((response.data as Plan[]) || []).filter((plan) => plan.catalogStatus !== 'RETIRED');
     },
   });
 
@@ -211,7 +214,7 @@ export default function PlansBillingPage() {
     enabled: Boolean(sessionToken || devFixture),
     queryFn: async () => {
       if (devFixture) return [
-        {code: 'AI_ACTION', displayName: 'AI actions', description: 'Completed documentation outcomes', planScope},
+        {code: 'AI_ACTIONS', displayName: 'AI actions', description: 'Completed documentation outcomes', planScope},
         {code: 'TRANSCRIPTION', displayName: 'Transcription time', description: 'Successful audio processing', planScope},
       ];
       const response = await adminApiService.listBillingFeatureCodes(sessionToken as string, planScope);
@@ -368,7 +371,7 @@ export default function PlansBillingPage() {
 
   const addFeatureMutation = useMutation({
     mutationFn: async () => {
-      const response = await adminApiService.addPlanFeature(sessionToken as string, featureForm.planId, {
+      const response = editingAllowanceId ? await adminApiService.updatePlanFeature(sessionToken!, featureForm.planId, editingAllowanceId, {limitValue: Number(featureForm.limitValue), isEnabled: featureForm.isEnabled}) : await adminApiService.addPlanFeature(sessionToken as string, featureForm.planId, {
         featureCode: featureForm.featureCode,
         usageUnit: featureForm.usageUnit,
         windowType: featureForm.windowType,
@@ -381,7 +384,9 @@ export default function PlansBillingPage() {
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Plan feature created');
+      toast.success(editingAllowanceId ? 'Allowance updated' : 'Allowance added');
+      setEditingAllowanceId('');
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'plan-configuration']});
       setFeatureDialogOpen(false);
     },
     onError: (error: Error) => toast.error(error.message),
@@ -407,6 +412,7 @@ export default function PlansBillingPage() {
     },
     onSuccess: () => {
       toast.success('Plan price created');
+      queryClient.invalidateQueries({queryKey: ['platform-admin', 'plan-configuration']});
       setPriceDialogOpen(false);
     },
     onError: (error: Error) => toast.error(error.message),
@@ -472,6 +478,10 @@ export default function PlansBillingPage() {
     () => plans.find((plan) => plan.id === selectedPlanId) || plans[0] || null,
     [plans, selectedPlanId]
   );
+  const configurationQuery = useQuery({queryKey: ['platform-admin', 'plan-configuration', selectedPlan?.id], enabled: Boolean(sessionToken && selectedPlan), queryFn: async () => {
+    const response = await adminApiService.getPlanConfiguration(sessionToken!, selectedPlan!.id);
+    if (!response.success || !response.data) throw new Error(response.error || 'Unable to load saved configuration'); return response.data;
+  }});
   const publishedPlans = useMemo(() => plans.filter((plan) => plan.isActive).length, [plans]);
   const draftPlans = useMemo(() => plans.filter((plan) => !plan.isActive && plan.catalogStatus !== 'RETIRED').length, [plans]);
 
@@ -568,18 +578,8 @@ export default function PlansBillingPage() {
   }
 
   return (
-    <div className="space-y-7">
-      <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-[30px]">Plans & billing</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-            Configure plan access, weekly allowances, regional pricing, and payment operations.
-          </p>
-        </div>
-        <Button className="self-start" onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Create plan
-        </Button>
-      </header>
+    <div className="space-y-6">
+      <PlatformModuleHeader title="Plans and Billing" description="One catalog for plans, allowances, and payments." actions={<Button onClick={() => setCreateDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Create plan</Button>} />
 
       <Dialog open={Boolean(capabilityPlan)} onOpenChange={(open) => { if (!open) setCapabilityPlan(null); }}>
         <DialogContent>
@@ -648,22 +648,12 @@ export default function PlansBillingPage() {
             ))}
           </div>
         </div>
-        <div className="grid divide-y divide-slate-200 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
-          {[
-            {label: 'Catalog entries', value: plans.length, helper: `${planScope} plan versions`, icon: CreditCard},
-            {label: 'Published', value: publishedPlans, helper: 'Available to customers', icon: CheckCircle2},
-            {label: 'Drafts', value: draftPlans, helper: 'Require validation', icon: CircleDashed},
-            {label: 'Payment activity', value: transactions.length, helper: `${organizations.length} organizations`, icon: Activity},
-          ].map(({label, value, helper, icon: Icon}) => (
-            <div key={label} className="flex items-center gap-3 px-4 py-4 lg:px-5">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700"><Icon className="h-4 w-4" /></span>
-              <div><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-0.5 text-lg font-semibold text-slate-950">{value}</p><p className="text-[11px] text-slate-400">{helper}</p></div>
-            </div>
-          ))}
-        </div>
+
       </section>
 
-      <div className="space-y-6">
+      <Tabs defaultValue="catalog" className="space-y-6">
+        <TabsList className="h-auto w-full justify-start gap-3 p-1"><TabsTrigger value="catalog">Catalog</TabsTrigger><TabsTrigger value="contracts">Contracts</TabsTrigger><TabsTrigger value="payments">Payments</TabsTrigger><TabsTrigger value="webhooks">Webhooks</TabsTrigger></TabsList>
+        <TabsContent value="catalog" className="space-y-6">
         <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-5">
             <div>
@@ -675,7 +665,7 @@ export default function PlansBillingPage() {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Create {planScope} Plan Draft</DialogTitle>
-                    <DialogDescription>Create an unpublished, versioned catalog entry. No paid values are assumed.</DialogDescription>
+                    <DialogDescription>Create a draft plan for the Billing v2 catalog.</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div>
@@ -705,16 +695,7 @@ export default function PlansBillingPage() {
                           onChange={(e) => setPlanForm((prev) => ({ ...prev, stableCode: e.target.value.toUpperCase() }))}
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="plan-version">Version</Label>
-                        <Input
-                          id="plan-version"
-                          type="number"
-                          min={1}
-                          value={planForm.version || 1}
-                          onChange={(e) => setPlanForm((prev) => ({ ...prev, version: Number(e.target.value) }))}
-                        />
-                      </div>
+
                     </div>
                     <p className="text-xs text-muted-foreground">Drafts are not available to checkout until the catalog publish check succeeds.</p>
                   </div>
@@ -729,7 +710,7 @@ export default function PlansBillingPage() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={featureDialogOpen} onOpenChange={setFeatureDialogOpen}>
+              <Dialog open={featureDialogOpen} onOpenChange={open => {setFeatureDialogOpen(open); if (!open) setEditingAllowanceId('');}}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline"><ShieldCheck className="mr-2 h-4 w-4" /> Add allowance</Button>
                 </DialogTrigger>
@@ -801,7 +782,7 @@ export default function PlansBillingPage() {
                       onClick={() => addFeatureMutation.mutate()}
                       disabled={Boolean(featureError) || addFeatureMutation.isPending}
                     >
-                      {addFeatureMutation.isPending ? 'Adding...' : 'Add Feature'}
+                      {addFeatureMutation.isPending ? 'Saving…' : editingAllowanceId ? 'Save allowance' : 'Add allowance'}
                     </Button>
                   </DialogFooter>
                   {featureError && <p className="text-xs text-destructive">{featureError}</p>}
@@ -925,7 +906,7 @@ export default function PlansBillingPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Plan</TableHead>
-                  <TableHead>Version</TableHead>
+                  <TableHead>Audience</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Allowance schedule</TableHead>
                   <TableHead className="w-10"><span className="sr-only">Select</span></TableHead>
@@ -962,26 +943,26 @@ export default function PlansBillingPage() {
                       <p className="font-medium">{plan.name}</p>
                       <p className="max-w-xs truncate text-xs text-muted-foreground">{plan.description || 'Public description not added'}</p>
                     </TableCell>
-                    <TableCell><p className="text-sm">v{plan.version || 1}</p><p className="font-mono text-[11px] text-slate-400">{plan.stableCode || 'NO_KEY'}</p></TableCell>
+                    <TableCell>{plan.planScope === 'B2B' ? 'Organizations' : 'Individuals'}</TableCell>
                     <TableCell>
                       <Badge variant={plan.isActive ? 'default' : 'secondary'}>
                         {plan.catalogStatus === 'RETIRED' ? 'RETIRED' : plan.isActive ? (plan.catalogStatus || 'ACTIVE') : (plan.catalogStatus === 'DRAFT' ? 'DRAFT' : 'INACTIVE')}
                       </Badge>
                       {plan.isDefault ? <Badge variant="outline" className="ml-1">Default</Badge> : null}
                     </TableCell>
-                    <TableCell><p className="text-sm">Every 7 days</p><p className="text-xs text-slate-400">{plan.refreshTimezone || 'UTC'} anchor</p></TableCell>
+                    <TableCell><p className="text-sm">{plan.isDefault ? 'One-time 30-day trial' : 'Every 7 days'}</p><p className="text-xs text-slate-400">{plan.refreshTimezone || 'UTC'} anchor</p></TableCell>
                     <TableCell><ChevronRight className="h-4 w-4 text-slate-400" /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
             <p className="border-t border-slate-100 px-4 py-3 text-xs text-muted-foreground lg:px-5">
-              Publication is server-validated. Missing provider prices, regional mismatches, incomplete public copy, or inactive capabilities must prevent checkout activation.
+              Drafts stay unavailable to customers until their configuration passes publication checks.
             </p>
             </div>
             <aside className="border-t border-slate-200 bg-slate-50/70 p-4 lg:border-l lg:border-t-0 lg:p-5" aria-label="Selected plan details">
               {selectedPlan ? (
-                <div className="space-y-5">
+                <div className="space-y-3">
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div><p className="text-xs font-medium text-slate-500">Selected plan</p><h3 className="mt-1 font-semibold text-slate-950">{selectedPlan.name}</h3></div>
@@ -991,16 +972,15 @@ export default function PlansBillingPage() {
                   </div>
 
                   <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
-                    <div className="flex items-center justify-between px-3 py-3"><span className="text-xs text-slate-500">Catalog key</span><span className="font-mono text-xs text-slate-700">{selectedPlan.stableCode || 'Not set'}</span></div>
                     <div className="flex items-center justify-between px-3 py-3"><span className="text-xs text-slate-500">Audience</span><span className="text-xs font-medium text-slate-700">{selectedPlan.planScope === 'B2B' ? 'Organizations' : 'Individuals'}</span></div>
-                    <div className="flex items-center justify-between px-3 py-3"><span className="text-xs text-slate-500">Allowance window</span><span className="text-xs font-medium text-slate-700">Weekly</span></div>
+                    <div className="flex items-center justify-between px-3 py-3"><span className="text-xs text-slate-500">Allowance window</span><span className="text-xs font-medium text-slate-700">{selectedPlan.isDefault ? '30-day trial' : 'Weekly'}</span></div>
                   </div>
 
                   <div>
                     <p className="text-xs font-semibold text-slate-700">Configuration</p>
                     <div className="mt-2 grid gap-2">
-                      <Button variant="outline" size="sm" className="justify-between bg-white" onClick={() => { setFeatureForm((current) => ({...current, planId: selectedPlan.id})); setFeatureDialogOpen(true); }}>
-                        Weekly allowances <ArrowUpRight className="h-3.5 w-3.5" />
+                      <Button variant="outline" size="sm" className="justify-between bg-white" onClick={() => { setEditingAllowanceId(''); setFeatureForm((current) => ({...current, planId: selectedPlan.id})); setFeatureDialogOpen(true); }}>
+                        Add allowance <ArrowUpRight className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="outline" size="sm" className="justify-between bg-white" onClick={() => setCapabilityPlan(selectedPlan)}>
                         Capabilities <ArrowUpRight className="h-3.5 w-3.5" />
@@ -1011,13 +991,24 @@ export default function PlansBillingPage() {
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Saved allowances</h4>
+                    {configurationQuery.isLoading && <p className="text-xs text-slate-500">Loading configuration…</p>}
+                    {configurationQuery.isError && <p role="alert" className="text-xs text-destructive">{configurationQuery.error.message}</p>}
+                    {configurationQuery.data && !configurationQuery.data.allowances.length && <p className="text-xs text-slate-500">No allowances configured.</p>}
+                    {configurationQuery.data?.allowances.map(allowance => <div key={allowance.id} className="flex items-center justify-between gap-2 rounded-md border bg-white p-2"><div><p className="text-xs font-medium">{allowance.metric === 'AI_ACTIONS' ? `${formatQuantity(allowance.limit)} AI actions` : `${formatDuration(allowance.limit)} transcription`}</p><p className="mt-1 text-xs text-slate-500">{allowance.enabled ? 'Enabled' : 'Disabled'}</p></div><Button size="sm" variant="ghost" onClick={() => {setEditingAllowanceId(allowance.id); setFeatureForm({planId: selectedPlan.id, featureCode: allowance.featureCode, usageUnit: allowance.metric, windowType: 'WEEKLY', limitValue: allowance.limit, isEnabled: allowance.enabled}); setFeatureDialogOpen(true);}}>Edit</Button></div>)}
+                    <h4 className="text-sm font-semibold">Saved prices</h4>
+                    {configurationQuery.data && !configurationQuery.data.prices.length && <p className="text-xs text-slate-500">No prices configured.</p>}
+                    {configurationQuery.data?.prices.map(price => <div key={price.id} className="rounded-md border bg-white p-3 text-xs"><p className="font-medium">{formatCapturedPayment(price.amountCents, price.currency)} / {price.billingInterval.toLowerCase()}</p><p className="mt-1 text-slate-500">{price.provider} · {price.countryCode || price.regionCode || 'Global'} · {price.active ? 'Active' : 'Inactive'}</p></div>)}
+                    <p className="text-xs leading-5 text-slate-500">Admin grants and top-ups never expire. Trial and plan allowances follow their billing periods.</p>
+                  </div>
                   <div className="border-t border-slate-200 pt-4">
                     {selectedPlan.isActive ? (
-                      <Button variant="outline" className="w-full" onClick={() => retirePlanMutation.mutate(selectedPlan.id)} disabled={retirePlanMutation.isPending}>Retire plan</Button>
+                      <Button variant="outline" className="w-full" onClick={() => retirePlanMutation.mutate(selectedPlan.id)} disabled={retirePlanMutation.isPending || selectedPlan.isDefault}>Retire plan</Button>
                     ) : (
                       <Button className="w-full" onClick={() => activatePlanMutation.mutate(selectedPlan.id)} disabled={activatePlanMutation.isPending}>{activatePlanMutation.isPending ? 'Validating…' : 'Validate & publish'}</Button>
                     )}
-                    <p className="mt-2 text-center text-[11px] leading-4 text-slate-400">The server will reject incomplete catalog configuration.</p>
+                    <p className="mt-2 text-center text-[11px] leading-4 text-slate-400">{selectedPlan.isDefault ? 'The default free plan remains available to customers.' : 'The server will reject incomplete catalog configuration.'}</p>
                   </div>
                 </div>
               ) : (
@@ -1027,33 +1018,8 @@ export default function PlansBillingPage() {
           </div>
         </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Capabilities and customer presentation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium">Available {planScope} capabilities</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {featureCodesQuery.isLoading ? <span className="text-sm text-muted-foreground">Loading capabilities...</span> : null}
-                {featureCodes.map((feature) => <Badge key={feature.code} variant="outline">{feature.displayName}</Badge>)}
-                {!featureCodesQuery.isLoading && featureCodes.length === 0 ? <span className="text-sm text-muted-foreground">No active capabilities are configured for this scope.</span> : null}
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {usageUnits.map((unit) => (
-                <div key={unit.code} className="rounded-lg border p-3">
-                  <p className="text-sm font-medium">{unit.displayName}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{unit.description || (unit.code === 'AI_ACTIONS' ? 'Completed customer AI actions.' : 'Exact successfully processed audio time.')}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Premium template, export, integration, and public-card copy controls remain read-only until their dedicated admin endpoints are available. They are not modeled as usage units.
-            </p>
-          </CardContent>
-        </Card>
-
+        </TabsContent>
+        <TabsContent value="contracts">
         {planScope === 'B2B' ? <Card>
           <CardHeader>
             <CardTitle>Assign Contract Plan To Organization</CardTitle>
@@ -1170,8 +1136,9 @@ export default function PlansBillingPage() {
               </div>
             </div>
           </CardContent>
-        </Card> : null}
-
+        </Card> : <p className="rounded-lg border bg-white p-6 text-sm text-slate-500">Select Organizations in the catalog to manage organization contracts.</p>}
+        </TabsContent>
+        <TabsContent value="payments">
         <Card>
           <CardHeader>
             <CardTitle>Billing Operations</CardTitle>
@@ -1232,6 +1199,8 @@ export default function PlansBillingPage() {
           </CardContent>
         </Card>
 
+        </TabsContent>
+        <TabsContent value="webhooks">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Webhook Events</CardTitle>
@@ -1288,7 +1257,8 @@ export default function PlansBillingPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={adjustmentDialogOpen} onOpenChange={setAdjustmentDialogOpen}>
         <DialogContent>

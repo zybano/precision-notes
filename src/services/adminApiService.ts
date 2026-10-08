@@ -395,10 +395,24 @@ class AdminApiService {
     });
   }
 
+  async getPlanConfiguration(sessionToken: string, planId: string) {
+    return this.makeAdminApiCall<import('@/types/platformAdmin').PlanConfiguration>({sessionToken, endpoint: `/admin/plans/${this.pathSegment(planId)}/configuration`});
+  }
+
+  async getBillingUsage(sessionToken: string, filters: {ownerType?: 'B2B' | 'B2C'; organizationId?: string; startDate?: string; endDate?: string} = {}) {
+    const params = new URLSearchParams();
+    if (filters.ownerType) params.set('owner_type', filters.ownerType);
+    if (filters.organizationId) params.set('organization_id', filters.organizationId);
+    if (filters.startDate) params.set('start_date', filters.startDate);
+    if (filters.endDate) params.set('end_date', filters.endDate);
+    return this.makeAdminApiCall<import('@/types/platformAdmin').PlatformBillingUsage>({sessionToken, endpoint: `/platform-admin/analytics/billing-usage?${params}`});
+  }
+
   async getPlatformAnalyticsOverview(sessionToken: string) {
     return this.makeAdminApiCall<{
       totalOrganizations: number;
       activeOrganizations: number;
+      paidOrganizationSubscriptions: number;
       totalRequests: number;
       totalAiActionsRemaining: number;
       totalTranscriptionSecondsRemaining: number;
@@ -786,7 +800,7 @@ class AdminApiService {
 
     return this.makeAdminApiCall({
       sessionToken,
-      endpoint: `/reporting/usage${suffix}`,
+      endpoint: `/platform-admin/analytics/usage${suffix}`,
     });
   }
 

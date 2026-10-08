@@ -37,8 +37,9 @@ import PlatformModuleHeader from '@/components/admin/PlatformModuleHeader';
 import {AdminMetricTile, AdminSectionPanel, AdminTableShell} from '@/components/admin/AdminSurface';
 import {useAdminAuth} from '@/contexts/AdminAuthContext';
 import {adminApiService} from '@/services/adminApiService';
-import type {AdminOrganizationBilling, BillingUsageUnitCode, CreateTenantRequest, OrganizationUser, Tenant, TenantUsage} from '@/types/platformAdmin';
+import type {AdminOrganizationBilling, BillingUsageUnitCode, CreateTenantRequest, OrganizationUser, Tenant, PlatformBillingUsage} from '@/types/platformAdmin';
 import {toast} from 'sonner';
+import {formatDuration, formatQuantity} from '@/components/admin/billing/BillingUsageView';
 import {
   Building2,
   Copy,
@@ -116,6 +117,7 @@ export default function OrganizationsPage() {
   const {sessionToken} = useAdminAuth();
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [detailTab, setDetailTab] = useState('billing');
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -139,6 +141,11 @@ export default function OrganizationsPage() {
     },
   });
 
+  const balancesQuery = useQuery({queryKey: ['billing-usage', 'B2B'], enabled: Boolean(sessionToken), queryFn: async () => {
+    const response = await adminApiService.getBillingUsage(sessionToken!, {ownerType: 'B2B'});
+    if (!response.success || !response.data) throw new Error(response.error || 'Unable to load balances'); return response.data;
+  }});
+
   const selectedTenantQuery = useQuery({
     queryKey: ['platform-admin', 'organization', selectedTenantId],
     enabled: Boolean(sessionToken && selectedTenantId),
@@ -151,16 +158,11 @@ export default function OrganizationsPage() {
 
   const usageQuery = useQuery({
     queryKey: ['platform-admin', 'organization-usage', selectedTenantId, usageStartDate, usageEndDate],
-    enabled: Boolean(sessionToken && selectedTenantId),
+    enabled: Boolean(sessionToken && selectedTenantId && (!usageStartDate || !usageEndDate || usageStartDate <= usageEndDate)),
     queryFn: async () => {
-      const response = await adminApiService.getTenantUsage(
-        sessionToken as string,
-        selectedTenantId,
-        usageStartDate || undefined,
-        usageEndDate || undefined
-      );
+      const response = await adminApiService.getBillingUsage(sessionToken as string, {ownerType: 'B2B', organizationId: selectedTenantId, startDate: usageStartDate || undefined, endDate: usageEndDate || undefined});
       if (!response.success) throw new Error(response.error || 'Failed to load usage data');
-      return response.data as TenantUsage;
+      return response.data as PlatformBillingUsage;
     },
   });
 
@@ -169,7 +171,7 @@ export default function OrganizationsPage() {
     enabled: Boolean(sessionToken && selectedTenantId),
     queryFn: async () => {
       const response = await adminApiService.getOrganizationBilling(sessionToken as string, selectedTenantId);
-      if (!response.success) throw new Error(response.error || 'Failed to load Billing V2 balances');
+      if (!response.success) throw new Error(response.error || 'Failed to load Billing balances');
       return response.data as AdminOrganizationBilling;
     },
   });
@@ -317,10 +319,12 @@ export default function OrganizationsPage() {
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Billing V2 allowance adjusted');
+      toast.success('Billing allowance adjusted');
       setAllowanceAdjustment(0);
       setAllowanceAdjustmentTouched(false);
       queryClient.invalidateQueries({queryKey: ['platform-admin', 'organization-billing-v2', selectedTenantId]});
+      queryClient.invalidateQueries({queryKey: ['billing-usage']});
+      queryClient.invalidateQueries({queryKey: ['reports', 'platform-analytics', 'overview']});
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -367,7 +371,7 @@ export default function OrganizationsPage() {
   if (!sessionToken) {
     return (
       <div className="space-y-6">
-        <PlatformModuleHeader title="Organizations" description="Create, manage, and operate organizations across the platform." />
+        <PlatformModuleHeader title="Organizations" description="Customer workspaces, balances, and access." />
         <Card>
           <CardContent className="py-8 text-sm text-muted-foreground">Sign in as platform admin to load organizations.</CardContent>
         </Card>
@@ -376,15 +380,10 @@ export default function OrganizationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PlatformModuleHeader title="Organizations" description="Create, manage, and operate organizations across the platform." />
+    <div className={`space-y-6 ${selectedTenantId ? 'xl:pr-[480px]' : ''}`}>
+      <PlatformModuleHeader title="Organizations" description="Customer workspaces, balances, and access." />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricTile label="Total Organizations" value={orgSummary.total} helper="Tenant records" icon={<Building2 className="h-4 w-4" />} tone="info" />
-        <AdminMetricTile label="Active" value={orgSummary.active} helper="Operational tenants" icon={<ShieldCheck className="h-4 w-4" />} tone="success" />
-        <AdminMetricTile label="Inactive" value={orgSummary.inactive} helper="Paused tenants" icon={<ShieldOff className="h-4 w-4" />} tone="warning" />
-        <AdminMetricTile label="Total Requests" value={orgSummary.totalRequests} helper="Across organizations" icon={<CreditCard className="h-4 w-4" />} />
-      </div>
+
 
       <AdminSectionPanel
         title="Organization Directory"
@@ -464,7 +463,7 @@ export default function OrganizationsPage() {
             <button
               type="button"
               key={tenant.id}
-              onClick={() => setSelectedTenantId(tenant.id)}
+              onClick={() => {setDetailTab('billing'); setSelectedTenantId(tenant.id);}}
               className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
             >
               <div className="flex items-start justify-between gap-3">
@@ -472,7 +471,7 @@ export default function OrganizationsPage() {
                   <p className="truncate text-sm font-semibold text-slate-950">{tenant.name}</p>
                   <p className="mt-1 truncate text-xs text-slate-500">{tenant.contactEmail || 'No contact email'}</p>
                 </div>
-                <Badge variant={tenant.isActive === false ? 'secondary' : 'default'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
+                <Badge variant="outline" className={tenant.isActive === false ? 'bg-slate-50 text-slate-500' : 'border-emerald-100 bg-emerald-50 text-emerald-700'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
                 <span>Requests: <strong className="text-slate-800">{tenant.totalRequests ?? 0}</strong></span>
@@ -481,14 +480,15 @@ export default function OrganizationsPage() {
           ))}
         </div>
 
+        {balancesQuery.isError && <p role="alert" className="mb-3 text-sm text-destructive">{balancesQuery.error.message}</p>}
         <AdminTableShell className="hidden md:block">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Industry</TableHead>
-                <TableHead>Requests</TableHead>
+                <TableHead>AI actions available</TableHead>
+                <TableHead>Transcription available</TableHead>
+                <TableHead>Completed actions</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Details</TableHead>
               </TableRow>
@@ -501,16 +501,16 @@ export default function OrganizationsPage() {
                 <TableRow><TableCell colSpan={6} className="text-muted-foreground">No organizations found.</TableCell></TableRow>
               )}
               {filteredOrganizations.map((tenant) => (
-                <TableRow key={tenant.id}>
+                <TableRow key={tenant.id} className={selectedTenantId === tenant.id ? 'bg-blue-50' : ''}>
                   <TableCell className="font-medium">{tenant.name}</TableCell>
-                  <TableCell>{tenant.contactEmail || '-'}</TableCell>
-                  <TableCell>{tenant.industry || '-'}</TableCell>
-                  <TableCell>{tenant.totalRequests ?? 0}</TableCell>
+                  <TableCell>{formatQuantity(balancesQuery.data?.owners.find(owner => owner.ownerId === tenant.id)?.remainingAiActions)}</TableCell>
+                  <TableCell>{formatDuration(balancesQuery.data?.owners.find(owner => owner.ownerId === tenant.id)?.remainingTranscriptionSeconds)}</TableCell>
+                  <TableCell>{formatQuantity(balancesQuery.data?.owners.find(owner => owner.ownerId === tenant.id)?.completedActions)}</TableCell>
                   <TableCell>
-                    <Badge variant={tenant.isActive === false ? 'secondary' : 'default'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
+                    <Badge variant="outline" className={tenant.isActive === false ? 'bg-slate-50 text-slate-500' : 'border-emerald-100 bg-emerald-50 text-emerald-700'}>{tenant.isActive === false ? 'Inactive' : 'Active'}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedTenantId(tenant.id)}>
+                    <Button variant="outline" size="sm" onClick={() => {setDetailTab('billing'); setSelectedTenantId(tenant.id);}}>
                       <Eye className="mr-2 h-4 w-4" />
                       Open
                     </Button>
@@ -522,8 +522,8 @@ export default function OrganizationsPage() {
         </AdminTableShell>
       </AdminSectionPanel>
 
-      <Sheet open={Boolean(selectedTenantId)} onOpenChange={(open) => !open && setSelectedTenantId('')}>
-        <SheetContent className="flex w-full flex-col overflow-hidden p-0 sm:max-w-3xl">
+      <Sheet modal={false} open={Boolean(selectedTenantId)} onOpenChange={(open) => !open && setSelectedTenantId('')}>
+        <SheetContent className="admin-workspace top-16 flex h-[calc(100dvh-4rem)] w-full flex-col overflow-hidden p-0 sm:max-w-[470px] bg-white">
           <SheetHeader className="border-b border-slate-200 px-5 py-4">
             <SheetTitle>{selectedTenant?.name || 'Organization'}</SheetTitle>
             <SheetDescription>{selectedTenant?.contactEmail || 'Tenant configuration and operations'}</SheetDescription>
@@ -535,19 +535,17 @@ export default function OrganizationsPage() {
                 <AlertDescription>{(selectedTenantQuery.error as Error).message}</AlertDescription>
               </Alert>
             )}
-            <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="grid h-auto grid-cols-2 gap-1 md:grid-cols-6">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
+            <Tabs value={detailTab} onValueChange={setDetailTab} className="space-y-4">
+              <TabsList className="grid h-auto grid-cols-4 gap-1">
+                <TabsTrigger value="billing">Billing</TabsTrigger>
                 <TabsTrigger value="usage">Usage</TabsTrigger>
-                <TabsTrigger value="billing">Billing V2</TabsTrigger>
-                <TabsTrigger value="admins">Admins</TabsTrigger>
-                <TabsTrigger value="danger">Danger</TabsTrigger>
+                <TabsTrigger value="admins">Staff</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="space-y-4">
+              <TabsContent value="overview" className="space-y-4"><Button variant="ghost" onClick={() => setDetailTab('settings')}>Back to settings</Button>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <AdminMetricTile label="AI Actions Remaining" value={billingQuery.data?.meters.find((meter) => meter.metric === 'AI_ACTIONS')?.remaining ?? '-'} helper="Billing V2" />
+                  <AdminMetricTile label="AI Actions Remaining" value={billingQuery.data?.meters.find((meter) => meter.metric === 'AI_ACTIONS')?.remaining ?? '-'} helper="Billing" />
                   <AdminMetricTile label="Total Requests" value={selectedTenant?.totalRequests ?? 0} helper="Recorded on tenant" />
                   <AdminMetricTile label="Rate Limit / Hour" value={selectedTenant?.rateLimitPerHour ?? '-'} />
                   <AdminMetricTile label="Request Limit" value={selectedTenant?.requestLimit ?? '-'} />
@@ -596,6 +594,7 @@ export default function OrganizationsPage() {
                 <Button onClick={() => updateTenantMutation.mutate()} disabled={Boolean(settingsFormError) || updateTenantMutation.isPending}>
                   {updateTenantMutation.isPending ? 'Saving...' : 'Save Settings'}
                 </Button>
+                <div className="flex flex-wrap gap-2 border-t pt-4"><Button variant="outline" onClick={() => setDetailTab('overview')}>API keys and workspace details</Button><Button variant="outline" onClick={() => setDetailTab('danger')}>Lifecycle controls</Button></div>
               </TabsContent>
 
               <TabsContent value="usage" className="space-y-4">
@@ -608,27 +607,35 @@ export default function OrganizationsPage() {
                 {usageQuery.isError && <p className="text-sm text-destructive">{(usageQuery.error as Error).message}</p>}
                 {usageQuery.data && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <AdminMetricTile label="Total Requests" value={usageQuery.data.totalRequests} />
-                    <AdminMetricTile label="Transcriptions" value={usageQuery.data.totalTranscriptions} />
-                    <AdminMetricTile label="Documents" value={usageQuery.data.totalDocumentsGenerated} />
+                    <AdminMetricTile label="Completed actions" value={usageQuery.data.totals.completedActions} />
+                    <AdminMetricTile label="Transcription used" value={formatDuration(usageQuery.data.totals.transcriptionSecondsUsed)} />
+                    <AdminMetricTile label="AI actions used" value={formatQuantity(usageQuery.data.totals.aiActionsUsed)} />
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="billing" className="space-y-4">
                 {billingQuery.isError && <p className="text-sm text-destructive">{(billingQuery.error as Error).message}</p>}
-                <div className="grid gap-3 sm:grid-cols-2">
+                <h3 className="text-base font-semibold">Permanent balances and current allowances</h3>
+                <div className="grid gap-3 grid-cols-2">
                   {(billingQuery.data?.meters || []).map((meter) => (
                     <AdminMetricTile
                       key={meter.metric}
-                      label={meter.metric === 'AI_ACTIONS' ? 'AI Actions Remaining' : 'Transcription Seconds Remaining'}
-                      value={meter.remaining}
-                      helper={`${meter.allowance} total · ${meter.used} used · resets ${formatDate(billingQuery.data?.periodEnd)}`}
-                      icon={<CreditCard className="h-4 w-4" />}
+                      label={meter.metric === 'AI_ACTIONS' ? 'AI actions' : 'Transcription'}
+                      value={meter.metric === 'AI_ACTIONS' ? formatQuantity(meter.remaining) : formatDuration(meter.remaining)}
                     />
                   ))}
                 </div>
-                <div className="grid gap-3">
+                <p className="text-xs text-slate-500">Admin grants and purchased top-ups never expire.</p>
+                <h3 className="text-base font-semibold">Allowance ledger</h3>
+                <p className="text-xs text-slate-500">Original grants and consumption are retained. Expired trial and plan grants are unavailable.</p>
+                <AdminTableShell className="admin-grants-table"><Table><TableHeader><TableRow><TableHead>Source</TableHead><TableHead>Granted</TableHead><TableHead>Used</TableHead><TableHead>Remaining</TableHead><TableHead>Expiry</TableHead></TableRow></TableHeader><TableBody>
+                  {!billingQuery.data?.grants?.length && <TableRow><TableCell colSpan={5} className="text-slate-500">{billingQuery.isLoading ? 'Loading grants…' : 'No grants recorded.'}</TableCell></TableRow>}
+                  {billingQuery.data?.grants?.map(grant => <TableRow key={grant.id}><TableCell>{grant.source === 'ADMIN_ADJUSTMENT' ? 'Admin grant' : grant.source === 'TOP_UP' ? 'Purchased top-up' : grant.source.replace(/_/g, ' ').toLowerCase()}<p className="mt-1 text-xs text-slate-500">{grant.metric === 'AI_ACTIONS' ? 'AI actions' : 'Transcription seconds'}</p></TableCell><TableCell>{formatQuantity(grant.granted)}</TableCell><TableCell>{formatQuantity(grant.used)}</TableCell><TableCell>{formatQuantity(grant.remaining)}</TableCell><TableCell>{grant.expiresAt ? `${new Date(grant.expiresAt).getTime() <= Date.now() ? 'Expired · ' : ''}${formatDate(grant.expiresAt)}` : 'Never'}</TableCell></TableRow>)}
+                </TableBody></Table></AdminTableShell>
+                <h3 className="text-base font-semibold">Adjust available balance</h3>
+                <p className="text-xs text-slate-500">Enter a positive quantity to add credits, or a negative quantity to remove unused credits. Transcription quantities use seconds.</p>
+                <div className="grant-adjustment-fields grid gap-3">
                   <AdminFormField label="Billing Meter" htmlFor="allowance-metric">
                     <Select value={allowanceMetric} onValueChange={(value) => setAllowanceMetric(value as BillingUsageUnitCode)}>
                       <SelectTrigger id="allowance-metric"><SelectValue /></SelectTrigger>
@@ -657,8 +664,8 @@ export default function OrganizationsPage() {
                     <Input id="allowance-description" value={allowanceDescription} onChange={(e) => setAllowanceDescription(e.target.value)} />
                   </AdminFormField>
                 </div>
-                <Button onClick={() => adjustAllowanceMutation.mutate()} disabled={Boolean(allowanceFormError) || adjustAllowanceMutation.isPending}>
-                  {adjustAllowanceMutation.isPending ? 'Applying...' : 'Apply Allowance Adjustment'}
+                <Button className="w-full" onClick={() => adjustAllowanceMutation.mutate()} disabled={Boolean(allowanceFormError) || adjustAllowanceMutation.isPending}>
+                  {adjustAllowanceMutation.isPending ? 'Applying...' : 'Apply adjustment'}
                 </Button>
               </TabsContent>
 
@@ -692,7 +699,7 @@ export default function OrganizationsPage() {
                 </AdminTableShell>
               </TabsContent>
 
-              <TabsContent value="danger" className="space-y-4">
+              <TabsContent value="danger" className="space-y-4"><Button variant="ghost" onClick={() => setDetailTab('settings')}>Back to settings</Button>
                 <div className="rounded-lg border border-slate-200 bg-white p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
